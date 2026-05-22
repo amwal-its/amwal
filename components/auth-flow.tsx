@@ -36,7 +36,7 @@ export function AuthFlow({ onSuccess }: AuthFlowProps) {
   };
 
   // Validation & Register Action
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
 
@@ -71,14 +71,36 @@ export function AuthFlow({ onSuccess }: AuthFlowProps) {
     }
 
     setRegErrors({});
-    console.log("handleRegister() called with:", { regEmail, regNama });
-    
-    // Simulate successful registration and switch to login
-    switchMode("login");
+
+    const isEmail = regEmail.includes("@");
+    const payload = {
+      name: regNama,
+      password: regSandi,
+      email: isEmail ? regEmail : undefined,
+      phone: !isEmail ? regEmail : undefined,
+    };
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setRegErrors({ email: data.error || "Gagal mendaftar" });
+        return;
+      }
+      
+      switchMode("login");
+    } catch (err) {
+      setRegErrors({ email: "Terjadi kesalahan koneksi" });
+    }
   };
 
   // Validation & Login Action
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
 
@@ -98,13 +120,31 @@ export function AuthFlow({ onSuccess }: AuthFlowProps) {
     setLoginErrors({});
     setIsLoggingIn(true);
 
-    console.log("handleLogin() called with:", { loginEmail });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          identifier: loginEmail,
+          password: loginSandi,
+        }),
+      });
 
-    // Mock API delays to demonstrate loading state
-    setTimeout(() => {
+      const data = await res.json();
       setIsLoggingIn(false);
+
+      if (!res.ok) {
+        setLoginErrors({ email: data.error || "Login gagal" });
+        return;
+      }
+
+      // Save token (e.g. to localStorage)
+      localStorage.setItem("token", data.token);
       onSuccess();
-    }, 1000);
+    } catch (err) {
+      setIsLoggingIn(false);
+      setLoginErrors({ email: "Terjadi kesalahan koneksi" });
+    }
   };
 
   return (
