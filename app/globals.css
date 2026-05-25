@@ -2,29 +2,54 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #11141F;
+  /* Updated to use GSM neutral-dark as default foreground */
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+
+  /* Setup Typography from GSM */
+  --font-sans: var(--font-jakarta), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-yeseva), ui-serif, Georgia, Cambria, serif;
+  --font-jakarta: var(--font-jakarta);
+  --font-yeseva: var(--font-yeseva);
   --font-mono: var(--font-geist-mono);
-  
-  /* Custom Amwal Premium Color Tokens */
-  --color-amwal-green: #2D5A4C;
-  --color-amwal-green-hover: #1E3F35;
-  --color-amwal-green-light: #F5F7F6;
-  --color-amwal-green-muted: #E2EAE7;
-  --color-amwal-lime: #8DA740;
-  --color-amwal-gray: #5A6E68;
-  --color-amwal-gray-light: #E4ECE9;
+
+  /* Setup Custom Border Radius for Amwal */
+  --radius-amwal-sm: 5px;
+  --radius-amwal-md: 10px;
+  --radius-amwal-lg: 12px;
+
+  /* GSM Design System - Main Colors */
+  --color-amwal-main-1: #F1EAD8;
+  --color-amwal-main-2: #D5C7AD;
+
+  /* GSM Design System - Neutral Colors */
+  --color-amwal-neutral-dark: #11141F;
+  --color-amwal-neutral-light: #F5F9FF;
+
+  /* GSM Design System - Secondary Colors */
+  --color-amwal-secondary-teal: #346052;
+  --color-amwal-secondary-green: #8DA750;
+
+  /* GSM Design System - Tertiary Colors */
+  --color-amwal-tertiary-yellow-light: #F9F295;
+  --color-amwal-tertiary-orange: #EOAA3E;
+  --color-amwal-tertiary-yellow-pale: #FAF395;
+  --color-amwal-tertiary-gold: #B88A44;
+
+  /* GSM Design System - Status Colors */
+  --color-amwal-status-danger: #EC0854;
+  --color-amwal-status-success: #8DA750;
+  --color-amwal-status-warning: #FFDF0D;
+  --color-amwal-status-info: #346052;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), var(--font-geist-sans), Arial, Helvetica, sans-serif;
   overflow-x: hidden;
 }
-
