@@ -6,9 +6,10 @@ import { defineConfig } from "prisma/config";
 const dbUser = process.env.DB_USER || 'postgres';
 const dbPass = process.env.DB_PASS || 'postgres';
 const dbHost = process.env.DB_HOST || 'localhost';
-const dbPort = process.env.DB_PORT || '5432';
-const dbName = process.env.DB_NAME || 'amwal_db';
-const databaseUrl = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?schema=public`;
+const dbName = process.env.DB_NAME || 'postgres';
+
+// DIRECT_URL (Port 5432) WAJIB untuk urusan push & migrate CLI
+const directUrl = process.env.DIRECT_URL || `postgresql://${dbUser}:${dbPass}@${dbHost}:5432/${dbName}?schema=public`;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -16,6 +17,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: databaseUrl,
+    url: directUrl,
   },
 });

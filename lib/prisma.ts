@@ -5,9 +5,11 @@ import { Pool } from 'pg';
 const dbUser = process.env.DB_USER || 'postgres';
 const dbPass = process.env.DB_PASS || 'postgres';
 const dbHost = process.env.DB_HOST || 'localhost';
-const dbPort = process.env.DB_PORT || '5432';
-const dbName = process.env.DB_NAME || 'amwal_db';
-const connectionString = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?schema=public`;
+const dbPort = process.env.DB_PORT || '6543';
+const dbName = process.env.DB_NAME || 'postgres';
+
+// DATABASE_URL (Port 6543) WAJIB untuk query sehari-hari (Connection Pooling)
+const connectionString = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?pgbouncer=true&schema=public`;
 
 const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);

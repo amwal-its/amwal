@@ -38,7 +38,7 @@ export function MobilePreview({ children }: MobilePreviewProps) {
         </div>
 
         {/* Content Viewport */}
-        <div className="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden selection:bg-amwal-green/10">
+        <div className="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden selection:bg-amwal-secondary-teal/10">
           {children}
         </div>
 

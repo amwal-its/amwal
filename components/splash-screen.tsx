@@ -36,13 +36,13 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
 
   return (
     <div
-      className={`fixed inset-0 flex flex-col items-center justify-center bg-[#F4F7F9] transition-all duration-700 ease-in-out z-50 w-screen h-screen overflow-hidden ${
+      className={`fixed inset-0 flex flex-col items-center justify-center bg-amwal-neutral-light transition-all duration-700 ease-in-out z-50 w-screen h-screen overflow-hidden ${
         exiting ? "opacity-0 scale-105 pointer-events-none" : "opacity-100"
       }`}
     >
       {/* Decorative subtle ambient lights */}
-      <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-amwal-green/5 rounded-full filter blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 md:w-96 md:h-96 bg-amwal-lime/5 rounded-full filter blur-3xl pointer-events-none animate-pulse delay-1000" />
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 md:w-96 md:h-96 bg-amwal-secondary-teal/5 rounded-full filter blur-3xl pointer-events-none animate-pulse" />
+      <div className="absolute bottom-1/4 right-1/4 w-72 h-72 md:w-96 md:h-96 bg-amwal-secondary-green/5 rounded-full filter blur-3xl pointer-events-none animate-pulse delay-1000" />
 
       {/* Main Logo Container */}
       <div
@@ -62,9 +62,9 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
 
         {/* Custom premium loading indicator dot */}
         <div className="flex gap-1.5 mt-8 justify-center items-center">
-          <span className="w-2.5 h-2.5 rounded-full bg-amwal-green animate-bounce [animation-delay:-0.3s]" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amwal-lime animate-bounce [animation-delay:-0.15s]" />
-          <span className="w-2.5 h-2.5 rounded-full bg-amwal-green/40 animate-bounce" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amwal-secondary-teal animate-bounce [animation-delay:-0.3s]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amwal-secondary-green animate-bounce [animation-delay:-0.15s]" />
+          <span className="w-2.5 h-2.5 rounded-full bg-amwal-secondary-teal/40 animate-bounce" />
         </div>
       </div>
     </div>
