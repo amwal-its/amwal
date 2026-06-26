@@ -7,7 +7,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-amwal-neutral-light dark:bg-zinc-950 font-jakarta">
+    <div className="max-w-md mx-auto min-h-screen bg-white relative flex flex-col w-full border-x border-gray-100 shadow-xs font-jakarta">
       <AuthFlow onSuccess={() => router.push("/dashboard")} />
     </div>
   );

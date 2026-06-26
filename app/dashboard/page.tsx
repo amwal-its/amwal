@@ -1,332 +1,315 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
-  Search, 
   Bell, 
-  User, 
-  Plus, 
-  MapPin, 
-  Users, 
-  BookOpen, 
-  ChevronRight, 
-  PlayCircle,
+  Search, 
+  HandCoins, 
+  HandHeart, 
+  HeartHandshake, 
+  Beef, 
+  ArrowRight,
+  Coins,
+  Sparkles,
+  CheckCircle2,
   Home,
-  HandHeart
-} from "lucide-react";
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/pagination';
+  Clock,
+  BookOpen
+} from 'lucide-react';
+import { getPoints, canCheckInToday, checkInDaily } from '@/lib/points';
+import { BottomNav } from '@/components/bottom-nav';
 
-export default function Dashboard() {
-  const educationCards = [
-    { 
-      img: "/assets/images/education/ilmu-faraidh-dijamin-bisa-bagi-waris.png", 
-      title: "Ilmu Faraidh | Dijamin bisa bagi waris",
-      hasPlay: false
+export default function DashboardPage() {
+  const router = useRouter();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [points, setPoints] = useState<number>(200);
+  const [showHasCheckIn, setShowHasCheckIn] = useState<boolean>(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [scrollPercent, setScrollPercent] = useState<number>(0);
+
+  const loadPoints = () => {
+    const pts = getPoints();
+    setPoints(pts || 200);
+    setShowHasCheckIn(canCheckInToday());
+  };
+
+  const handleClaimCheckIn = () => {
+    const res = checkInDaily();
+    if (res.success) {
+      setToastMessage(`Alhamdulillah! Berhasil presensi harian. +${res.pointsAdded} XP Berkah ditambahkan!`);
+      loadPoints();
+      setTimeout(() => {
+        setToastMessage(null);
+      }, 4000);
+    }
+  };
+  
+  const banners = [
+    {
+      title: "Berwakaf Lebih Mudah",
+      desc: "Bangun pahala mengalir bersama Amwal",
+      img: "https://images.unsplash.com/photo-1597466765990-64ad1c35dafc?auto=format&fit=crop&w=800&q=80"
     },
-    { 
-      img: "/assets/images/education/jangan-tunda-pembagian-warisan.png", 
-      title: "Jangan Tunda Pembagian Warisan", 
-      hasPlay: true 
+    {
+      title: "Infaq Jumat Berkah",
+      desc: "Raih keberkahan di hari yang mulia",
+      img: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=800&q=80"
     },
-    { 
-      img: "/assets/images/education/pembagian-harta-waris-menurut-hukum-perdata.png", 
-      title: "Pembagian Harta Waris Menurut Hukum Perdata",
-      hasPlay: false
+    {
+      title: "Qurban Tanpa Batas",
+      desc: "Tebar kebahagiaan hingga pelosok negeri",
+      img: "https://images.unsplash.com/photo-1484557985045-eaa252be761c?auto=format&fit=crop&w=800&q=80"
     }
   ];
 
-  const wakafCards = [
-    { 
-      img: "/assets/images/wakaf/wakaf-dana-abadi-untuk-pendidikan-agama-islam.png", 
-      title: "Wakaf Dana Abadi untuk Pendidikan Agama Islam", 
-      progress: 65, 
-      terkumpul: "Rp 162.500.000" 
-    },
-    { 
-      img: "/assets/images/wakaf/wakaf-pembangunan-masjid-al-furqon.png", 
-      title: "Wakaf Pembangunan Masjid Al-Furqon", 
-      progress: 18, 
-      terkumpul: "Rp 141.600.000" 
-    },
-    { 
-      img: "/assets/images/wakaf/wakaf-air-bersih-desa-nurul-amanah.png", 
-      title: "Wakaf Air Bersih Desa Nurul Amanah", 
-      progress: 49, 
-      terkumpul: "Rp 48.700.000" 
-    },
-    { 
-      img: "/assets/images/wakaf/wakaf-perbaikan-jalan-aspal-untuk-akses-pendidikan.png", 
-      title: "Wakaf Perbaikan Jalan Aspal untuk Akses Pendidikan dan...", 
-      progress: 85, 
-      terkumpul: "Rp 853.750.000" 
-    }
-  ];
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    const maxScroll = target.scrollWidth - target.clientWidth;
+    if (maxScroll <= 0) return;
+    setScrollPercent(target.scrollLeft / maxScroll);
+  };
 
-  const heroBanners = [
-    {
-      img: "/assets/images/wakaf/wakaf-pembangunan-masjid-al-furqon.png",
-      title: "Pembangunan Masjid Al-Furqon untuk Santri"
-    },
-    {
-      img: "/assets/images/wakaf/wakaf-dana-abadi-untuk-pendidikan-agama-islam.png",
-      title: "Wakaf Dana Abadi untuk Pendidikan Agama Islam"
-    },
-    {
-      img: "/assets/images/wakaf/wakaf-air-bersih-desa-nurul-amanah.png",
-      title: "Wakaf Air Bersih Desa Nurul Amanah"
-    }
-  ];
+  useEffect(() => {
+    loadPoints();
+
+    // Listen to points updates dynamically
+    const handlePointsUpdated = () => {
+      loadPoints();
+    };
+    window.addEventListener('amwal_points_updated', handlePointsUpdated);
+
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
+    }, 3000);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('amwal_points_updated', handlePointsUpdated);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 font-jakarta flex flex-col">
-      
-      {/* Desktop Top Navigation (Hidden on mobile) */}
-      <header className="hidden md:flex items-center px-8 lg:px-12 py-4 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        {/* Left Side: Logo & Menus */}
-        <div className="flex items-center gap-12">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 rounded-amwal-sm overflow-hidden bg-white shadow-sm flex items-center justify-center border border-amwal-main-2/20 p-0.5">
-              <img
-                src="/assets/images/logo.png"
-                alt="Amwal Logo"
-                className="object-contain w-[34px] h-[34px]"
-              />
-            </div>
-            <div>
-              <h1 className="text-2xl font-yeseva text-amwal-secondary-teal mt-[-2px] tracking-tight">Amwal</h1>
-            </div>
-          </div>
-          
-          {/* 4 Menus Horizontal */}
-          <nav className="flex items-center gap-8 font-semibold text-amwal-neutral-dark/70 text-sm">
-            <a href="#" className="text-amwal-secondary-teal font-bold border-b-2 border-amwal-secondary-teal pb-1">Beranda</a>
-            <a href="#" className="hover:text-amwal-secondary-teal transition-colors pb-1 border-b-2 border-transparent hover:border-amwal-secondary-teal/50">Wakaf</a>
-            <a href="#" className="hover:text-amwal-secondary-teal transition-colors pb-1 border-b-2 border-transparent hover:border-amwal-secondary-teal/50">Waris</a>
-            <a href="#" className="hover:text-amwal-secondary-teal transition-colors pb-1 border-b-2 border-transparent hover:border-amwal-secondary-teal/50">Edukasi</a>
-          </nav>
+    <div className="max-w-md mx-auto min-h-screen bg-white relative flex flex-col w-full border-x border-gray-100 shadow-xs pb-24">
+      <div className="bg-white px-4 py-4 flex items-center justify-between sticky top-0 z-10 border-b border-gray-100/50">
+        <div className="relative flex-1 mr-4">
+          <input 
+            type="text" 
+            placeholder="Cari program wakaf..." 
+            className="w-full bg-gray-100 rounded-full py-2 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-amwal-secondary-teal border-none"
+          />
+          <Search size={18} className="absolute left-3 top-2.5 text-gray-400" />
         </div>
+        <div className="flex items-center space-x-3">
+          <button onClick={() => router.push('/dashboard/notifications')} className="text-gray-600 relative cursor-pointer outline-none">
+            <Bell size={24} />
+            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white animate-pulse"></span>
+          </button>
+          <img 
+            src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80" 
+            alt="Profile" 
+            referrerPolicy="no-referrer"
+            className="w-8 h-8 rounded-full border border-gray-250 cursor-pointer object-cover"
+            onClick={() => router.push('/dashboard/profile')}
+          />
+        </div>
+      </div>
 
-        {/* Right Side: Search & Profile */}
-        <div className="flex items-center gap-4 ml-auto">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Pencarian..." 
-              className="bg-slate-100 text-amwal-neutral-dark rounded-full py-2 pl-9 pr-4 outline-none focus:ring-2 focus:ring-amwal-tertiary-gold text-sm w-64 transition-all" 
-            />
+      {/* Poin Berkah & Absensi Header Bar */}
+      <div className="mx-4 mt-3 flex items-center justify-between bg-gradient-to-r from-emerald-800 to-emerald-950 text-white rounded-xl px-4 py-3.5 shadow-3xs cursor-pointer" onClick={() => router.push('/dashboard/points')}>
+        <div className="flex items-center space-x-2.5">
+          <div className="bg-white/10 p-2 rounded-lg text-amber-300">
+            <Coins size={18} className="animate-pulse" />
           </div>
-          <div className="relative p-2.5 bg-slate-100 rounded-full cursor-pointer hover:bg-slate-200 transition-colors">
-            <Bell className="w-5 h-5 text-amwal-secondary-teal" />
-            <div className="absolute top-0 right-0 w-3 h-3 bg-amwal-status-danger rounded-full border-2 border-white"></div>
-          </div>
-          <div className="w-10 h-10 rounded-full bg-amwal-main-1 border border-amwal-secondary-teal/10 flex items-center justify-center font-bold text-sm text-amwal-secondary-teal shadow-inner cursor-pointer hover:bg-amwal-secondary-teal/10 transition-colors">
-            BA
+          <div>
+            <p className="text-[10px] text-emerald-250 font-bold uppercase tracking-wider">Poin Berkah Anda</p>
+            <p className="text-sm font-black font-mono tracking-tight">{points} XP</p>
           </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative pb-24 md:pb-12 overflow-x-hidden">
         
-        {/* Green Background Header Layer */}
-        <div className="w-full bg-amwal-secondary-teal rounded-b-[40px] md:rounded-b-none pt-6 pb-28 md:pb-36 px-5 md:px-8 relative z-0 flex flex-col">
-          <div className="w-full max-w-7xl mx-auto">
-            {/* Mobile Header (Hidden on Desktop) */}
-            <div className="md:hidden flex items-center gap-4 text-white">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input 
-                  type="text" 
-                  placeholder="Pencarian" 
-                  className="w-full bg-white text-amwal-neutral-dark rounded-full py-2.5 pl-12 pr-4 outline-none focus:ring-2 focus:ring-amwal-tertiary-gold text-sm shadow-sm" 
-                />
-              </div>
-              <div className="relative p-2.5 bg-white rounded-full shadow-sm flex items-center justify-center shrink-0">
-                <Bell className="w-5 h-5 text-amwal-secondary-teal" />
-                <div className="absolute top-0 right-0 w-3 h-3 bg-amwal-status-danger rounded-full border-2 border-white"></div>
-              </div>
-              <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center overflow-hidden shrink-0 shadow-sm">
-                <User className="text-gray-400 w-6 h-6" />
-              </div>
-            </div>
+        {showHasCheckIn ? (
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClaimCheckIn();
+            }}
+            className="bg-[#FBBF24] hover:bg-[#F59E0B] text-emerald-950 font-black text-[10px] uppercase px-3.5 py-1.5 rounded-full transition duration-200 shadow-sm flex items-center space-x-1 cursor-pointer shrink-0"
+          >
+            <Sparkles size={11} className="animate-spin text-emerald-900" />
+            <span>KLAIM ABSEN</span>
+          </button>
+        ) : (
+          <div className="flex items-center space-x-1 bg-white/10 px-2.5 py-1.5 rounded-full text-[10px] font-bold text-emerald-100">
+            <CheckCircle2 size={12} className="text-emerald-350" />
+            <span>Sudah Absen</span>
+          </div>
+        )}
+      </div>
 
-            {/* Greeting on Desktop */}
-            <div className="hidden md:block pt-4 pb-2 text-white">
-              <h2 className="text-3xl font-yeseva">Selamat Datang, Bara!</h2>
-              <p className="text-white/80 font-medium mt-1">Mari bersama membangun kemaslahatan umat melalui wakaf.</p>
-            </div>
+      {/* Toast Notification for Daily Check-In */}
+      {toastMessage && (
+        <div className="mx-4 mt-3 bg-amber-500 text-white font-bold text-xs px-4.5 py-3 rounded-lg shadow-sm border border-amber-600 flex items-center justify-between animate-fade-in">
+          <div className="flex items-center space-x-2">
+            <Sparkles size={15} className="text-white animate-bounce" />
+            <span>{toastMessage}</span>
           </div>
         </div>
+      )}
 
-        {/* Floating Content Overlapping the Green Background */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-5 md:px-8 flex flex-col -mt-20 md:-mt-24">
-          
-          {/* Hero Image Carousel */}
-          <div className="w-full mx-auto md:max-w-none">
-            <div className="rounded-amwal-lg overflow-hidden border-[1.5px] border-amwal-tertiary-gold shadow-xl aspect-[16/9] md:aspect-[21/7] lg:aspect-[24/6] w-full bg-white relative">
-              <Swiper
-                modules={[Autoplay, Pagination]}
-                autoplay={{ delay: 4000, disableOnInteraction: false }}
-                pagination={{ clickable: true, dynamicBullets: true }}
-                loop={true}
-                className="w-full h-full hero-swiper"
-              >
-                {heroBanners.map((banner, idx) => (
-                  <SwiperSlide key={idx}>
-                    <div className="w-full h-full relative">
-                      <img 
-                        src={banner.img} 
-                        alt={banner.title} 
-                        className="object-cover object-center w-full h-full"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent md:from-black/90 md:via-black/40 flex flex-col justify-end md:justify-center p-5 md:p-10">
-                        <h2 className="text-white font-yeseva text-lg md:text-3xl lg:text-4xl leading-snug max-w-[90%] md:max-w-[70%] drop-shadow-md">
-                          {banner.title}
-                        </h2>
-                        <button className="mt-3 md:mt-5 bg-amwal-status-success text-white px-5 py-2 md:px-8 md:py-3 rounded-amwal-md text-xs md:text-sm font-bold w-fit hover:bg-opacity-90 transition-all shadow-md hover:scale-105">
-                          Wakaf sekarang
-                        </button>
-                      </div>
-                    </div>
-                  </SwiperSlide>
-                ))}
-              </Swiper>
-              <style jsx global>{`
-                .hero-swiper .swiper-pagination-bullet {
-                  background: white;
-                  opacity: 0.6;
-                }
-                .hero-swiper .swiper-pagination-bullet-active {
-                  background: var(--color-amwal-tertiary-gold, #B88A44);
-                  opacity: 1;
-                }
-                /* Hide scrollbar for webkit */
-                .hide-scrollbar::-webkit-scrollbar {
-                  display: none;
-                }
-              `}</style>
-            </div>
-          </div>
-
-          {/* Quick Actions (4 Icons) */}
-          <div className="grid grid-cols-4 gap-2 md:gap-8 py-8 mt-2 w-full max-w-4xl mx-auto">
-            {[
-              { icon: Plus, label: "Buat program wakaf" },
-              { icon: MapPin, label: "Cari wakaf di sekitarmu" },
-              { icon: Users, label: "Kelola waris" },
-              { icon: BookOpen, label: "Pusat edukasi" }
-            ].map((item, idx) => (
-              <div key={idx} className="flex flex-col items-center gap-2 md:gap-4 cursor-pointer group">
-                <div className="w-14 h-14 md:w-20 md:h-20 bg-amwal-secondary-teal text-white rounded-full flex items-center justify-center shadow-md group-hover:scale-105 group-hover:bg-amwal-secondary-teal/90 transition-all">
-                  <item.icon className="w-7 h-7 md:w-10 md:h-10" strokeWidth={1.5} />
+      {/* Carousel (with 92% width so next slide peeks) */}
+      <div className="pl-4 py-4 relative overflow-hidden">
+        <div className="overflow-hidden rounded-l-xl relative h-40">
+          <div 
+            className="flex transition-transform duration-500 ease-in-out h-full"
+            style={{ transform: `translateX(-${currentSlide * 92}%)` }}
+          >
+            {banners.map((banner, idx) => (
+              <div key={idx} className="w-[92%] shrink-0 h-full pr-3">
+                <div className="relative h-full bg-teal-800 w-full flex items-center justify-center rounded-xl overflow-hidden shadow-xs">
+                  <img src={banner.img} referrerPolicy="no-referrer" className="absolute inset-0 w-full h-full object-cover opacity-45" />
+                  <div className="relative z-10 text-white text-center px-4">
+                    <h2 className="text-base font-bold mb-1">{banner.title}</h2>
+                    <p className="text-[11px] opacity-90">{banner.desc}</p>
+                  </div>
                 </div>
-                <span className="text-[11px] md:text-sm leading-tight text-center text-amwal-secondary-teal font-bold max-w-[80px] md:max-w-[120px]">
-                  {item.label}
-                </span>
               </div>
             ))}
           </div>
-
-          {/* Main Dashboard Content Grid: 
-              Using lg:flex-row-reverse so 'Pusat Edukasi' is the first DOM element (on top for Mobile)
-              but rendered on the right side for Desktop.
-          */}
-          <div className="w-full flex flex-col lg:flex-row-reverse gap-6 md:gap-8">
-            
-            {/* Section 'Pusat Edukasi' (First in DOM: Top on Mobile, Right on Desktop) */}
-            <div className="w-full lg:w-1/3 flex flex-col mb-2 lg:mb-0">
-              <div className="bg-white border border-yellow-400/80 rounded-amwal-lg p-5 md:p-6 shadow-sm relative overflow-hidden flex-1">
-                <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-yeseva text-amwal-secondary-teal flex items-center gap-2 text-xl md:text-2xl">
-                    Pusat Edukasi <ChevronRight className="w-6 h-6 text-amwal-tertiary-gold" />
-                  </h3>
-                </div>
-                <p className="text-sm text-amwal-neutral-dark/70 mb-5 font-medium">
-                  Pelajari ilmu waris dan wakaf lengkap.
-                </p>
-                
-                {/* Horizontal scroll on mobile, Vertical stack on large desktop */}
-                <div className="flex lg:flex-col gap-4 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 snap-x snap-mandatory scroll-smooth hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                  {educationCards.map((item, idx) => (
-                    <div key={idx} className="min-w-[160px] md:min-w-[200px] lg:min-w-0 snap-start relative rounded-amwal-md overflow-hidden aspect-[4/5] lg:aspect-video shadow-sm cursor-pointer group border border-slate-100">
-                      <img src={item.img} alt={item.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-3 md:p-4">
-                        {item.hasPlay && (
-                          <PlayCircle className="w-10 h-10 md:w-12 md:h-12 text-white absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-90 drop-shadow-md group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-                        )}
-                        <h4 className="text-white text-[13px] md:text-sm font-medium leading-tight drop-shadow-md">
-                          {item.title}
-                        </h4>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Section 'Temukan Wakaf' (Second in DOM: Bottom on Mobile, Left on Desktop) */}
-            <div className="w-full lg:w-2/3 flex flex-col">
-              <div className="bg-white md:bg-[#f5f9f5] border border-amwal-secondary-teal/10 rounded-amwal-lg p-5 md:p-6 shadow-sm md:shadow-inner flex-1">
-                <h3 className="font-yeseva text-amwal-secondary-teal flex items-center gap-2 text-xl md:text-2xl mb-5">
-                  Temukan Wakaf <ChevronRight className="w-6 h-6 text-amwal-tertiary-gold" />
-                </h3>
-                <div className="flex flex-col gap-4">
-                  {wakafCards.map((item, idx) => (
-                    <div key={idx} className="flex flex-row gap-4 bg-white p-3 rounded-amwal-md shadow-sm border border-slate-100 hover:shadow-md hover:border-amwal-tertiary-gold/30 transition-all cursor-pointer group">
-                      <div className="relative w-[100px] h-[100px] md:w-[130px] md:h-[130px] shrink-0 rounded-amwal-sm overflow-hidden">
-                        <img src={item.img} alt={item.title} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500" />
-                      </div>
-                      <div className="flex flex-col flex-1 justify-between py-1">
-                        <h4 className="text-sm md:text-lg font-bold text-amwal-neutral-dark leading-snug line-clamp-2 md:line-clamp-3 pr-2 group-hover:text-amwal-secondary-teal transition-colors">
-                          {item.title}
-                        </h4>
-                        <div className="mt-2">
-                          <div className="flex justify-between text-[11px] md:text-sm text-slate-500 mb-1.5 font-medium">
-                            <span>Progres</span>
-                            <span className="font-bold text-amwal-secondary-teal">{item.progress}%</span>
-                          </div>
-                          <div className="w-full bg-amwal-main-1 h-2 md:h-2.5 rounded-full overflow-hidden mb-1.5 md:mb-2">
-                            <div className="bg-amwal-secondary-green h-full rounded-full transition-all duration-1000" style={{ width: `${item.progress}%` }}></div>
-                          </div>
-                          <div className="text-[11px] md:text-sm text-amwal-neutral-dark font-semibold">
-                            {item.terkumpul} <span className="text-slate-500 font-medium">terkumpul</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
+          <div className="flex justify-center space-x-1.5 absolute bottom-3 left-0 right-0 z-20 pr-4">
+            {banners.map((_, idx) => (
+              <div 
+                key={idx} 
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  currentSlide === idx ? 'w-5 bg-white' : 'w-1.5 bg-white/50'
+                }`}
+              ></div>
+            ))}
           </div>
         </div>
-      </main>
-
-      {/* Mobile-Only Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 px-8 py-3 flex justify-between items-center z-50 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] pb-6">
-        {[
-          { icon: Home, label: "Beranda", active: true },
-          { icon: HandHeart, label: "Wakaf", active: false },
-          { icon: Users, label: "Waris", active: false },
-          { icon: BookOpen, label: "Edukasi", active: false }
-        ].map((item, idx) => (
-          <div key={idx} className={`flex flex-col items-center gap-1.5 cursor-pointer ${item.active ? 'text-amwal-secondary-teal' : 'text-slate-400 hover:text-slate-600'}`}>
-            <item.icon className={`w-6 h-6 ${item.active ? 'fill-amwal-secondary-teal text-amwal-secondary-teal' : ''}`} strokeWidth={item.active ? 2 : 1.5} />
-            <span className={`text-[11px] font-medium ${item.active ? 'font-bold' : ''}`}>
-              {item.label}
-            </span>
-          </div>
-        ))}
       </div>
-      
+
+      {/* Quick Actions grid */}
+      <div className="px-5 py-4 grid grid-cols-4 gap-3 bg-white mx-4 rounded-2xl border border-gray-100 shadow-sm mt-1">
+        <button className="flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 group cursor-pointer" onClick={() => router.push('/catalog')}>
+          <div className="w-11 h-11 bg-emerald-50 text-amwal-secondary-teal rounded-xl flex items-center justify-center shadow-xs border border-emerald-100 group-hover:bg-emerald-100 group-hover:shadow-sm transition duration-150">
+            <HandHeart size={22} />
+          </div>
+          <span className="text-[10.5px] text-gray-700 text-center font-bold leading-tight group-hover:text-amwal-secondary-teal transition">Wakaf</span>
+        </button>
+        <button className="flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 group cursor-pointer" onClick={() => router.push('/zakat')}>
+          <div className="w-11 h-11 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shadow-xs border border-purple-100 group-hover:bg-purple-100 group-hover:shadow-sm transition duration-150">
+            <HeartHandshake size={22} />
+          </div>
+          <span className="text-[10.5px] text-gray-700 text-center font-bold leading-tight group-hover:text-purple-800 transition">Zakat</span>
+        </button>
+        <button className="flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 group cursor-pointer" onClick={() => router.push('/qurban')}>
+          <div className="w-11 h-11 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center shadow-xs border border-orange-100 group-hover:bg-orange-100 group-hover:shadow-sm transition duration-150">
+            <Beef size={22} />
+          </div>
+          <span className="text-[10.5px] text-gray-700 text-center font-bold leading-tight group-hover:text-orange-900 transition">Qurban</span>
+        </button>
+        <button className="flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 group cursor-pointer" onClick={() => router.push('/infaq')}>
+          <div className="w-11 h-11 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shadow-xs border border-amber-100 group-hover:bg-amber-100 group-hover:shadow-sm transition duration-150">
+            <HandCoins size={22} />
+          </div>
+          <span className="text-[10.5px] text-gray-700 text-center font-bold leading-tight group-hover:text-amber-800 transition">Lainnya</span>
+        </button>
+      </div>
+
+      {/* News & Education */}
+      <div className="mt-6">
+        <div className="px-4 flex justify-between items-center mb-3">
+          <h3 className="font-bold text-gray-800 text-sm">Berita & Edukasi</h3>
+          <button onClick={() => router.push('/education')} className="text-xs text-amwal-secondary-teal font-bold flex items-center cursor-pointer">
+            Lihat Semua <ArrowRight size={13} className="ml-1"/>
+          </button>
+        </div>
+        <div 
+          onScroll={handleScroll}
+          className="flex overflow-x-auto px-4 pb-2 space-x-4 hide-scrollbar scroll-smooth"
+        >
+          {[
+            {
+              id: 'syariah_milenial',
+              title: 'Manajemen Keuangan Syariah untuk Milenial',
+              category: 'Finansial Pintar',
+              img: 'https://images.unsplash.com/photo-1579621970588-a3f5ece89634?auto=format&fit=crop&w=400&q=80'
+            },
+            {
+              id: 'wakaf_infaq_sedekah',
+              title: 'Perbedaan Mendasar Wakaf, Infaq, dan Sedekah',
+              category: 'Fiqih Muamalah',
+              img: 'https://images.unsplash.com/photo-1604594849809-dfedbc827105?auto=format&fit=crop&w=400&q=80'
+            }
+          ].map((item) => (
+            <div 
+              key={item.id} 
+              className="min-w-[240px] bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden cursor-pointer hover:border-emerald-200 transition duration-200" 
+              onClick={() => router.push(`/education/${item.id}`)}
+            >
+              <img src={item.img} referrerPolicy="no-referrer" className="w-full h-28 object-cover" />
+              <div className="p-3">
+                <span className="text-[10px] text-blue-600 font-bold mb-1 block">{item.category}</span>
+                <h4 className="font-bold text-xs text-gray-850 leading-tight mb-1 line-clamp-2">{item.title}</h4>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Custom scrollbar progress indicator */}
+        <div className="mx-4 mt-2 mb-4 h-[3px] bg-gray-200/80 rounded-full relative">
+          <div 
+            className="absolute bg-amwal-secondary-teal h-full w-12 rounded-full transition-all duration-150"
+            style={{ left: `${scrollPercent * (100 - 15)}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Recommended campaigns */}
+      <div className="mt-2 pb-8">
+        <div className="px-4 flex justify-between items-center mb-3">
+          <h3 className="font-bold text-gray-800 text-sm">Program Wakaf Pilihan</h3>
+          <button onClick={() => router.push('/catalog')} className="text-xs text-amwal-secondary-teal font-bold flex items-center cursor-pointer">
+            Lihat Semua <ArrowRight size={13} className="ml-1"/>
+          </button>
+        </div>
+        <div className="px-4 space-y-4">
+          <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex cursor-pointer hover:shadow-sm transition" onClick={() => router.push('/wakaf')}>
+            <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=200&q=80" referrerPolicy="no-referrer" className="w-28 h-auto object-cover" />
+            <div className="p-3 flex-1">
+              <span className="text-[9px] bg-emerald-50 text-amwal-secondary-teal px-2 py-0.5 rounded font-bold mb-1.5 inline-block">Pendidikan</span>
+              <h4 className="font-bold text-xs text-gray-800 leading-tight mb-1">Pembangunan Gedung Sekolah Yatim</h4>
+              <p className="text-[10px] text-gray-500 mb-2 font-medium">Dompet Dhuafa</p>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1.5 overflow-hidden">
+                <div className="bg-amwal-secondary-green h-1.5 rounded-full" style={{ width: '45%' }}></div>
+              </div>
+              <div className="flex justify-between text-[9px] font-bold">
+                <span className="text-amwal-secondary-teal">Terkumpul Rp 450jt</span>
+                <span className="text-gray-400 font-medium">45 hari lagi</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden flex cursor-pointer hover:shadow-sm transition" onClick={() => router.push('/wakaf')}>
+            <img src="https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=200&q=80" referrerPolicy="no-referrer" className="w-28 h-auto object-cover" />
+            <div className="p-3 flex-1">
+              <span className="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-bold mb-1.5 inline-block">Kesehatan</span>
+              <h4 className="font-bold text-xs text-gray-800 leading-tight mb-1">Wakaf Alat Kesehatan Klinik Umat</h4>
+              <p className="text-[10px] text-gray-500 mb-2 font-medium">Lazismu</p>
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1.5 overflow-hidden">
+                <div className="bg-amwal-secondary-green h-1.5 rounded-full" style={{ width: '70%' }}></div>
+              </div>
+              <div className="flex justify-between text-[9px] font-bold">
+                <span className="text-amwal-secondary-teal">Terkumpul Rp 140jt</span>
+                <span className="text-gray-400 font-medium">12 hari lagi</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky Bottom Navigation Bar */}
+      <BottomNav />
     </div>
   );
 }
-
