@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
+import {
+  signAccessToken,
+  generateRefreshToken,
+  hashToken,
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+  ACCESS_TOKEN_MAX_AGE,
+  REFRESH_TOKEN_MAX_AGE,
+} from '../../../../lib/tokens';
 
 const loginSchema = z.object({
   identifier: z.string().min(1, 'Email or phone is required'),
@@ -12,7 +20,7 @@ const loginSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     // Validate input
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
@@ -50,31 +58,67 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate JWT
-    // Ensure you set JWT_SECRET in your .env file
-    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_please_change_in_production';
-    const token = jwt.sign(
-      { 
-        userId: user.id, 
-        email: user.email, 
-        phone: user.phone 
-      }, 
-      jwtSecret, 
-      { expiresIn: '7d' }
-    );
+    // Generate JWT Access Token with role
+    const accessToken = signAccessToken({
+      id: user.id,
+      role: user.role,
+      email: user.email,
+      phone: user.phone,
+    });
 
-    // Return token and user (excluding passwordHash)
-    const { passwordHash: _, ...userWithoutPassword } = user;
+    // Generate and store Refresh Token
+    const rawRefreshToken = generateRefreshToken();
+    const tokenHash = hashToken(rawRefreshToken);
+    const refreshExpiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE * 1000);
 
-    return NextResponse.json(
-      { 
-        message: 'Login successful', 
-        token, 
-        user: userWithoutPassword 
+    await prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiresAt: refreshExpiresAt,
+      },
+    });
+
+    // Return response without passwordHash in body
+    const userWithoutPassword = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
+
+    const response = NextResponse.json(
+      {
+        message: 'Login successful',
+        user: userWithoutPassword,
       },
       { status: 200 }
     );
-  } catch (error: any) {
+
+    // Set httpOnly cookies
+    const isProduction = process.env.NODE_ENV === 'production';
+
+    response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+
+    response.cookies.set(REFRESH_TOKEN_COOKIE, rawRefreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: REFRESH_TOKEN_MAX_AGE,
+    });
+
+    return response;
+  } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
