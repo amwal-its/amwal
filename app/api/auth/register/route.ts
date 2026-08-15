@@ -10,6 +10,7 @@ const registerSchema = z.object({
     .transform(e => e === '' ? undefined : e),
   phone: z.string().min(8, 'Phone must be at least 8 digits').optional().or(z.literal(''))
     .transform(p => p === '' ? undefined : p),
+  role: z.enum(['WAKIF', 'NADZIR']).optional().default('WAKIF'),
 }).refine((data) => data.email || data.phone, {
   message: 'Either email or phone is required',
   path: ['email'], // attach error to email field generally
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, password, email, phone } = parsed.data;
+    const { name, password, email, phone, role } = parsed.data;
 
     // Check if user already exists
     if (email) {
@@ -66,12 +67,14 @@ export async function POST(req: NextRequest) {
         email,
         phone,
         passwordHash,
+        role,
       },
       select: {
         id: true,
         name: true,
         email: true,
         phone: true,
+        role: true,
         createdAt: true,
       },
     });
@@ -80,7 +83,7 @@ export async function POST(req: NextRequest) {
       { message: 'User registered successfully', user: newUser },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },

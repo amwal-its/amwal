@@ -8,7 +8,7 @@ const dbPass = process.env.DB_PASS || 'postgres';
 const dbHost = process.env.DB_HOST || 'localhost';
 const dbPort = process.env.DB_PORT || '5432';
 const dbName = process.env.DB_NAME || 'amwal_db';
-const databaseUrl = process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?schema=public`;
+const databaseUrl = process.env.DIRECT_URL || process.env.DATABASE_URL || `postgresql://${dbUser}:${dbPass}@${dbHost}:${dbPort}/${dbName}?schema=public`;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

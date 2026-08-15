@@ -94,7 +94,7 @@ export function AuthFlow({ onSuccess }: AuthFlowProps) {
       }
       
       switchMode("login");
-    } catch (err) {
+    } catch {
       setRegErrors({ email: "Terjadi kesalahan koneksi" });
     }
   };
@@ -124,6 +124,7 @@ export function AuthFlow({ onSuccess }: AuthFlowProps) {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           identifier: loginEmail,
           password: loginSandi,
@@ -138,10 +139,8 @@ export function AuthFlow({ onSuccess }: AuthFlowProps) {
         return;
       }
 
-      // Save token (e.g. to localStorage)
-      localStorage.setItem("token", data.token);
       onSuccess();
-    } catch (err) {
+    } catch {
       setIsLoggingIn(false);
       setLoginErrors({ email: "Terjadi kesalahan koneksi" });
     }
