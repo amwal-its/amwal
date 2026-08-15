@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 export const ACCESS_TOKEN_COOKIE = 'amwal_token';
 export const REFRESH_TOKEN_COOKIE = 'amwal_refresh';
 
-export const ACCESS_TOKEN_MAX_AGE = 15 * 60; // 15 minutes (900 seconds)
+export const ACCESS_TOKEN_MAX_AGE = 20 * 60; // 20 minutes (1200 seconds)
 export const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 30; // 30 days (seconds)
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_please_change_in_production';
@@ -25,7 +25,7 @@ export function signAccessToken(user: TokenUser): string {
       phone: user.phone,
     },
     JWT_SECRET,
-    { expiresIn: '15m' }
+    { expiresIn: '20m' }
   );
 }
 
