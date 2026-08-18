@@ -180,19 +180,26 @@ enum WaqfOrderStatus {
   DITOLAK
 }
 
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+}
+
 // ============================================================
 // MODELS
 // ============================================================
 
 model User {
-  id           String   @id @default(uuid())
-  email        String?  @unique
-  phone        String?  @unique
-  passwordHash String   @map("password_hash")
-  name         String
-  role         Role     @default(WAKIF)
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id            String         @id @default(uuid())
+  email         String?        @unique
+  phone         String?        @unique
+  passwordHash  String?        @map("password_hash")
+  name          String
+  role          Role           @default(WAKIF)
+  oauthProvider OAuthProvider? @map("oauth_provider")
+  oauthId       String?        @map("oauth_id")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
 
   refreshTokens                   RefreshToken[]
   nadzirProfile                   NadzirProfile?                    @relation("NadzirUser")
@@ -216,6 +223,7 @@ model User {
   chatbotConversations            ChatbotConversation[]
   notifications                   Notification[]
 
+  @@unique([oauthProvider, oauthId])
   @@map("users")
 }
 
