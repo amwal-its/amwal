@@ -1,13 +1,19 @@
-# Skema Basis Data — Amwal V.1
+<!-- /docs/DATABASE_SCHEMA.md -->
 
-## Status Saat Ini vs Target
+# Skema Basis Data — Amwal V.1 (Revisi Putaran 6)
 
-**Saat ini** (`prisma/schema.prisma`): hanya 1 model, `User`, tanpa field
-`role`, tanpa `RefreshToken`.
+## Perubahan dari Versi Sebelumnya
 
-**Target**: skema penuh sesuai DBML final di bawah — migrasi dilakukan
-bertahap mulai Micro-Sprint 1 (fondasi: User+role+RefreshToken+Auth tables)
-lalu per-modul di Micro-Sprint 2-4.
+- `users`: `password_hash` jadi nullable, tambah `oauth_provider`/`oauth_id` (Google OAuth)
+- `waqf_orders`, `zakat_orders`: tambah `is_anonymous` ("Hamba Allah")
+- `qurban_orders`: tambah `akad_wakalah_text`, `akad_wakalah_accepted_at`
+- `hewan_batches`: tambah 8 field detail (ras, kelas, estimasi berat, dst.)
+- `qurban_distribution_reports`: tambah GPS (`lokasi_lat`/`lokasi_lng`), `jumlah_penerima`, `video_url`
+- **BARU**: `zakat_fitrah_config` (konfigurasi varian beras & konversi harga)
+- **BARU**: `zakat_gold_price_history` (cache/fallback harga emas live API)
+- `fund_withdrawal_requests`, `permohonan_penyaluran_institusional`: tambah `admin_notes`
+- `chatbot_messages`: tambah `user_feedback` (UP/DOWN)
+- Modul **Infaq TETAP TIDAK ADA** tabel `infaq_orders` — dikonfirmasi ditunda Putaran 6
 
 ## DBML Final (Sumber Kebenaran — Import ke dbdiagram.io untuk Visual)
 
@@ -15,6 +21,7 @@ lalu per-modul di Micro-Sprint 2-4.
 // ============================================================
 // AMWAL V.1 — Database Markup Language (DBML)
 // HETI Project - ADB Loan ITS | Pilot: Masjid Manarul Ilmi ITS
+// Revisi Putaran 6
 // ============================================================
 
 Enum role_enum {
@@ -22,6 +29,11 @@ Enum role_enum {
   NADZIR
   ADMIN
   PETUGAS_LAPANGAN
+}
+
+Enum oauth_provider_enum {
+  GOOGLE
+  FACEBOOK
 }
 
 Enum nadzir_kategori_enum {
@@ -134,6 +146,11 @@ Enum chatbot_domain_enum {
   WAKAF_PRODUKTIF
 }
 
+Enum chatbot_feedback_enum {
+  UP
+  DOWN
+}
+
 Enum zakat_type_enum {
   FITRAH
   MAAL_PENGHASILAN
@@ -172,6 +189,11 @@ Enum zakat_distribution_status_enum {
   DIBATALKAN
 }
 
+Enum gold_price_source_enum {
+  LIVE_API
+  MANUAL_FALLBACK
+}
+
 Enum bentuk_wakaf_enum {
   UANG
   BARANG
@@ -183,15 +205,33 @@ Enum waqf_order_status_enum {
   DITOLAK
 }
 
+// ------------------------------------------------------------
+// AUTH & USER
+// ------------------------------------------------------------
+
 Table users {
   id uuid [pk, default: `gen_random_uuid()`]
   email varchar(255) [unique]
   phone varchar(20) [unique]
-  password_hash varchar(255) [not null]
+  password_hash varchar(255)
   name varchar(255) [not null]
   role role_enum [not null]
+  oauth_provider oauth_provider_enum
+  oauth_id varchar(255)
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null]
+
+  indexes {
+    (oauth_provider, oauth_id) [unique]
+  }
+
+  Note: '''
+  password_hash NULLABLE — akun OAuth (Google) tidak punya password.
+  Validasi aplikasi: JIKA password_hash NULL, endpoint login email/password
+  WAJIB menolak dengan pesan jelas ("Akun ini terdaftar via Google, silakan
+  login dengan Google") — JANGAN biarkan bcrypt.compare(password, null) 
+  dieksekusi (akan throw error, bukan graceful reject).
+  '''
 }
 
 Table refresh_tokens {
@@ -204,6 +244,10 @@ Table refresh_tokens {
 }
 
 Ref: refresh_tokens.user_id > users.id
+
+// ------------------------------------------------------------
+// NADZIR & VERIFIKASI
+// ------------------------------------------------------------
 
 Table nadzir_profiles {
   id uuid [pk, default: `gen_random_uuid()`]
@@ -236,6 +280,10 @@ Table nadzir_documents {
 }
 
 Ref: nadzir_documents.nadzir_profile_id > nadzir_profiles.id
+
+// ------------------------------------------------------------
+// WAKAF
+// ------------------------------------------------------------
 
 Table waqf_programs {
   id uuid [pk, default: `gen_random_uuid()`]
@@ -286,7 +334,10 @@ Table fund_withdrawal_requests {
   requested_by_id uuid [not null]
   approved_by_id uuid
   status withdrawal_status_enum [not null, default: 'PENDING']
+  admin_notes text
   created_at timestamp [not null, default: `now()`]
+
+  Note: 'admin_notes: alasan approve/reject, wajib diisi Admin saat status=REJECTED (validasi di application layer)'
 }
 
 Ref: fund_withdrawal_requests.waqf_program_id > waqf_programs.id
@@ -302,6 +353,7 @@ Table waqf_orders {
   no_telepon varchar(20)
   alamat text
   atas_nama_wakif text
+  is_anonymous boolean [not null, default: false]
   bentuk_wakaf bentuk_wakaf_enum [not null]
   nominal decimal(18,2)
   nama_barang varchar(255)
@@ -314,6 +366,12 @@ Table waqf_orders {
   nomor_ikrar_wakaf varchar(100)
   dokumen_aiw_url varchar(500)
   created_at timestamp [not null, default: `now()`]
+
+  Note: '''
+  is_anonymous=true: UI publik WAJIB sembunyikan nama_wakif (tampilkan
+  "Hamba Allah"), tapi DATA nama_wakif TETAP tersimpan di DB untuk audit
+  internal/legal — TIDAK PERNAH dikosongkan.
+  '''
 }
 
 Ref: waqf_orders.waqf_program_id > waqf_programs.id
@@ -337,6 +395,10 @@ Table mauquf_alaih_distributions {
 Ref: mauquf_alaih_distributions.waqf_program_id > waqf_programs.id
 Ref: mauquf_alaih_distributions.withdrawal_request_id > fund_withdrawal_requests.id
 
+// ------------------------------------------------------------
+// TRANSAKSI GENERIK (ANCHOR PAYMENT GATEWAY)
+// ------------------------------------------------------------
+
 Table transactions {
   id uuid [pk, default: `gen_random_uuid()`]
   wakif_id uuid [not null]
@@ -350,6 +412,10 @@ Table transactions {
 }
 
 Ref: transactions.wakif_id > users.id
+
+// ------------------------------------------------------------
+// ZAKAT
+// ------------------------------------------------------------
 
 Table zakat_calculations {
   id uuid [pk, default: `gen_random_uuid()`]
@@ -374,6 +440,7 @@ Table zakat_orders {
   nama_dizakatkan varchar(255)
   no_telepon varchar(20)
   alamat text
+  is_anonymous boolean [not null, default: false]
   jenis_zakat zakat_type_enum [not null]
   metode_pembayaran zakat_payment_method_enum [not null]
   nominal decimal(18,2)
@@ -416,9 +483,48 @@ Table zakat_distributions {
 Ref: zakat_distributions.mustahiq_id > mustahiq_profiles.id
 Ref: zakat_distributions.distributed_by_amil_id > users.id
 
+Table zakat_fitrah_config {
+  id uuid [pk, default: `gen_random_uuid()`]
+  jenis_beras varchar(50) [not null]
+  konversi_harga_per_jiwa decimal(18,2) [not null]
+  referensi_sk varchar(255)
+  tahun_berlaku varchar(10)
+  is_active boolean [not null, default: true]
+  updated_at timestamp [not null]
+
+  Note: 'Dikelola Admin, dipakai kalkulator zakat FITRAH sebagai sumber harga dinamis (bukan hardcode)'
+}
+
+Table zakat_gold_price_history {
+  id uuid [pk, default: `gen_random_uuid()`]
+  price_per_gram decimal(18,2) [not null]
+  source gold_price_source_enum [not null]
+  fetched_at timestamp [not null, default: `now()`]
+
+  Note: '''
+  Log setiap fetch harga emas (live API sukses ATAU input manual Admin
+  sebagai fallback). Row TERBARU (ORDER BY fetched_at DESC LIMIT 1) dipakai
+  sebagai harga acuan aktif. Cache disarankan 6 jam — endpoint live tidak
+  perlu fetch ulang API eksternal tiap request, cukup baca row ini jika
+  fetched_at < 6 jam lalu.
+  '''
+}
+
+// ------------------------------------------------------------
+// QURBAN — KOMPLEKSITAS OPERASIONAL PENUH
+// ------------------------------------------------------------
+
 Table hewan_batches {
   id uuid [pk, default: `gen_random_uuid()`]
   jenis_hewan hewan_type_enum [not null]
+  ras varchar(100)
+  kelas_grade varchar(50)
+  estimasi_berat_kg decimal(6,2)
+  jenis_kelamin varchar(20)
+  wilayah_penyaluran varchar(255)
+  target_penerima_manfaat int
+  tanggal_penyembelihan_estimasi date
+  galeri_foto_urls json
   total_slot int [not null, default: 1]
   harga_per_slot decimal(18,2) [not null]
   status hewan_batch_status_enum [not null, default: 'TERSEDIA']
@@ -453,9 +559,17 @@ Table qurban_orders {
   status_pembayaran qurban_payment_status_enum [not null, default: 'BELUM_BAYAR']
   total_harga decimal(18,2) [not null]
   sisa_tagihan decimal(18,2) [not null, default: 0]
+  akad_wakalah_text text
+  akad_wakalah_accepted_at timestamp
   entered_by_petugas_id uuid
   transaction_id uuid
   created_at timestamp [not null, default: `now()`]
+
+  Note: '''
+  akad_wakalah_accepted_at WAJIB terisi sebelum status_pembayaran boleh
+  berubah dari BELUM_BAYAR — representasikan persetujuan wakalah 
+  penyembelihan ke panitia. Validasi di application layer (Task 2.6).
+  '''
 }
 
 Ref: qurban_orders.wakif_id > users.id
@@ -466,7 +580,11 @@ Table qurban_distribution_reports {
   id uuid [pk, default: `gen_random_uuid()`]
   qurban_order_id uuid [not null]
   bukti_foto_url varchar(500)
+  video_url varchar(500)
   lokasi_penyaluran varchar(255)
+  lokasi_lat decimal(9,6)
+  lokasi_lng decimal(9,6)
+  jumlah_penerima int
   created_at timestamp [not null, default: `now()`]
 }
 
@@ -488,6 +606,7 @@ Table setoran_petugas_lapangan {
   nomor_urut int
   tanggal date [not null]
   jumlah_setor decimal(18,2) [not null]
+  bukti_setor_url varchar(500)
   keterangan text
   verified_by_admin_id uuid
   verified_at timestamp
@@ -521,6 +640,7 @@ Table permohonan_penyaluran_institusional {
   nomor_rekening_pemohon varchar(50)
   nama_bank varchar(100)
   status permohonan_status_enum [not null, default: 'DIAJUKAN']
+  admin_notes text
   approved_by_admin_id uuid
   created_at timestamp [not null, default: `now()`]
 }
@@ -540,6 +660,10 @@ Table qurban_distribution_allocations {
 Ref: qurban_distribution_allocations.permohonan_id > permohonan_penyaluran_institusional.id
 Ref: qurban_distribution_allocations.qurban_order_id > qurban_orders.id
 
+// ------------------------------------------------------------
+// SERTIFIKAT
+// ------------------------------------------------------------
+
 Table certificates {
   id uuid [pk, default: `gen_random_uuid()`]
   transaction_id uuid [not null]
@@ -551,6 +675,10 @@ Table certificates {
 }
 
 Ref: certificates.transaction_id > transactions.id
+
+// ------------------------------------------------------------
+// EDUKASI, GAMIFIKASI, CHATBOT (schema siap, fitur ditunda)
+// ------------------------------------------------------------
 
 Table education_contents {
   id uuid [pk, default: `gen_random_uuid()`]
@@ -616,10 +744,17 @@ Table chatbot_messages {
   role chatbot_role_enum [not null]
   content text [not null]
   cited_sources json
+  user_feedback chatbot_feedback_enum
   created_at timestamp [not null, default: `now()`]
+
+  Note: 'user_feedback nullable — user tidak wajib memberi feedback. Dipakai mengukur kualitas RAG/LLM.'
 }
 
 Ref: chatbot_messages.conversation_id > chatbot_conversations.id
+
+// ------------------------------------------------------------
+// NOTIFIKASI
+// ------------------------------------------------------------
 
 Table notifications {
   id uuid [pk, default: `gen_random_uuid()`]
@@ -635,37 +770,35 @@ Table notifications {
 Ref: notifications.user_id > users.id
 ```
 
-## Instruksi Konversi DBML → `schema.prisma`
+## Instruksi Konversi DBML → `schema.prisma` (Tetap Berlaku)
 
-1. **Naming**: tabel `snake_case` di atas → model Prisma `PascalCase`,
-   kolom `snake_case` → field `camelCase`, gunakan `@map`/`@@map` untuk
-   menjaga nama kolom DB tetap `snake_case` (konsisten dgn konvensi baru,
-   meski model `User` existing saat ini masih `camelCase` native tanpa
-   `@map` — akan diselaraskan saat migrasi Sprint 1).
-2. **Enum**: setiap `Enum` DBML → `enum` Prisma persis sama.
-3. **`decimal(p,s)`** → `Decimal @db.Decimal(p,s)`.
-4. **`json`** → `Json`.
-5. **`uuid` dengan `default gen_random_uuid()`** → `String @id @default(uuid())`
-   (konsisten dengan pola existing `User.id`).
-6. **Relasi `-`** (one-to-one, mis. `waqf_principal_ledgers.waqf_program_id - waqf_programs.id`)
-   → field unik + `@relation`.
-7. **Relasi `>`** (many-to-one) → field FK + `@relation` standar.
-8. **`indexes { (a,b) [unique] }`** → `@@unique([a, b])`.
+Ikuti pola konversi yang sudah ditetapkan sebelumnya (naming, decimal, json, uuid, relasi).
+**Tambahan khusus Putaran 6:**
 
-**Urutan migrasi disarankan** (jangan migrasi semua sekaligus):
-1. Sprint 1: `users` (+role), `refresh_tokens`
-2. Sprint 2: `nadzir_profiles`, `nadzir_documents`, `waqf_programs`,
-   `hewan_batches`, `qurban_animal_slots`
-3. Sprint 3: `waqf_orders`, `zakat_orders`, `zakat_calculations`,
-   `qurban_orders`, `transactions`, `petugas_lapangan_profiles`,
-   `setoran_petugas_lapangan`, `setoran_qurban_order_links`
-4. Sprint 4: sisanya (`waqf_principal_ledgers`, `fund_withdrawal_requests`,
-   `mauquf_alaih_distributions`, `mustahiq_profiles`,
-   `zakat_distributions`, `permohonan_penyaluran_institusional`,
-   `qurban_distribution_allocations`, `qurban_distribution_reports`,
-   `certificates`, `notifications`)
+```prisma
+model User {
+  id           String    @id @default(uuid())
+  email        String?   @unique
+  phone        String?   @unique
+  passwordHash String?   // NULLABLE sekarang — akun OAuth tidak punya password
+  name         String
+  role         Role
+  oauthProvider OAuthProvider?
+  oauthId      String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-`education_contents`, `quizzes`, `quiz_questions`, `quiz_attempts`,
-`gamification_point_ledgers`, `chatbot_conversations`, `chatbot_messages`
-BOLEH dimigrasi (schema-nya siap), TAPI fitur/endpoint-nya TIDAK dikerjakan
-di staging 14 hari ini (lihat `PRD.md` & `AI_RULES.md`).
+  @@unique([oauthProvider, oauthId])
+}
+
+enum OAuthProvider {
+  GOOGLE
+  FACEBOOK
+}
+```
+
+**Peringatan migrasi**: mengubah `passwordHash` dari `required` ke `optional` adalah
+perubahan **non-destructive** (kolom existing tetap terisi untuk user lama),
+tapi **WAJIB update logic** di `login/route.ts` — cek `user.passwordHash === null`
+SEBELUM memanggil `bcrypt.compare()`, karena `bcrypt.compare(x, null)` akan
+throw error, bukan return `false` secara graceful.
