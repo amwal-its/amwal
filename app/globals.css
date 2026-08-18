@@ -1,55 +1,243 @@
+/* app/globals.css */
+/* HETI Amwal · Design System — Tailwind v4 @theme tokens
+ * Sumber: Figma "HETI Amwal / Tokens" (71 variables, 9 Text Styles)
+ * ⚠️ Nilai HEX warna adalah ESTIMASI VISUAL dari swatch — verifikasi
+ * nilai eksak ke Figma sebelum dipakai di build produksi/staging final.
+ * Nilai tipografi, spacing, radius, dan grid SUDAH EKSAK dari dokumentasi.
+ */
+
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #11141F;
-  /* Updated to use GSM neutral-dark as default foreground */
+@theme {
+  /* ============================================================
+     FONT
+     ============================================================ */
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+
+  /* ============================================================
+     COLOR — PRIMITIVE (contoh skala, lengkapi sesuai kebutuhan)
+     ============================================================ */
+  --color-green-50: #E8F5E9;
+  --color-green-500: #22A559; /* ⚠️ estimasi — verifikasi ke Figma */
+  --color-green-700: #14532D; /* ⚠️ estimasi */
+  --color-amber-50: #FFF8E1;  /* = color/amber/50 di Figma */
+  --color-amber-500: #F5B301; /* ⚠️ estimasi */
+  --color-red-500: #DC2626;   /* ⚠️ estimasi */
+  --color-blue-100: #E3F2FD;  /* ⚠️ estimasi */
+
+  /* ============================================================
+     COLOR — SEMANTIC: Background & Surface
+     ============================================================ */
+  --color-bg-default: #FFFFFF;
+  --color-bg-surface: #F5F5F5;      /* ⚠️ estimasi */
+  --color-bg-surface-alt: #EEF1F4;  /* ⚠️ estimasi */
+  --color-bg-cream: #FFF8E7;        /* ⚠️ estimasi */
+  --color-bg-green-tint: #E8F5E9;   /* ⚠️ estimasi */
+  --color-bg-red-tint: #FDECEA;     /* ⚠️ estimasi */
+  --color-bg-blue-tint: #E3F2FD;    /* ⚠️ estimasi */
+
+  /* ============================================================
+     COLOR — SEMANTIC: Brand & Accent
+     ============================================================ */
+  --color-brand-primary: #22A559;       /* ⚠️ estimasi */
+  --color-brand-primary-hover: #14532D; /* ⚠️ estimasi */
+  --color-brand-primary-soft: #4CAF50;  /* ⚠️ estimasi */
+  --color-accent-amber: #F5B301;        /* ⚠️ estimasi */
+  --color-accent-red: #E53935;          /* ⚠️ estimasi */
+
+  /* ============================================================
+     COLOR — SEMANTIC: Text
+     ============================================================ */
+  --color-text-primary: #0F172A;   /* ⚠️ estimasi — dark navy */
+  --color-text-secondary: #64748B; /* ⚠️ estimasi — slate gray */
+  --color-text-on-brand: #FFFFFF;
+
+  /* ============================================================
+     COLOR — SEMANTIC: Border
+     ============================================================ */
+  --color-border-default: #E0E0E0; /* ⚠️ estimasi */
+  --color-border-subtle: #EEEEEE;  /* ⚠️ estimasi */
+
+  /* ============================================================
+     COLOR — SEMANTIC: Icon
+     ============================================================ */
+  --color-icon-brand: #22A559; /* ⚠️ estimasi, = brand/primary */
+  --color-icon-amber: #F5B301; /* ⚠️ estimasi */
+  --color-icon-red: #E53935;   /* ⚠️ estimasi */
+  --color-icon-info: #60A5FA;  /* ⚠️ estimasi */
+
+  /* ============================================================
+     COLOR — SEMANTIC: Status
+     ============================================================ */
+  --color-status-error: #DC2626;   /* ⚠️ estimasi */
+  --color-status-warning: #D97706; /* ⚠️ estimasi */
+  --color-status-info: #2563EB;    /* ⚠️ estimasi */
+  --color-status-success: #34D399; /* ⚠️ estimasi */
+
+  /* ============================================================
+     TYPOGRAPHY — Font Size (nilai EKSAK dari Design Guideline)
+     ============================================================ */
+  --text-display-xl: 32px;
+  --text-display-xl--line-height: 38px;
+  --text-display-xl--font-weight: 800; /* ExtraBold */
+
+  --text-heading-l: 24px;
+  --text-heading-l--line-height: 30px;
+  --text-heading-l--font-weight: 700; /* Bold */
+
+  --text-heading-m: 20px;
+  --text-heading-m--line-height: 26px;
+  --text-heading-m--font-weight: 600; /* SemiBold */
+
+  --text-title-s: 16px;
+  --text-title-s--line-height: 22px;
+  --text-title-s--font-weight: 600; /* SemiBold */
+
+  --text-body-base: 14px;
+  --text-body-base--line-height: 20px;
+  --text-body-base--font-weight: 400; /* Regular */
+
+  --text-body-medium: 14px;
+  --text-body-medium--line-height: 20px;
+  --text-body-medium--font-weight: 500; /* Medium */
+
+  --text-label-button: 14px;
+  --text-label-button--line-height: 18px;
+  --text-label-button--font-weight: 600; /* SemiBold */
+
+  --text-label-caption: 12px;
+  --text-label-caption--line-height: 16px;
+  --text-label-caption--font-weight: 500; /* Medium */
+
+  --text-caption-mini: 10px;
+  --text-caption-mini--line-height: 14px;
+  --text-caption-mini--font-weight: 400; /* Regular */
+
+  /* ============================================================
+     SPACING (nilai EKSAK)
+     ============================================================ */
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-48: 48px;
+
+  /* ============================================================
+     RADIUS (nilai EKSAK)
+     ============================================================ */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* ============================================================
+     BREAKPOINT (nilai EKSAK — men-generate variant tablet:/desktop:/wide:
+     otomatis di Tailwind v4 karena namanya cocok dengan --breakpoint-*)
+     ============================================================ */
+  --breakpoint-tablet: 600px;
+  --breakpoint-desktop: 1024px;
+  --breakpoint-wide: 1440px;
+
+  /* ============================================================
+     LAYOUT TOKEN TAMBAHAN (dipakai manual via arbitrary value / CSS var)
+     ============================================================ */
+  --layout-mobile-columns: 4;
+  --layout-mobile-margin: 16px;
+  --layout-mobile-gutter: 16px;
+  --layout-tablet-columns: 8;
+  --layout-tablet-margin: 24px;
+  --layout-tablet-gutter: 24px;
+  --layout-desktop-columns: 12;
+  --layout-desktop-margin: 24px;
+  --layout-desktop-gutter: 24px;
+  --layout-desktop-container-max: 1200px;
+  --layout-tap-target-min: 44px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* ============================================================
+   TEXT STYLE UTILITY CLASSES
+   Tailwind v4 @theme hanya mendefinisikan token skala individual —
+   kombinasi size+weight+line-height (Text Style Figma) didefinisikan
+   sebagai utility class eksplisit di sini supaya dipakai persis 1:1
+   dengan nama Text Style di Figma. JANGAN susun ulang manual
+   (text-[32px] font-extrabold dst.) di komponen — pakai class ini.
+   ============================================================ */
 
-  /* Setup Typography from GSM */
-  --font-sans: var(--font-jakarta), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-yeseva), ui-serif, Georgia, Cambria, serif;
-  --font-jakarta: var(--font-jakarta);
-  --font-yeseva: var(--font-yeseva);
-  --font-mono: var(--font-geist-mono);
+@layer utilities {
+  .text-display-xl {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-display-xl);
+    line-height: var(--text-display-xl--line-height);
+    font-weight: var(--text-display-xl--font-weight);
+  }
+  .text-heading-l {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-heading-l);
+    line-height: var(--text-heading-l--line-height);
+    font-weight: var(--text-heading-l--font-weight);
+  }
+  .text-heading-m {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-heading-m);
+    line-height: var(--text-heading-m--line-height);
+    font-weight: var(--text-heading-m--font-weight);
+  }
+  .text-title-s {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-title-s);
+    line-height: var(--text-title-s--line-height);
+    font-weight: var(--text-title-s--font-weight);
+  }
+  .text-body-base {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-body-base);
+    line-height: var(--text-body-base--line-height);
+    font-weight: var(--text-body-base--font-weight);
+  }
+  .text-body-medium {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-body-medium);
+    line-height: var(--text-body-medium--line-height);
+    font-weight: var(--text-body-medium--font-weight);
+  }
+  .text-label-button {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-label-button);
+    line-height: var(--text-label-button--line-height);
+    font-weight: var(--text-label-button--font-weight);
+  }
+  .text-label-caption {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-label-caption);
+    line-height: var(--text-label-caption--line-height);
+    font-weight: var(--text-label-caption--font-weight);
+  }
+  .text-caption-mini {
+    font-family: var(--font-jakarta);
+    font-size: var(--text-caption-mini);
+    line-height: var(--text-caption-mini--line-height);
+    font-weight: var(--text-caption-mini--font-weight);
+  }
 
-  /* Setup Custom Border Radius for Amwal */
-  --radius-amwal-sm: 5px;
-  --radius-amwal-md: 10px;
-  --radius-amwal-lg: 12px;
-
-  /* GSM Design System - Main Colors */
-  --color-amwal-main-1: #F1EAD8;
-  --color-amwal-main-2: #D5C7AD;
-
-  /* GSM Design System - Neutral Colors */
-  --color-amwal-neutral-dark: #11141F;
-  --color-amwal-neutral-light: #F5F9FF;
-
-  /* GSM Design System - Secondary Colors */
-  --color-amwal-secondary-teal: #346052;
-  --color-amwal-secondary-green: #8DA750;
-
-  /* GSM Design System - Tertiary Colors */
-  --color-amwal-tertiary-yellow-light: #F9F295;
-  --color-amwal-tertiary-orange: #EOAA3E;
-  --color-amwal-tertiary-yellow-pale: #FAF395;
-  --color-amwal-tertiary-gold: #B88A44;
-
-  /* GSM Design System - Status Colors */
-  --color-amwal-status-danger: #EC0854;
-  --color-amwal-status-success: #8DA750;
-  --color-amwal-status-warning: #FFDF0D;
-  --color-amwal-status-info: #346052;
+  /* Elevation / Shadow — nilai blur/spread TIDAK eksak dari gambar
+     (hanya swatch visual), ini estimasi standar Material-like shadow.
+     ⚠️ Verifikasi ke Figma jika butuh presisi pixel-perfect. */
+  .shadow-card {
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 4px 6px rgba(15, 23, 42, 0.10), 0 2px 4px rgba(15, 23, 42, 0.06);
+  }
+  .shadow-floating {
+    box-shadow: 0 10px 15px rgba(15, 23, 42, 0.12), 0 4px 6px rgba(15, 23, 42, 0.08);
+  }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-jakarta), var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
+  font-family: var(--font-jakarta);
+  color: var(--color-text-primary);
+  background: var(--color-bg-default);
 }
