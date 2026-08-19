@@ -34,6 +34,24 @@ const PROTECTED_ROUTES: RouteRule[] = [
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Endpoint GET /api/wakaf/programs dan /api/wakaf/programs/[id] bersifat publik
+  if (req.method === 'GET' && pathname.startsWith('/api/wakaf/programs')) {
+    const token = req.cookies.get('amwal_token')?.value;
+    if (token) {
+      try {
+        const { payload } = await jwtVerify(token, JWT_SECRET);
+        const role = payload.role as string | undefined;
+        const requestHeaders = new Headers(req.headers);
+        requestHeaders.set('x-user-id', String(payload.userId ?? ''));
+        if (role) requestHeaders.set('x-user-role', role);
+        return NextResponse.next({ request: { headers: requestHeaders } });
+      } catch {
+        // Token invalid/expired, tapi endpoint publik — izinkan lewat tanpa header user
+      }
+    }
+    return NextResponse.next();
+  }
+
   const matched = PROTECTED_ROUTES.find((rule) => pathname.startsWith(rule.prefix));
   if (!matched) {
     return NextResponse.next();

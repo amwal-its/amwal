@@ -49,6 +49,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Guard: Akun OAuth Google tidak memiliki passwordHash
+    if (!user.passwordHash) {
+      return NextResponse.json(
+        { error: 'Akun ini terdaftar via Google. Silakan login menggunakan Google OAuth.' },
+        { status: 401 }
+      );
+    }
+
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
