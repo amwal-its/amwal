@@ -360,6 +360,7 @@ model WaqfOrder {
   noTelepon           String?         @map("no_telepon")
   alamat              String?         @map("alamat")
   atasNamaWakif       String?         @map("atas_nama_wakif")
+  isAnonymous         Boolean         @default(false) @map("is_anonymous")
   bentukWakaf         BentukWakaf     @map("bentuk_wakaf")
   nominal             Decimal?        @map("nominal") @db.Decimal(18, 2)
   namaBarang          String?         @map("nama_barang")
