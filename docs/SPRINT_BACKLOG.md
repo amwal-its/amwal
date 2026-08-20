@@ -1,8 +1,10 @@
-# Sprint Backlog — Amwal V.1 (Revisi Putaran 6)
+# Sprint Backlog — Amwal V.1 (Revisi Putaran 6 — Single Source of Truth)
 
-**Tim:** Bara (Wakaf + OAuth), Awan (Zakat + Gold Price API), Naufal (Qurban + Auth Foundation)
-**Target:** Staging Deployment dalam 14 hari (7 Micro-Sprint × 2 hari)
-**Status Prasyarat:** Sprint 1 (Auth/RBAC foundation) CLOSED
+**Tim:** Bara (Wakaf + OAuth), Awan (Zakat + Gold Price API), Naufal (Qurban + Auth Foundation)  
+**Target:** Staging Deployment dalam 14 hari (7 Micro-Sprint × 2 hari)  
+**Status Prasyarat:** Sprint 1 (Auth/RBAC foundation) CLOSED  
+
+---
 
 ## ⚠️ Perubahan Scope Putaran 6 — Baca Dulu
 
@@ -12,400 +14,691 @@
 
 ---
 
+# MICRO-SPRINT 1 (Hari 1-2) — Fondasi (Auth / RBAC Baseline & Schema Sync)
+
+> **Status:** CLOSED (Baseline Fondasi Terpasang)
+
+### Task 1.1 — Fix Bug Kritis Auth/RBAC Foundation
+**Scope Utama:** [Backend Auth & Middleware]  
+**Developer:** Bara & Naufal  
+**Target Database:** `User`, `RefreshToken`  
+**RBAC:** 4 Role Final (`WAKIF`, `NADZIR`, `PETUGAS_LAPANGAN`, `ADMIN`)  
+**Detail Logic:**  
+- Implementasi sistem token JWT internal (`lib/tokens.ts`) dengan short-lived Access Token (15m/7d) dan Refresh Token cookie `HttpOnly`.
+- Refaktor proxy middleware (`proxy.ts`) untuk memeriksa role-based access control pada protected routes (`/dashboard/*`, `/api/admin/*`, `/api/mustahik/*`, `/api/muzaki/*`, `/api/donation/*`).
+- Penyesuaian `role` enum di Prisma schema dengan default `WAKIF`.  
+**DoD:** RBAC 4 role teruji, access token + refresh token cookie `HttpOnly` berfungsi tanpa leakage di client side.
+
+---
+
+### Task 1.2 — Extend Auth: RefreshToken Table & Token Rotation Flow
+**Scope Utama:** [Backend Auth Engine]  
+**Developer:** Naufal  
+**Endpoint:** `POST /api/auth/refresh`, `POST /api/auth/logout`  
+**Target Database:** `RefreshToken` (relasi `User`, `tokenHash`, `expiresAt`, `isRevoked`)  
+**RBAC:** Publik (refresh) / Authenticated (logout)  
+**Detail Logic:**  
+- Pada `POST /api/auth/refresh`: verifikasi refresh token dari cookie `amwal_refresh`, periksa apakah `isRevoked === false` dan belum expired. Terbitkan access token & refresh token baru, tandai token lama `isRevoked: true` (Refresh Token Rotation).
+- Pada `POST /api/auth/logout`: tandai refresh token di DB sebagai `isRevoked: true`, dan bersihkan cookie `amwal_token` serta `amwal_refresh` (set `Max-Age=0`).  
+**DoD:** Token rotation teruji; refresh token lama yang sudah di-rotate/revoked ditolak otomatis.
+
+---
+
+### Task 1.3 — Migrasi Full DBML → `schema.prisma` & Seed Dasar
+**Scope Utama:** [Database Schema & Seed]  
+**Developer:** Bara  
+**Target Database:** 33 Tabel & 27 Enums  
+**Detail Logic:**  
+- Melakukan sinkronisasi schema Prisma ke PostgreSQL Supabase.
+- Konfigurasi adapter `@prisma/adapter-pg` untuk connection pooling.
+- Menyiapkan script seed (`prisma/seed.ts`) untuk mengisi data awal: `ZakatFitrahConfig`, 4 `FundPool` (`ZAKAT_MAAL`, `ZAKAT_FITRAH`, `INFAK`, `SEDEKAH`), dan `ZakatGoldPriceHistory` baseline.  
+**DoD:** `npx prisma db seed` berjalan lancar; schema ter-sync 100% tanpa migration drift.
+
+---
+
+### Task 1.4 — Supabase Storage Setup & Dokumentasi Baseline
+**Scope Utama:** [Infrastructure & Docs]  
+**Developer:** Awan  
+**Target Storage:** Supabase Storage Buckets (`nadzir-docs`, `proof-photos`, `distribution-videos`)  
+**Detail Logic:**  
+- Membuat storage bucket di Supabase dengan RLS policies yang sesuai untuk dokumen privat vs media publik.
+- Menyusun draft dokumentasi arsitektur (`DOMAIN_GLOSSARY.md`, `DECISION_LOG.md`).  
+**DoD:** Upload file dari backend API ke Supabase Storage terverifikasi sukses.
+
+---
+
 # MICRO-SPRINT 2 (Hari 3-4) — Skeleton API Digital
 
 ## 🟢 Bara — Modul Wakaf + OAuth Google
 
 ### Task 2.1 — CRUD `WaqfProgram`
-*(Tidak berubah dari versi sebelumnya)*
-
-**Scope Utama:** [Backend API Handler]
-**Endpoint:** `POST /api/wakaf/programs`, `GET /api/wakaf/programs`, `GET /api/wakaf/programs/[id]`, `PATCH /api/wakaf/programs/[id]`
-**Target Database:** `WaqfProgram`, relasi `NadzirProfile`
-**RBAC:** `POST`/`PATCH` → `NADZIR` (verified); `GET` → publik
-**Alur Logic:** Create program + `WaqfPrincipalLedger` dalam satu `$transaction`; `PATCH jenisWakaf` ditolak jika `status !== 'DRAFT'`
-**DoD:** tsc bersih; ledger otomatis tercipta; lock `jenisWakaf` teruji; filter `kategori`/`search` bekerja
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/wakaf/programs`, `GET /api/wakaf/programs`, `GET /api/wakaf/programs/[id]`, `PATCH /api/wakaf/programs/[id]`  
+**Target Database:** `WaqfProgram`, `NadzirProfile`, `WaqfPrincipalLedger`  
+**RBAC:** `POST`/`PATCH` → `NADZIR` (verified); `GET` → publik  
+**Detail Alur Logic:**  
+- Create program + `WaqfPrincipalLedger` (balance = 0, totalPokok = 0, totalHasil = 0) dalam satu `$transaction`.
+- `PATCH jenisWakaf` ditolak jika status program `!== 'DRAFT'`.
+- Supports filter `kategori`, `kategoriWakafEnum`, dan query `search` pada `GET /api/wakaf/programs`.  
+**Acceptance Criteria (DoD):**  
+- [ ] `tsc` bersih tanpa error.
+- [ ] `WaqfPrincipalLedger` otomatis tercipta bersamaan dengan pembuatan `WaqfProgram`.
+- [ ] Penguncian `jenisWakaf` saat status program terpublikasi/LIVE teruji.
+- [ ] Filter `kategori` dan `search` berfungsi dengan benar.
 
 ---
 
 ### Task 2.2 — Submit `NadzirProfile` + `NadzirDocument` + OCR PoC
-*(Tidak berubah — lihat detail alur OCR Google Vision + fallback mock parser dari revisi sebelumnya)*
-
-**Scope Utama:** [Backend API Handler] + [Integrasi Eksternal: OCR]
-**Endpoint:** `POST /api/nadzir/profile`, `POST /api/nadzir/documents`
-**Target Database:** `NadzirProfile`, `NadzirDocument`
-**RBAC:** role `NADZIR`
-**DoD:** file ter-upload Supabase Storage; NIK terenkripsi AES-256; OCR gagal tidak menyebabkan 500
+**Scope Utama:** [Backend API Handler] + [Integrasi Eksternal: OCR]  
+**Endpoint:** `POST /api/nadzir/profile`, `POST /api/nadzir/documents`  
+**Target Database:** `NadzirProfile`, `NadzirDocument`  
+**RBAC:** role `NADZIR`  
+**Detail Alur Logic:**  
+- Submit data profil Nadzir (kategori individu/organisasi, alamat, rekening bank).
+- Upload dokumen legalitas (KTP/Sertifikat BWI) ke Supabase Storage bucket `nadzir-docs`.
+- Integrasi OCR Google Vision (dengan fallback mock parser jika OCR timeout/gagal) untuk mengekstrak NIK/Nomor BWI.
+- NIK wajib dienkripsi menggunakan AES-256 sebelum disimpan ke DB.  
+**Acceptance Criteria (DoD):**  
+- [ ] File berhasil ter-upload ke Supabase Storage.
+- [ ] NIK tersimpan dalam kondisi terenkripsi AES-256.
+- [ ] Kegagalan service OCR tidak menyebabkan HTTP 500 (graceful fallback).
 
 ---
 
 ### Task 2.7 — OAuth Google Login (BARU, Putaran 6)
-
-**Scope Utama:** [Backend API Handler] + [Integrasi Eksternal: Google OAuth2]
-
-**Detail Endpoint & HTTP Method:**
+**Scope Utama:** [Backend API Handler] + [Integrasi Eksternal: Google OAuth2]  
+**Endpoint:**  
 - `GET /api/auth/google` — redirect ke Google OAuth consent screen
-- `GET /api/auth/google/callback` — terima authorization code dari Google
-
-**Target Database:** `User` (create jika belum ada, atau match existing by `email`)
-
-**RBAC & Middleware Guard:** Publik (ini adalah endpoint login)
-
-**Detail Alur Logic & Input/Output:**
-```
+- `GET /api/auth/google/callback` — terima authorization code dari Google  
+**Target Database:** `User`  
+**RBAC & Middleware Guard:** Publik  
+**Detail Alur Logic:**  
+```text
 GET /api/auth/google
 ```
-- Redirect ke `https://accounts.google.com/o/oauth2/v2/auth` dengan `client_id`, `redirect_uri`, `scope=openid email profile`, `response_type=code`
+- Redirect ke `https://accounts.google.com/o/oauth2/v2/auth` dengan `client_id`, `redirect_uri`, `scope=openid email profile`, `response_type=code`.
 
-```
+```text
 GET /api/auth/google/callback?code=...
 ```
-1. Tukar `code` dengan access token via `POST https://oauth2.googleapis.com/token`
-2. Ambil profil user (`email`, `name`, `sub` sebagai `oauthId`) dari Google
+1. Tukar `code` dengan access token via `POST https://oauth2.googleapis.com/token`.
+2. Ambil profil user (`email`, `name`, `sub` sebagai `oauthId`) dari Google API.
 3. **Cari user existing** by `email`:
-   - Jika ADA dan `passwordHash` terisi (akun email/password lama) → **JANGAN otomatis link** tanpa konfirmasi (risiko account takeover jika email dipalsukan) — untuk V.1, cukup balas error "Email sudah terdaftar, silakan login dengan password" (linking akun manual jadi item Post-Staging)
-   - Jika ADA dan `oauthProvider='GOOGLE'` cocok → lanjut ke langkah 4 (login)
-   - Jika TIDAK ADA → create `User` baru: `passwordHash: null`, `oauthProvider: 'GOOGLE'`, `oauthId: sub`, `role: 'WAKIF'` (default, sama seperti register biasa)
-4. Terbitkan Access Token + Refresh Token **PAKAI SISTEM KITA SENDIRI** (`lib/tokens.ts` — fungsi yang SAMA dipakai `login/route.ts`, JANGAN buat sistem token terpisah)
-5. Set cookie `amwal_token`+`amwal_refresh` (sama seperti login biasa)
-6. Redirect ke halaman utama (`/`) — BUKAN mengembalikan JSON (ini full-page redirect flow, beda dari API JSON biasa)
-
-**Acceptance Criteria (DoD):**
-- [ ] Login Google baru → `User` tercipta dengan `passwordHash: null`, cookie ter-set, RBAC berfungsi normal setelahnya (test akses endpoint terproteksi)
-- [ ] Login Google dengan email yang SUDAH ada sebagai akun password → ditolak dengan pesan jelas, TIDAK auto-link
-- [ ] Login Google kedua kalinya (user sama) → match by `oauthProvider`+`oauthId`, TIDAK membuat `User` duplikat
-- [ ] `login/route.ts` existing: tambahkan guard `if (!user.passwordHash) return 401 "Akun ini terdaftar via Google"` SEBELUM `bcrypt.compare()`
+   - Jika ADA dan `passwordHash` terisi (akun email/password lama) → **JANGAN otomatis link** tanpa konfirmasi (risiko account takeover). Balas error "Email sudah terdaftar, silakan login dengan password".
+   - Jika ADA dan `oauthProvider='GOOGLE'` cocok → lanjut ke langkah 4 (login).
+   - Jika TIDAK ADA → create `User` baru: `passwordHash: null`, `oauthProvider: 'GOOGLE'`, `oauthId: sub`, `role: 'WAKIF'` (default).
+4. Terbitkan Access Token + Refresh Token menggunakan sistem token internal (`lib/tokens.ts`).
+5. Set cookie `amwal_token` dan `amwal_refresh`.
+6. Redirect ke halaman utama (`/`).  
+**Acceptance Criteria (DoD):**  
+- [ ] Login Google baru → `User` tercipta dengan `passwordHash: null`, cookie ter-set, RBAC berfungsi normal.
+- [ ] Login Google dengan email yang SUDAH terdaftar via password → ditolak dengan pesan jelas, TIDAK auto-link.
+- [ ] Login Google kedua kali (user sama) → match by `oauthProvider`+`oauthId`, TIDAK membuat `User` duplikat.
+- [ ] `login/route.ts` existing: tambahkan guard `if (!user.passwordHash) return 401 "Akun ini terdaftar via Google"` SEBELUM `bcrypt.compare()`.
 
 ---
 
 ## 🟡 Awan — Modul Zakat + Harga Emas Live API
 
 ### Task 2.8 — `zakat_fitrah_config` CRUD (BARU, Putaran 6 — Prasyarat Task 2.3)
-
-**Scope Utama:** [Backend API Handler]
-
-**Detail Endpoint & HTTP Method:**
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:**  
 - `POST /api/admin/zakat-fitrah-config` — Admin tambah/update varian beras
-- `GET /api/zakat-fitrah-config?active=true` — publik, dipakai kalkulator
-
-**Target Database:** `ZakatFitrahConfig`
-
-**RBAC & Middleware Guard:** `POST` → `ADMIN`; `GET` → publik
-
-**Detail Alur Logic & Input/Output:**
+- `GET /api/zakat-fitrah-config?active=true` — publik, dipakai kalkulator  
+**Target Database:** `ZakatFitrahConfig`  
+**RBAC & Middleware Guard:** `POST` → `ADMIN`; `GET` → publik  
+**Detail Alur Logic:**  
+```json
+Body: { "jenisBeras": "string", "konversiHargaPerJiwa": 45000, "referensiSk": "SK BAZNAS 2026", "tahunBerlaku": "2026" }
 ```
-Body: { jenisBeras: string, konversiHargaPerJiwa: number, 
-        referensiSk?: string, tahunBerlaku?: string }
-```
-- `isActive: true` default. Kalau Admin buat config baru untuk `jenisBeras` yang sama, config lama sebaiknya di-set `isActive: false` (bukan dihapus, untuk histori)
-
-**Acceptance Criteria (DoD):**
-- [ ] Minimal 3 varian seed (Standar/Premium/Organik) dengan harga berbeda
-- [ ] Kalkulator FITRAH (Task 2.3) WAJIB ambil `konversiHargaPerJiwa` dari sini, BUKAN hardcode/input bebas dari client
+- `isActive: true` default. Jika Admin membuat config baru untuk `jenisBeras` yang sama, config lama di-set `isActive: false` (tetap tersimpan untuk histori).  
+**Acceptance Criteria (DoD):**  
+- [ ] Minimal 3 varian seed (Standar/Premium/Organik) dengan harga berbeda.
+- [ ] Kalkulator FITRAH (Task 2.3) WAJIB mengambil `konversiHargaPerJiwa` dari tabel ini, BUKAN hardcode/input bebas dari client.
 
 ---
 
 ### Task 2.3 — Kalkulator Zakat (Preview, Belum Bayar) — Update Putaran 6
-
-**Scope Utama:** [Backend API Handler]
-
-**Detail Endpoint & HTTP Method:** `POST /api/zakat/calculate`
-
-**Target Database:** `ZakatCalculation` (create), `ZakatFitrahConfig` (read, untuk FITRAH), `ZakatGoldPriceHistory` (read, untuk EMAS/MAAL_PENGHASILAN/PERUSAHAAN)
-
-**RBAC & Middleware Guard:** Authenticated, role apapun
-
-**Detail Alur Logic & Input/Output:** *(formula per jenis tetap sama seperti versi sebelumnya)*, TAPI:
-- `goldPricePerGram` **TIDAK LAGI** input manual dari client untuk kalkulasi resmi — ambil dari `zakat_gold_price_history` (row terbaru). Client BOLEH kirim untuk simulasi/preview cepat, tapi hasil FINAL yang disimpan ke `ZakatCalculation.nisabDigunakan` harus pakai harga acuan sistem
-- `hargaBerasPerKg` untuk FITRAH: ambil dari `ZakatFitrahConfig` sesuai `jenisBeras` yang dipilih user, bukan input bebas
-
-**Acceptance Criteria (DoD):**
-- [ ] Semua kriteria versi sebelumnya (unit test per jenis, `PERUSAHAAN` tidak pakai `revenue`)
-- [ ] Konsistensi: 2 user hitung `EMAS` di waktu berdekatan → `nisabDigunakan` SAMA (bukti keduanya ambil dari sumber harga yang sama, bukan input manual masing-masing)
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/zakat/calculate`  
+**Target Database:** `ZakatCalculation` (create), `ZakatFitrahConfig` (read, untuk FITRAH), `ZakatGoldPriceHistory` (read, untuk EMAS/MAAL_PENGHASILAN/PERUSAHAAN)  
+**RBAC & Middleware Guard:** Authenticated (semua role)  
+**Detail Alur Logic:**  
+- Mendukung jenis zakat: FITRAH, MAAL_TABUNGAN, MAAL_EMAS, MAAL_PENGHASILAN, MAAL_PERUSAHAAN.
+- Formula PERUSAHAAN: `(aktivaLancar - hutangJangkaPendek) * 2.5%` (TANPA variabel `revenue`).
+- `goldPricePerGram` **TIDAK LAGI** di-input manual dari client untuk kalkulasi resmi — wajib mengambil data terbaru dari `ZakatGoldPriceHistory`.
+- `hargaBerasPerKg` untuk FITRAH wajib mengambil dari `ZakatFitrahConfig` sesuai `jenisBeras` pilihan user.  
+**Acceptance Criteria (DoD):**  
+- [ ] Unit test per jenis zakat lolos.
+- [ ] `nisabDigunakan` tersimpan konsisten sesuai acuan sistem.
 
 ---
 
 ### Task 2.9 — Harga Emas Live API + Fallback (BARU, Putaran 6)
-
-**Scope Utama:** [Backend API Handler] + [Integrasi Eksternal: Gold Price API]
-
-**Detail Endpoint & HTTP Method:**
+**Scope Utama:** [Backend API Handler] + [Integrasi Eksternal: Gold Price API]  
+**Endpoint:**  
 - `GET /api/zakat/gold-price/live` — endpoint utama, dipanggil Task 2.3
-- `PATCH /api/admin/zakat/gold-price` — Admin override manual (fallback kedua jika API mati lama)
-
-**Target Database:** `ZakatGoldPriceHistory` (create tiap fetch sukses/manual)
-
-**RBAC & Middleware Guard:** `GET /live` → authenticated (dipanggil internal oleh kalkulator); `PATCH` → `ADMIN`
-
-**Detail Alur Logic & Input/Output:**
-```
+- `PATCH /api/admin/zakat/gold-price` — Admin override manual (fallback kedua)  
+**Target Database:** `ZakatGoldPriceHistory`  
+**RBAC & Middleware Guard:** `GET /live` → authenticated; `PATCH` → `ADMIN`  
+**Detail Alur Logic:**  
+```text
 GET /api/zakat/gold-price/live
 ```
-1. Cek row `ZakatGoldPriceHistory` terbaru (`ORDER BY fetchedAt DESC LIMIT 1`)
-2. **Jika ada dan `fetchedAt` < 6 jam lalu** → return langsung dari cache, JANGAN fetch API eksternal (hemat rate-limit/biaya)
-3. **Jika cache basi/kosong** → panggil provider harga emas eksternal (pilih provider yang tim sepakati — rekomendasi: cari provider yang langsung quote IDR/gram supaya tidak perlu konversi troy-ounce+kurs USD-IDR tambahan; jika tidak ada, siapkan 2 langkah fetch: harga USD/troy-ounce + kurs USD-IDR, lalu `hargaPerGram = (hargaUSD / 31.1035) * kurs`)
-4. **Jika fetch sukses**: simpan row baru `source: 'LIVE_API'`, return harga baru
-5. **Jika fetch GAGAL** (timeout/API down/rate limit): return row cache TERAKHIR yang ada (berapapun umurnya) dengan flag tambahan di response `{ isStale: true, fetchedAt: ... }` — **JANGAN** biarkan kalkulator zakat gagal total hanya karena API eksternal down
-6. **Jika TIDAK ADA cache sama sekali** (hari pertama, belum pernah fetch) DAN API juga gagal → response 503 dengan pesan jelas "Harga emas belum tersedia, hubungi Admin untuk input manual"
+1. Cek record `ZakatGoldPriceHistory` terbaru (`ORDER BY fetchedAt DESC LIMIT 1`).
+2. **Jika ada & `fetchedAt` < 6 jam lalu** → return langsung dari cache DB (efisiensi rate-limit).
+3. **Jika cache basi/kosong** → panggil API provider harga emas eksternal (convert USD/troy-ounce ke IDR/gram jika diperlukan).
+4. **Jika fetch sukses**: simpan record baru `source: 'LIVE_API'`, return harga baru.
+5. **Jika fetch GAGAL** (timeout/API down): return record cache TERAKHIR dengan flag `{ isStale: true, fetchedAt: ... }`.
+6. **Jika TIDAK ADA cache sama sekali & API gagal** → response HTTP 503 "Harga emas belum tersedia, hubungi Admin".
 
-```
+```text
 PATCH /api/admin/zakat/gold-price
-Body: { pricePerGram: number }
+Body: { "pricePerGram": 1350000 }
 ```
-- Insert row baru `source: 'MANUAL_FALLBACK'` — jadi cache aktif berikutnya
-
-**Acceptance Criteria (DoD):**
-- [ ] Simulasi API eksternal down (matikan sementara/mock error) → endpoint tetap return harga (dari cache), tidak 500
-- [ ] Cache < 6 jam → dibuktikan TIDAK ada network call baru ke provider eksternal (cek log/network tab)
-- [ ] Admin manual override → langsung jadi harga aktif berikutnya sampai live fetch berikutnya berhasil
+- Insert record baru `source: 'MANUAL_FALLBACK'` yang otomatis menjadi cache aktif.  
+**Acceptance Criteria (DoD):**  
+- [ ] Simulasi API down → endpoint tetap mengembalikan harga dari cache, tidak HTTP 500.
+- [ ] Cache < 6 jam → dibuktikan TIDAK melakukan network call baru ke provider eksternal.
+- [ ] Admin manual override → langsung menjadi harga aktif berikutnya.
 
 ---
 
-### Task 2.4 — `ZakatOrder` Creation (Flow Digital)
-*(Tidak berubah — tambahkan field `isAnonymous: boolean` opsional ke body, default `false`)*
-
-**DoD tambahan:** [ ] `isAnonymous: true` tersimpan benar, tidak mempengaruhi field lain
+### Task 2.4 — `ZakatOrder` Creation (Flow Digital) — Update Putaran 6
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/zakat/orders`  
+**Target Database:** `ZakatOrder`, `Transaction`  
+**RBAC:** `WAKIF` / Authenticated  
+**Detail Alur Logic:**  
+- Menerima payload pesanan zakat digital.
+- **Tambahan Putaran 6**: Menerima field opsional `isAnonymous: boolean` (default `false`).
+- Generate `nomorKwitansi` (`ZKT-YYYY-XXXX`).
+- Jika metode pembayaran digital → integrasikan pembuatan invoice Midtrans/Xendit.  
+**Acceptance Criteria (DoD):**  
+- [ ] `isAnonymous: true` tersimpan dengan benar di DB.
+- [ ] Order tersimpan dengan status `MENUNGGU_PEMBAYARAN`.
 
 ---
 
 ## 🔵 Naufal — Modul Qurban
 
 ### Task 2.5 — `HewanBatch` + `QurbanAnimalSlot` dengan Row-Lock — Update Putaran 6
-
-**Scope Utama:** [Backend API Handler]
-
-**Detail Endpoint & HTTP Method:** `POST /api/admin/qurban/hewan-batches`, `GET /api/qurban/hewan-batches`, fungsi internal `reserveSlot()`
-
-**Target Database:** `HewanBatch`, `QurbanAnimalSlot`
-
-**RBAC & Middleware Guard:** `POST` → `ADMIN`; `GET` → publik
-
-**Detail Alur Logic & Input/Output — Payload Diperluas (Putaran 6):**
-```
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/qurban/hewan-batches`, `GET /api/qurban/hewan-batches`, fungsi internal `reserveSlot()`  
+**Target Database:** `HewanBatch`, `QurbanAnimalSlot`  
+**RBAC:** `POST` → `ADMIN`; `GET` → publik  
+**Detail Alur Logic (Payload Diperluas):**  
+```json
 Body: {
-  jenisHewan: 'SAPI'|'KAMBING', totalSlot: number, hargaPerSlot: number,
-  ras?: string, kelasGrade?: string, estimasiBeratKg?: number,
-  jenisKelamin?: string, wilayahPenyaluran?: string,
-  targetPenerimaManfaat?: number, tanggalPenyembelihanEstimasi?: string,
-  galeriFotoUrls?: string[]
+  "jenisHewan": "SAPI", "totalSlot": 7, "hargaPerSlot": 3500000,
+  "ras": "Limosin", "kelasGrade": "A", "estimasiBeratKg": 350,
+  "jenisKelamin": "JANTAN", "wilayahPenyaluran": "Kab. Bogor",
+  "targetPenerimaManfaat": 150, "tanggalPenyembelihanEstimasi": "2026-06-17",
+  "galeriFotoUrls": ["https://..."]
 }
 ```
-Logic row-lock `reserveSlot()` **TIDAK BERUBAH** dari versi sebelumnya — tetap wajib `SELECT ... FOR UPDATE` + unique constraint.
-
-**Acceptance Criteria (DoD):** *(sama seperti sebelumnya, DITAMBAH)*:
-- [ ] Field detail baru (ras, kelas, dst.) tersimpan & muncul di `GET` list/detail untuk konsumsi UI katalog
+- Fungsi internal `reserveSlot()` wajib menggunakan `SELECT ... FOR UPDATE` dalam transaksi DB untuk mencegah race condition / double-booking slot.  
+**Acceptance Criteria (DoD):**  
+- [ ] Field detail baru (`ras`, `kelasGrade`, dst.) tersimpan dan muncul di `GET` list/detail.
+- [ ] Concurrency test: 10 request simultan tidak menyebabkan slot ter-booking melebihi `totalSlot`.
 
 ---
 
 ### Task 2.6 — `QurbanOrder` Creation (Flow Digital) — Update Putaran 6: Wajib Akad Wakalah
-
-**Scope Utama:** [Backend API Handler]
-
-**Detail Endpoint & HTTP Method:** `POST /api/qurban/orders`
-
-**Target Database:** `QurbanOrder`, panggil `reserveSlot()`
-
-**RBAC & Middleware Guard:** role `WAKIF`
-
-**Detail Alur Logic & Input/Output:**
-```
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/qurban/orders`  
+**Target Database:** `QurbanOrder`, `QurbanAnimalSlot` (panggil `reserveSlot()`)  
+**RBAC:** role `WAKIF`  
+**Detail Alur Logic:**  
+```json
 Body: {
-  hewanBatchId, jenisHewan, tipeKepemilikan, jumlahSlotDiminta, opsiPesan,
-  namaPengqurban, teleponPengqurban, alamatPengqurban,
-  akadWakalahAccepted: boolean   // BARU — WAJIB true
+  "hewanBatchId": "uuid", "jenisHewan": "SAPI", "tipeKepemilikan": "PATUNGAN",
+  "jumlahSlotDiminta": 1, "opsiPesan": "PASRAH_PANITIA",
+  "namaPengqurban": "Fulan", "teleponPengqurban": "08123456789",
+  "akadWakalahAccepted": true
 }
 ```
-- **VALIDASI BARU**: jika `akadWakalahAccepted !== true` → 400 "Akad wakalah wajib disetujui sebelum melanjutkan pembayaran", JANGAN panggil `reserveSlot()` sama sekali (fail fast sebelum reservasi slot)
-- Jika diterima: simpan `akadWakalahText` (teks akad standar, bisa konstanta di kode: *"Saya [nama] dengan ini mewakilkan kepada panitia Qurban Amwal untuk menyembelihkan hewan qurban atas nama saya sesuai syariat Islam"*), `akadWakalahAcceptedAt: now()`
-
-**Acceptance Criteria (DoD):** *(sama seperti sebelumnya, DITAMBAH)*:
-- [ ] `akadWakalahAccepted: false` atau tidak dikirim → 400, TIDAK ADA slot ter-reservasi (cek `QurbanAnimalSlot` tidak berubah status)
+- **VALIDASI WAJIB**: Jika `akadWakalahAccepted !== true` → return HTTP 400 "Akad wakalah wajib disetujui sebelum melanjutkan pembayaran". JANGAN panggil `reserveSlot()` sama sekali.
+- Simpan `akadWakalahText` (teks standar syariat) dan `akadWakalahAcceptedAt: now()`.  
+**Acceptance Criteria (DoD):**  
+- [ ] `akadWakalahAccepted: false` atau tidak dikirim → HTTP 400, slot `QurbanAnimalSlot` TIDAK ter-reservasi.
 
 ---
 
 # MICRO-SPRINT 3 (Hari 5-6) — Offline Flow + Payment Gateway
 
-*(Task 3.1-3.6 tidak berubah struktur dari versi sebelumnya, dengan 2 penyesuaian kecil berikut)*
+### Task 3.1 — `WaqfOrder` Entri Offline (Amil/Admin) + Field AIW + `isAnonymous`
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/wakaf/orders`  
+**Target Database:** `WaqfOrder`, `WaqfOrderUnit`, `Transaction`  
+**RBAC:** `ADMIN` / `AMIL`  
+**Detail Alur Logic:**  
+- Input transaksi wakaf offline (tunai/barang) oleh petugas/admin.
+- Body input: `waqfProgramId`, `nominal`, `metodePembayaran` (`TUNAI`/`TRANSFER_MANUAL`), `namaWakif`, `teleponWakif`, `isAnonymous: boolean` (default `false`), `bentukWakafEnum` (`UANG`/`BARANG`).
+- Jika `bentukWakafEnum === 'BARANG'`: wajib menyertakan `deskripsiBarang`, `estimasiNilaiBarang`, dan `nomorAIW` (Akta Ikrar Wakaf BWI).
+- Status transaksi langsung diset ke `TERVERIFIKASI` atau `MENUNGGU_VERIFIKASI_SETORAN`. Auto-generate `nomorKwitansi` (`WKF-OFF-YYYY-XXXX`).  
+**Acceptance Criteria (DoD):**  
+- [ ] `isAnonymous: true` tersimpan dengan benar di DB.
+- [ ] `namaWakif` tetap wajib diisi di backend untuk pencatatan administratif meskipun `isAnonymous: true`.
+- [ ] Entri wakaf barang wajib memvalidasi `nomorAIW`.
+- [ ] Kwitansi offline berhasil di-generate.
 
-## 🟢 Bara — Task 3.1 Update: Tambah `isAnonymous`
+---
 
-`POST /api/admin/wakaf/orders` — tambahkan `isAnonymous: boolean` (default `false`) ke body & field DB. **DoD tambahan:** [ ] checkbox "Hamba Allah" tersimpan benar, `namaWakif` tetap wajib diisi di backend meski anonim (anonim hanya soal tampilan, bukan soal data kosong)
+### Task 3.2 — Webhook Payment Gateway Wakaf (Midtrans/Xendit)
+**Scope Utama:** [Backend API Handler / Webhook]  
+**Endpoint:** `POST /api/webhooks/payment/wakaf` (atau unified `/api/webhooks/payment`)  
+**Target Database:** `Transaction`, `WaqfOrder`, `WaqfPrincipalLedger`  
+**RBAC:** Signature Verified (bukan JWT)  
+**Detail Alur Logic:**  
+- Verifikasi signature HTTP request dari Payment Gateway.
+- Mengambil `orderId` / `transactionId`.
+- Update `Transaction.statusPembayaran` → `SETTLED`/`SUCCESS`.
+- Update `WaqfOrder.status` → `TERVERIFIKASI`.
+- Increment `WaqfPrincipalLedger.totalPokok` sesuai nominal dalam `$transaction`. Trigger async generation sertifikat.  
+**Acceptance Criteria (DoD):**  
+- [ ] Webhook notification sukses mengubah status order & ledger pokok secara atomic.
+- [ ] Request dengan signature invalid ditolak (HTTP 403 Forbidden).
 
-## 🟡 Awan — Task 3.3 Update: Tambah `isAnonymous`
+---
 
-Sama seperti Task 3.1, untuk `POST /api/admin/zakat/orders`.
+### Task 3.3 — `ZakatOrder` Entri Offline (Amil/Admin) + `isAnonymous`
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/zakat/orders`  
+**Target Database:** `ZakatOrder`, `Transaction`  
+**RBAC:** `ADMIN` / `AMIL` / `PETUGAS_LAPANGAN`  
+**Detail Alur Logic:**  
+- Entri zakat offline (tunai/beras) oleh petugas amil.
+- Body input: `jenisZakatEnum`, `namaMuzaki`, `teleponMuzaki`, `isAnonymous: boolean` (default `false`), `bentukZakatEnum` (`UANG`/`BERAS`).
+- Jika `UANG` → input `nominalRp`. Jika `BERAS` → input `jumlahBerasKg` dan `konversiHargaPerKg` (dari `ZakatFitrahConfig`).
+- Auto-generate `nomorKwitansi` (`ZKT-OFF-YYYY-XXXX`) dan set status `TERVERIFIKASI`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Mendukung zakat beras dan zakat uang.
+- [ ] `isAnonymous: true` tersimpan dengan benar.
+- [ ] Saldo `FundPool` terkait ter-increment otomatis.
 
-## 🔵 Naufal — Task 3.5, 3.6: Tidak ada perubahan dari versi sebelumnya.
+---
+
+### Task 3.4 — Webhook Payment Gateway Zakat
+**Scope Utama:** [Backend API Handler / Webhook]  
+**Endpoint:** `POST /api/webhooks/payment/zakat` (atau unified `/api/webhooks/payment`)  
+**Target Database:** `Transaction`, `ZakatOrder`, `FundPool`  
+**RBAC:** Signature Verified  
+**Detail Alur Logic:**  
+- Verifikasi signature webhook PG.
+- Update `Transaction.statusPembayaran` → `SUCCESS`.
+- Update `ZakatOrder.status` → `TERVERIFIKASI`.
+- Tambahkan saldo `FundPool` sesuai `jenisZakat` (`ZAKAT_MAAL`, `ZAKAT_FITRAH`, dll) secara atomic `$transaction`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Webhook bersifat idempotent (duplicate payload diabaikan dengan HTTP 200).
+- [ ] Saldo `FundPool` ter-increment dengan tepat.
+
+---
+
+### Task 3.5 — `QurbanOrder` Entri Offline Petugas Lapangan & Management Setoran
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/petugas/qurban-orders`, `POST /api/petugas/setoran`, `PATCH /api/admin/setoran/[id]/verify`  
+**Target Database:** `QurbanOrder`, `SetoranPetugasLapangan`, `SetoranQurbanOrderLink`, `QurbanAnimalSlot`  
+**RBAC:** `PETUGAS_LAPANGAN` (entri & setoran); `ADMIN` (verifikasi setoran)  
+**Detail Alur Logic:**  
+1. **Entri Offline**: Petugas menginput transaksi tunai (`metodePembayaran: TUNAI`), memanggil `reserveSlot()`, mencatat `nominalDibayar`, `sisaTagihan`, dan status pembayaran (`SEBAGIAN`/`LUNAS`).
+2. **Pengajuan Setoran**: Petugas mengelompokkan beberapa order tunai yang belum disetor menjadi satu berkas setoran (`POST /api/petugas/setoran`) dengan melampirkan `jumlahSetor`, `buktiSetorUrl`, dan `qurbanOrderIds`.
+3. **Verifikasi Admin**: Admin meninjau berkas setoran (`PATCH /api/admin/setoran/[id]/verify`). Jika disetujui (`status: VERIFIED`), seluruh `QurbanOrder` terkait otomatis berstatus `TERVERIFIKASI`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Multi-order setoran link berfungsi dengan benar.
+- [ ] Verifikasi Admin mengunci status order dan setoran secara permanen.
+- [ ] Sisa cash di tangan petugas terhitung presisi.
+
+---
+
+### Task 3.6 — Webhook Payment Gateway Qurban (Logic DP & Pelunasan)
+**Scope Utama:** [Backend API Handler / Webhook]  
+**Endpoint:** `POST /api/webhooks/payment/qurban` (atau unified `/api/webhooks/payment`)  
+**Target Database:** `Transaction`, `QurbanOrder`, `QurbanAnimalSlot`  
+**RBAC:** Signature Verified  
+**Detail Alur Logic:**  
+- Mengolah notifikasi pembayaran PG untuk transaksi DP atau Pelunasan.
+- Jika pembayaran DP: update `Transaction.status` → `SUCCESS`, update `QurbanOrder.nominalDibayar`, `sisaTagihan`, set `statusPembayaran: DP_LUNAS`.
+- Jika Pelunasan: set `statusPembayaran: LUNAS`, update `QurbanAnimalSlot.status` → `TERJUAL`.
+- Jika transaksi expired/gagal: rilis kembali `QurbanAnimalSlot` menjadi `AVAILABLE`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Penanganan status DP vs Pelunasan teruji.
+- [ ] Order expired otomatis melepaskan slot (`RELEASED`) kembali ke katalog.
 
 ---
 
 # MICRO-SPRINT 4 (Hari 7-8) — Approval & Distribusi
 
-## 🟢 Bara — Task 4.1 Update: `admin_notes` Wajib Saat Reject
-
-**Perubahan dari versi sebelumnya:**
-```
-PATCH /api/admin/withdrawal-requests/[id]
-Body: { status: 'APPROVED'|'REJECTED', adminNotes?: string }
-```
-- **VALIDASI BARU**: jika `status: 'REJECTED'` DAN `adminNotes` kosong/tidak dikirim → 400 "Alasan penolakan wajib diisi"
-- `adminNotes` opsional untuk `APPROVED` (boleh kosong)
-
-**DoD tambahan:** [ ] Reject tanpa `adminNotes` → 400; Approve tanpa `adminNotes` → tetap 200 (tidak wajib)
-
-## Task 4.2 — Tidak berubah.
-
-## 🟡 Awan — Task 4.3, 4.4 — Tidak berubah.
-
-## 🔵 Naufal — Task 4.5 Update: `admin_notes` untuk Permohonan Institusional
-
-```
-PATCH /api/admin/permohonan-institusional/[id]
-Body: { status: 'DISETUJUI'|'DITOLAK', adminNotes?: string }
-```
-Validasi sama seperti Task 4.1: `DITOLAK` wajib disertai `adminNotes`.
-
-## Task 4.6 — Tidak berubah.
+### Task 4.1 — `FundWithdrawalRequest` Flow & Ledger Verification (`admin_notes` Wajib saat Reject)
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/wakaf/programs/[id]/withdrawal-requests`, `PATCH /api/admin/withdrawal-requests/[id]`  
+**Target Database:** `FundWithdrawalRequest`, `WaqfPrincipalLedger`, `WaqfProgram`  
+**RBAC:** `POST` → `NADZIR` (owner program); `PATCH` → `ADMIN`  
+**Detail Alur Logic:**  
+- Nadzir mengajukan penarikan hasil wakaf (`nominal`, `peruntukan`, `rekeningTujuan`).
+- Admin meninjau pengajuan (`PATCH`):
+  - Jika `status === 'APPROVED'`: validasi server bahwa `nominal <= WaqfPrincipalLedger.totalHasilAvailable`. Kurangi `totalHasilAvailable` dan tambah `totalHasilDisalurkan` dalam `$transaction`. `adminNotes` opsional.
+  - Jika `status === 'REJECTED'`: **VALIDASI WAJIB**: `adminNotes` wajib diisi (jika kosong/undefined → return HTTP 400 "Alasan penolakan wajib diisi").  
+**Acceptance Criteria (DoD):**  
+- [ ] Penolakan (Reject) tanpa `adminNotes` → HTTP 400.
+- [ ] Persetujuan (Approve) dengan saldo hasil cukup → HTTP 200 & ledger ter-update.
+- [ ] Penarikan melebihi saldo hasil available → HTTP 400 Bad Request.
 
 ---
 
-# MICRO-SPRINT 5 (Hari 9-10) — Frontend per Modul
+### Task 4.2 — Penyaluran Hasil Wakaf (`MauqufAlaihDistribution`)
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/wakaf/programs/[id]/mauquf-alaih`  
+**Target Database:** `MauqufAlaihDistribution`, `WaqfProgram`  
+**RBAC:** `ADMIN` / `NADZIR`  
+**Detail Alur Logic:**  
+- Catat realisasi penyaluran dana hasil wakaf ke penerima manfaat (`mauquf_alaih`).
+- Input body: `namaPenerima`, `kategoriPenerima`, `nominal`, `buktiPenyaluranUrl`, `deskripsiKegiatan`, link `withdrawalRequestId`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Record `MauqufAlaihDistribution` ter-create.
+- [ ] Relasi link ke `FundWithdrawalRequest` valid.
+
+---
+
+### Task 4.3 — Management `MustahikProfile` & Verifikasi Asnaf
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/mustahiq`, `GET /api/admin/mustahiq`, `PATCH /api/admin/mustahiq/[id]/verify`  
+**Target Database:** `MustahikProfile`  
+**RBAC:** `ADMIN` / `PETUGAS_LAPANGAN` (Amil)  
+**Detail Alur Logic:**  
+- Registrasi dan verifikasi data mustahik.
+- Input body: `namaLengkap`, `nik`, `kategoriAsnafEnum` (8 Asnaf: FAKIR, MISKIN, AMIL, MUALLAF, RIQAB, GHARIMIN, FISABILILLAH, IBNU_SABIL), `alamat`, `noHp`, `statusVerifikasi` (`PENDING`/`VERIFIED`/`REJECTED`).
+- NIK wajib dienkripsi AES-256.  
+**Acceptance Criteria (DoD):**  
+- [ ] Enkripsi NIK AES-256 teruji.
+- [ ] 8 Kategori Asnaf ter-validate.
+
+---
+
+### Task 4.4 — Pencatatan Distribusi Zakat (`ZakatDistribution`)
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/zakat/distributions`  
+**Target Database:** `ZakatDistribution`, `MustahikProfile`, `FundPool`  
+**RBAC:** `ADMIN`  
+**Detail Alur Logic:**  
+- Penyaluran dana zakat dari `FundPool` (`ZAKAT_MAAL` / `ZAKAT_FITRAH`) ke `MustahikProfile`.
+- Validasi `nominal <= FundPool.balance`.
+- Potong `FundPool.balance` dan tambah `FundPool.totalDistributed` dalam `$transaction`.
+- Simpan `kategoriAsnaf`, `bentukBantuan` (`UANG`/`BERAS`), `buktiFotoUrl`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Saldo `FundPool` berkurang secara atomic.
+- [ ] Return HTTP 400 jika saldo pool tidak mencukupi.
+
+---
+
+### Task 4.5 — Permohonan Penyaluran Institusional Qurban (`admin_notes` Wajib saat Ditolak)
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/permohonan-institusional`, `PATCH /api/admin/permohonan-institusional/[id]`  
+**Target Database:** `PermohonanPenyaluranInstitusional`  
+**RBAC:** `POST` → Publik / Admin entri manual; `PATCH` → `ADMIN`  
+**Detail Alur Logic:**  
+- Pengajuan alokasi daging qurban oleh lembaga/masjid eksternal.
+- Admin meninjau permohonan (`PATCH`):
+  - Jika `status === 'DITOLAK'`: **VALIDASI WAJIB**: `adminNotes` wajib diisi (jika kosong → return HTTP 400 "Alasan penolakan wajib diisi").
+  - Jika `status === 'DISETUJUI'`: `adminNotes` opsional, set `alokasiDagingDisetujuiKg`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Ditolak tanpa `adminNotes` → HTTP 400.
+- [ ] Disetujui → HTTP 200 & alokasi kg tercatat.
+
+---
+
+### Task 4.6 — Alokasi & Distribusi Daging Qurban (`QurbanDistributionAllocation`)
+**Scope Utama:** [Backend API Handler]  
+**Endpoint:** `POST /api/admin/qurban/distribution-allocations`  
+**Target Database:** `QurbanDistributionAllocation`, `PermohonanPenyaluranInstitusional`, `HewanBatch`  
+**RBAC:** `ADMIN`  
+**Detail Alur Logic:**  
+- Mengalokasikan paket/kg daging dari `HewanBatch` ke permohonan institusional yang telah disetujui atau penerima individu.
+- Validasi total alokasi daging tidak melebihi kapasitas estimasi `HewanBatch`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Total alokasi <= kapasitas estimasi daging batch.
+- [ ] Status distribusi ter-update.
+
+---
+
+# MICRO-SPRINT 5 (Hari 9-10) — Frontend per Modul & Screen Petugas Lapangan
 
 ## 🟢 Bara — Frontend Wakaf
 
-### Task 5.1 — Halaman Eksplorasi & Detail Program *(tidak berubah)*
+### Task 5.1 — Halaman Eksplorasi & Detail Program
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** `/wakaf`, `/wakaf/[id]`  
+**Detail Logic:**  
+- Halaman katalog program wakaf dengan filter kategori (Uang, Produksi, Sertifikasi), search bar, progress bar pengumpulan dana.
+- Detail program menampilkan transparansi `WaqfPrincipalLedger` (pokok vs hasil).  
+**Acceptance Criteria (DoD):**  
+- [ ] Layout responsive.
+- [ ] Integration data dari `GET /api/wakaf/programs` ter-render sempurna.
+
+---
 
 ### Task 5.2 — Form Donasi Wakaf & Dashboard Nadzir — Update: Checkbox Anonim + OAuth
-
-**Tambahan dari versi sebelumnya:**
-- Form donasi: tambahkan checkbox "Sembunyikan nama saya (Hamba Allah)" → kirim `isAnonymous` ke `POST /api/wakaf/orders`
-- Halaman `/login` & `/register`: tambahkan tombol "Masuk dengan Google" yang redirect ke `/api/auth/google` (Task 2.7)
-
-**DoD tambahan:** [ ] Tombol Google berfungsi end-to-end (redirect → consent → callback → landing di halaman utama dengan sesi aktif)
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** `/wakaf/[id]/donate`, `/nadzir/dashboard`, `/login`, `/register`  
+**Detail Logic:**  
+- Form donasi wakaf menyertakan checkbox "Sembunyikan nama saya (Hamba Allah)" → menyertakan `isAnonymous: true` pada payload `POST /api/wakaf/orders`.
+- Halaman `/login` dan `/register` menyertakan tombol "Masuk dengan Google" yang mengarah ke `/api/auth/google`.
+- Dashboard Nadzir untuk mengelola program & pengajuan penarikan dana.  
+**Acceptance Criteria (DoD):**  
+- [ ] Checkbox anonim berfungsi di form donasi.
+- [ ] Tombol Google OAuth berfungsi end-to-end (redirect → consent → callback → login).
 
 ---
 
 ## 🟡 Awan — Frontend Zakat
 
 ### Task 5.3 — UI Kalkulator Zakat — Update: Sumber Harga Emas
-
-**Tambahan:** Tampilkan label kecil di hasil kalkulasi: "Harga emas acuan: Rp X/gram (update: [tanggal])" — ambil dari response `GET /api/zakat/gold-price/live` yang dipanggil kalkulator, supaya user tahu ini bukan angka sembarangan. Jika `isStale: true`, tampilkan badge kecil "Harga belum ter-update hari ini" (bukan error, cukup info).
-
-### Task 5.4 — Form Bayar & Form Entri Amil — Update: Checkbox Anonim
-
-Sama seperti Task 5.2, tambahkan checkbox anonim di kedua form.
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** `/zakat/kalkulator`  
+**Detail Logic:**  
+- UI Tab Kalkulator per jenis zakat.
+- Tampilkan label info acuan harga emas: "Harga emas acuan: Rp X/gram (update: [tanggal])" dari response `GET /api/zakat/gold-price/live`.
+- Jika `isStale: true`, tampilkan badge "Harga belum ter-update hari ini".  
+**Acceptance Criteria (DoD):**  
+- [ ] Kalkulasi real-time bekerja akurat.
+- [ ] Label harga emas ter-render dinamis dari API.
 
 ---
 
-## 🔵 Naufal — Frontend Qurban + **4 Screen Petugas Lapangan (BARU, Detail Putaran 6)**
+### Task 5.4 — Form Bayar & Form Entri Amil — Update: Checkbox Anonim
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** `/zakat/bayar`, `/amil/zakat-entri`  
+**Detail Logic:**  
+- Form bayar zakat digital (muzaki) & form entri offline (amil).
+- Pilihan bentuk zakat (Uang/Beras), checkbox "Hamba Allah" (`isAnonymous: true`).
+- Modal konfirmasi ringkasan transaksi sebelum submit entri amil.  
+**Acceptance Criteria (DoD):**  
+- [ ] Form terintegrasi dengan API order digital & offline.
+- [ ] Modal konfirmasi entri amil bekerja.
+
+---
+
+## 🔵 Naufal — Frontend Qurban + **4 Screen Petugas Lapangan (BARU, Putaran 6)**
 
 ### Task 5.5 — Katalog Hewan & Slot Picker — Update: Field Detail Baru
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** `/qurban`, `/qurban/[batchId]`  
+**Detail Logic:**  
+- Display card katalog hewan qurban dengan detail baru: `ras`, `kelasGrade`, `estimasiBeratKg`, `wilayahPenyaluran`, `tanggalPenyembelihanEstimasi`, galeri foto (carousel `galeriFotoUrls`).
+- Slot picker visual (slot 1/7 sapi atau 1/1 kambing).  
+**Acceptance Criteria (DoD):**  
+- [ ] Detail ras, grade, & foto carousel ter-render.
+- [ ] Slot picker disable otomatis jika slot habis.
 
-Tambahkan tampilan `ras`, `kelasGrade`, `estimasiBeratKg`, `wilayahPenyaluran`, galeri foto (carousel dari `galeriFotoUrls`) di card katalog & detail.
+---
 
 ### Task 5.6 — Form Order Digital — Update: Modal Akad Wakalah
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** `/qurban/order`  
+**Detail Logic:**  
+- Form pemesanan qurban digital.
+- **Modal konfirmasi Akad Wakalah** muncul sebelum lanjut ke Payment Gateway: menampilkan teks akad resmi & checkbox "Saya menyetujui akad wakalah ini". Tombol bayar disabled sampai checkbox di-centang.
+- Kirim `akadWakalahAccepted: true` ke `POST /api/qurban/orders`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Modal akad wakalah tidak bisa di-bypass.
+- [ ] Payload `akadWakalahAccepted: true` terkirim.
 
-**Scope Utama:** [Frontend UI/Page]
-Tambahkan **modal konfirmasi** sebelum lanjut ke Payment Gateway: tampilkan teks akad wakalah (dari Task 2.6), checkbox "Saya menyetujui akad wakalah ini", tombol "Lanjutkan Pembayaran" disabled sampai checkbox dicentang. Kirim `akadWakalahAccepted: true` ke `POST /api/qurban/orders`.
+---
 
 ### Task 5.7 — Dashboard Rekap Cash Petugas Lapangan (BARU)
-
-**Scope Utama:** [Frontend UI/Page] + [Backend API Handler]
-
-**Detail Endpoint & HTTP Method:** `GET /api/petugas/rekap-cash` — total nominal `QurbanOrder` yang dientri petugas login dengan `metodePembayaran: TUNAI` dikurangi total yang sudah masuk `SetoranPetugasLapangan` terverifikasi (= cash yang masih "di tangan" petugas)
-
-**Target Database:** Aggregate query `QurbanOrder` + `SetoranPetugasLapangan` + `SetoranQurbanOrderLink`
-
-**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN`, filter otomatis by `enteredByPetugasId = x-user-id`
-
-**Detail Alur Logic & Input/Output:**
-- Response: `{ data: { totalDiterima: number, totalDisetor: number, sisaDiTangan: number, daftarOrderBelumDisetor: [...] } }`
-- Frontend: card ringkas angka besar "Rp X di tangan Anda" + list order yang belum masuk setoran manapun
-
-**Acceptance Criteria (DoD):**
-- [ ] Angka `sisaDiTangan` cocok dengan hitungan manual (total tunai - total setoran terverifikasi)
-- [ ] Order yang statusnya sudah masuk setoran (meski belum diverifikasi Admin) tidak dobel dihitung sebagai "belum disetor"
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler]  
+**Endpoint:** `GET /api/petugas/rekap-cash` — total nominal `QurbanOrder` yang dientri petugas login (`metodePembayaran: TUNAI`) dikurangi total yang sudah masuk `SetoranPetugasLapangan` terverifikasi.  
+**Target Database:** Aggregate query `QurbanOrder` + `SetoranPetugasLapangan` + `SetoranQurbanOrderLink`  
+**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN` (`enteredByPetugasId = x-user-id`)  
+**Detail Alur Logic:**  
+- Response: `{ data: { totalDiterima: number, totalDisetor: number, sisaDiTangan: number, daftarOrderBelumDisetor: [...] } }`.
+- Frontend: Card ringkas angka besar "Rp X di tangan Anda" + list order yang belum masuk setoran manapun.  
+**Acceptance Criteria (DoD):**  
+- [ ] Angka `sisaDiTangan` cocok dengan kalkulasi manual.
+- [ ] Order yang sudah masuk setoran (meski pending verifikasi) tidak terhitung ganda.
 
 ---
 
 ### Task 5.8 — Form Entri Transaksi Offline (BARU — Frontend untuk Task 3.5)
-
-**Scope Utama:** [Frontend UI/Page]
-
-**Detail Endpoint & HTTP Method:** Konsumsi `POST /api/petugas/qurban-orders` (Task 3.5)
-
-**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN`
-
-**Detail Alur Logic & Input/Output:**
-- Form: Nama, No. HP, pilih Batch/Slot (reuse komponen `SlotPicker`), Jenis Akad (opsi pesan Pasrah/Ambil Sendiri), Nominal Dibayar, **upload foto bukti cash** (opsional tapi direkomendasikan untuk akuntabilitas — field `buktiCashUrl` BARU, tambahkan ke `QurbanOrder` jika tim setuju, atau simpan sebagai lampiran terpisah)
-- **Modal konfirmasi sebelum submit**: ringkasan data yang diinput, tombol "Periksa Lagi" vs "Konfirmasi & Simpan" (mengatasi Gap "konfirmasi entri offline" dari review UI sebelumnya)
-
-**Acceptance Criteria (DoD):**
-- [ ] Modal konfirmasi WAJIB muncul sebelum data benar-benar tersimpan ke server
-- [ ] `sisaTagihan` auto-terhitung & ditampilkan real-time saat nominal diketik
-
-> **Catatan untuk Bara/Awan**: pola "modal konfirmasi sebelum submit entri offline" ini sebaiknya juga diterapkan di form entri offline Wakaf (Task 5.2) dan Zakat (Task 5.4) — reuse komponen modal yang sama, jangan bangun 3x terpisah.
+**Scope Utama:** [Frontend UI/Page]  
+**Endpoint:** Konsumsi `POST /api/petugas/qurban-orders`  
+**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN`  
+**Detail Alur Logic:**  
+- Form: Nama, No. HP, pilih Batch/Slot, Jenis Akad, Nominal Dibayar, **upload foto bukti cash** (`buktiCashUrl`).
+- **Modal konfirmasi sebelum submit**: ringkasan data yang diinput, tombol "Periksa Lagi" vs "Konfirmasi & Simpan".
+- Auto-calculation real-time `sisaTagihan`.  
+**Acceptance Criteria (DoD):**  
+- [ ] Modal konfirmasi WAJIB muncul sebelum data tersimpan ke server.
+- [ ] `sisaTagihan` auto-terhitung real-time saat nominal diketik.
 
 ---
 
-### Task 5.9 — Form Setoran ke Admin (BARU — Frontend untuk fungsi Task 3.5 bagian setoran)
-
-**Scope Utama:** [Frontend UI/Page]
-
-**Detail Endpoint & HTTP Method:** `POST /api/petugas/setoran`
-
-**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN`
-
-**Detail Alur Logic & Input/Output:**
-- Form: pilih tanggal, multi-select `QurbanOrder` tunai yang belum disetor (dari Task 5.7 data), input `jumlahSetor`, **upload bukti transfer/serah terima** (field `buktiSetorUrl` — sudah ditambahkan ke `SetoranPetugasLapangan` di `DATABASE_SCHEMA.md` Putaran 6)
-- Tampilkan otomatis SUM nominal order yang dipilih, bandingkan dengan `jumlahSetor` yang diinput (peringatan visual jika beda, tidak block)
-
-**Acceptance Criteria (DoD):**
-- [ ] Multi-select order berfungsi, hanya menampilkan order milik petugas login yang belum masuk setoran manapun
-- [ ] Upload bukti setoran wajib sebelum submit (validasi client-side)
+### Task 5.9 — Form Setoran ke Admin (BARU — Frontend untuk Task 3.5 Setoran)
+**Scope Utama:** [Frontend UI/Page]  
+**Endpoint:** `POST /api/petugas/setoran`  
+**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN`  
+**Detail Alur Logic:**  
+- Form: pilih tanggal, multi-select `QurbanOrder` tunai yang belum disetor, input `jumlahSetor`, **upload bukti transfer/serah terima** (`buktiSetorUrl`).
+- Tampilkan otomatis SUM nominal order yang dipilih, bandingkan dengan `jumlahSetor` yang diinput.  
+**Acceptance Criteria (DoD):**  
+- [ ] Multi-select order hanya menampilkan order milik petugas login yang belum disetor.
+- [ ] Upload bukti setoran wajib sebelum submit.
 
 ---
 
 ### Task 5.10 — Form Verifikasi Penyaluran (BARU — Frontend untuk `QurbanDistributionReport`)
-
-**Scope Utama:** [Frontend UI/Page] + [Backend API Handler — endpoint ini belum ada di Sprint sebelumnya, tambahkan sekarang]
-
-**Detail Endpoint & HTTP Method:** `POST /api/qurban/orders/[id]/distribution-report`
-
-**Target Database:** `QurbanDistributionReport`
-
-**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN` atau `ADMIN`
-
-**Detail Alur Logic & Input/Output:**
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler]  
+**Endpoint:** `POST /api/qurban/orders/[id]/distribution-report`  
+**Target Database:** `QurbanDistributionReport`  
+**RBAC & Middleware Guard:** role `PETUGAS_LAPANGAN` atau `ADMIN`  
+**Detail Alur Logic:**  
+```json
+Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "string", "lokasiLat": -6.2, "lokasiLng": 106.8, "jumlahPenerima": 100 }
 ```
-Body: { buktiFotoUrl: string, videoUrl?: string, lokasiPenyaluran: string,
-        lokasiLat?: number, lokasiLng?: number, jumlahPenerima: number }
-```
-- Frontend: gunakan Geolocation API browser (`navigator.geolocation.getCurrentPosition`) untuk auto-isi `lokasiLat`/`lokasiLng`, dengan fallback input manual jika user menolak izin lokasi
-- Upload foto WAJIB, video opsional (ukuran file besar — beri batas maks, mis. 50MB, kompresi sisi client jika memungkinkan)
-
-**Acceptance Criteria (DoD):**
-- [ ] Geolocation browser berhasil auto-isi koordinat (test di browser dengan izin lokasi diberikan)
-- [ ] Fallback manual input koordinat berfungsi jika izin ditolak
-- [ ] `jumlahPenerima` wajib diisi angka > 0
+- Frontend: gunakan Geolocation API browser (`navigator.geolocation.getCurrentPosition`) untuk auto-fill `lokasiLat`/`lokasiLng`, dengan fallback input manual jika izin ditolak.
+- Upload foto WAJIB, video opsional.  
+**Acceptance Criteria (DoD):**  
+- [ ] Browser Geolocation auto-fill koordinat teruji.
+- [ ] Fallback manual input koordinat berfungsi jika izin ditolak.
+- [ ] `jumlahPenerima` wajib diisi angka > 0.
 
 ---
 
 # MICRO-SPRINT 6 (Hari 11-12) — Cross-Cutting
 
-*(Task 6.1-6.4 TIDAK BERUBAH dari versi sebelumnya — Certificate generation, Notifikasi FCM, Dashboard Admin Overview, Integration Testing.)*
+### Task 6.1 — Generator Sertifikat Digital Lintas Modul + Input Nomor BWI Admin
+**Scope Utama:** [Backend Utility / Service] + [API Handler] + [Frontend UI]  
+**Developer:** Bara  
+**Endpoint:** `GET /api/certificates/[transactionId]`, `PATCH /api/admin/certificates/[id]/bwi-number`  
+**Target Database:** `Certificate`  
+**RBAC:** Owner / `ADMIN`  
+**Detail Alur Logic:**  
+- Auto-generate PDF/Image sertifikat digital untuk transaksi Wakaf, Zakat, & Qurban yang berstatus `TERVERIFIKASI`.
+- Untuk Wakaf: Admin dapat mengisi nomor registrasi BWI secara manual (`bwiRegistrationNumber`) yang kemudian ter-render pada sertifikat.  
+**Acceptance Criteria (DoD):**  
+- [ ] PDF sertifikat ter-generate rapi dengan QR Code / ID Transaksi.
+- [ ] Input nomor BWI Admin ter-render pada sertifikat Wakaf.
 
-**Catatan tambahan untuk Task 6.3 (Dashboard Admin Overview, Naufal):** dashboard ini HANYA operasional ringkas (jumlah pending verifikasi, total dana per modul) — **BUKAN** dashboard analitik RFMD yang muncul di mockup UI. Jangan bangun elemen segmentasi/prediksi apapun, sesuai keputusan Putaran 6.
+---
+
+### Task 6.2 — System Notifikasi Real-time & Event FCM
+**Scope Utama:** [Backend Integration: FCM / Email]  
+**Developer:** Awan  
+**Endpoint:** `GET /api/notifications`, `PATCH /api/notifications/[id]/read`  
+**Target Database:** `Notification`  
+**RBAC:** Authenticated  
+**Detail Alur Logic:**  
+- Trigger notifikasi otomatis saat event kunci:
+  - Status pembayaran PG updated (`SETTLED` / `EXPIRED`).
+  - Verifikasi setoran tunai petugas oleh Admin (`VERIFIED` / `REJECTED`).
+  - Laporan penyaluran qurban/zakat diterbitkan.
+  - Status pengajuan Nadzir / withdrawal disetujui atau ditolak.  
+**Acceptance Criteria (DoD):**  
+- [ ] Record notifikasi ter-create otomatis di DB.
+- [ ] User login dapat membaca dan menandai notifikasi as read.
+
+---
+
+### Task 6.3 — Dashboard Admin Overview Operasional Ringkas
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler]  
+**Developer:** Naufal  
+**Target Route:** `/admin/dashboard`  
+**Detail Alur Logic:**  
+- Dashboard ringkasan operasional Admin lintas 3 modul: total pengumpulan dana Wakaf, Zakat, & Qurban; counter pending verifikasi Nadzir, setoran petugas, & withdrawal request.
+- **CATATAN KETAT**: HANYA ringkasan operasional — **BUKAN** dashboard analitik RFMD (RFMD ditunda pasca-MVP).  
+**Acceptance Criteria (DoD):**  
+- [ ] Card metric operasional ter-render akurat.
+- [ ] Link shortcut ke halaman pending approval berfungsi.
+- [ ] TIDAK ada elemen UI/fitur analitik RFMD.
+
+---
+
+### Task 6.4 — Integration Testing & End-to-End Flow Verification
+**Scope Utama:** [Quality Assurance & E2E Testing]  
+**Developer:** Tim (Bara, Awan, Naufal)  
+**Detail Alur Logic:**  
+- Pengujian E2E alur lengkap lintas modul:
+  1. Auth → OAuth Google & Email/Password → Session cookie.
+  2. Wakaf digital & offline → PG Webhook → Ledger update → Sertifikat.
+  3. Zakat calculate → Live Gold Price → Order → Payment → Mustahik distribution.
+  4. Qurban Batch → Slot Row-Lock → Akad Wakalah → Petugas Entri Tunai → Setoran → Admin Verify → Distribution Report + GPS.  
+**Acceptance Criteria (DoD):**  
+- [ ] E2E flow 3 modul berjalan tanpa blocker crash.
+- [ ] Format error & response API konsisten sesuai `CODING_CONVENTIONS.md`.
 
 ---
 
 # MICRO-SPRINT 7 (Hari 13-14) — Hardening & Staging Deploy
 
-*(Tidak berubah dari versi sebelumnya)*
+### Task 7.1 — Bug Bash & Security / Fiqih Audit Final (Hari 13)
+**Scope Utama:** [Audit & Quality Hardening]  
+**Developer:** Tim (Bara, Awan, Naufal)  
+**Checklist Audit:**  
+- **Security Audit**: Enkripsi NIK AES-256 terverifikasi di DB; Cookie `HttpOnly` `amwal_token` & `amwal_refresh` ter-set dengan flag `SameSite=Lax`; CORS & rate-limiting di API handler.
+- **Fiqih Audit**: Validasi Akad Wakalah Qurban; Pemisahan Ledger Pokok vs Hasil Wakaf; 8 Asnaf Zakat; Nisab Zakat Emas 85 gram.
+- **Scope Verification**: Verifikasi ulang TIDAK ada elemen UI/route yang secara tidak sengaja mengekspos fitur RFMD Analytics atau Infaq (di-hide/tidak ter-render).  
+**Acceptance Criteria (DoD):**  
+- [ ] Zero critical security/fiqih vulnerabilities.
+- [ ] Scope Putaran 6 dipatuhi 100%.
 
-**Tambahan checklist Hari 13:**
-- [ ] Verifikasi ulang: TIDAK ada elemen UI/route yang secara tidak sengaja mengekspos fitur RFMD Analytics atau Infaq (kalau tim UI/UX terlanjur push komponen terkait ke branch, pastikan di-hide/tidak ter-render)
-- [ ] Verifikasi OAuth Google berfungsi di environment staging (redirect URI Google Console harus didaftarkan untuk domain staging, BEDA dari `localhost` — jangan lupa update Google Cloud Console authorized redirect URIs)
+---
+
+### Task 7.2 — Staging Deployment & Environment Hardening (Hari 14)
+**Scope Utama:** [DevOps & Deployment]  
+**Developer:** Tim (Bara, Awan, Naufal)  
+**Target Platform:** Vercel Staging + Supabase Staging Database  
+**Detail Alur Logic:**  
+- Deployment ke environment Staging.
+- Konfigurasi Environment Variables di Vercel & Supabase (`DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOLD_PRICE_API_KEY`, `MIDTRANS_SERVER_KEY`).
+- Update Google Cloud Console Authorized Redirect URIs untuk domain staging.
+- Smoke Test 4 Role: Verify login & akses RBAC untuk `WAKIF`, `NADZIR`, `PETUGAS_LAPANGAN`, dan `ADMIN` di staging environment.
+- Update `RUNBOOK.md` dengan instruksi deployment & maintenance final.  
+**Acceptance Criteria (DoD):**  
+- [ ] Staging deployment sukses & dapat diakses publik.
+- [ ] Smoke test 4 role PASS.
+- [ ] `RUNBOOK.md` updated.
+
+---
 
 ## Eksplisit DI LUAR Scope 14 Hari Ini
 
