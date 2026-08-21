@@ -34,6 +34,11 @@ SUPABASE_SERVICE_ROLE_KEY=
 FCM_SERVER_KEY=
 FCM_PROJECT_ID=
 
+# OAuth Testing (SECURITY POLICY - LOCAL ONLY)
+# HANYA set 'true' di local dev testing jika tanpa akun Google asli.
+# JANGAN PERNAH di-set di Vercel / Staging / Production!
+ALLOW_OAUTH_MOCK=false
+
 NODE_ENV=development
 ```
 

@@ -12,7 +12,7 @@ export async function reserveSlot(
     WHERE hewan_batch_id = ${hewanBatchId} AND status = 'TERSEDIA'
     ORDER BY "nomor_slot" ASC
     LIMIT ${jumlahSlotDiminta}
-    FOR UPDATE SKIP LOCKED
+    FOR UPDATE
   `;
 
   if (availableSlots.length < jumlahSlotDiminta) {

@@ -23,6 +23,27 @@ export async function GET(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
+    const stateParam = searchParams.get('state');
+    const stateCookie = req.cookies.get('amwal_oauth_state')?.value;
+
+    // Strict environment gating for mock behavior (local testing only)
+    const isMockAllowed =
+      process.env.NODE_ENV !== 'production' &&
+      process.env.ALLOW_OAUTH_MOCK === 'true';
+
+    const isMockCode = isMockAllowed && code.startsWith('mock_google_');
+
+    // CSRF Protection: Validate state parameter matches state cookie (enforced ALWAYS unless local mock environment is enabled)
+    if (!isMockCode) {
+      if (!stateParam || !stateCookie || stateParam !== stateCookie) {
+        const loginUrl = new URL('/login', req.url);
+        loginUrl.searchParams.set('error', 'Validasi CSRF (state) gagal. Silakan coba login kembali.');
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+        return res;
+      }
+    }
+
     const clientId = process.env.GOOGLE_CLIENT_ID || 'dummy_google_client_id';
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET || 'dummy_google_client_secret';
     const redirectUri = process.env.GOOGLE_REDIRECT_URI || `${req.nextUrl.origin}/api/auth/google/callback`;
@@ -65,23 +86,33 @@ export async function GET(req: NextRequest) {
       }
 
       const profileData = await profileRes.json();
+
+      // Verify email_verified === true from Google UserInfo response
+      if (profileData.email_verified !== true) {
+        const loginUrl = new URL('/login', req.url);
+        loginUrl.searchParams.set('error', 'Email Google belum terverifikasi oleh Google.');
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+        return res;
+      }
+
       googleProfile = {
         email: profileData.email,
         name: profileData.name || profileData.email.split('@')[0],
         sub: profileData.sub,
       };
     } catch (err) {
-      console.warn('Google OAuth API call failed or in mock/test mode:', err);
-      
-      // If code looks like a test mock code or Google API call fails in dev/test, fallback for testing
-      if (code.startsWith('mock_google_email_')) {
+      console.warn('Google OAuth API call failed or in mock mode:', err);
+
+      // Mock fallback ONLY allowed if process.env.NODE_ENV !== 'production' AND process.env.ALLOW_OAUTH_MOCK === 'true'
+      if (isMockAllowed && code.startsWith('mock_google_email_')) {
         const mockEmail = code.replace('mock_google_email_', '');
         googleProfile = {
           email: mockEmail,
           name: 'Google User Mock',
           sub: 'google_sub_' + Date.now(),
         };
-      } else if (code.startsWith('mock_google_code_')) {
+      } else if (isMockAllowed && code.startsWith('mock_google_code_')) {
         const mockEmail = code.replace('mock_google_code_', '') + '@gmail.com';
         googleProfile = {
           email: mockEmail,
@@ -91,14 +122,18 @@ export async function GET(req: NextRequest) {
       } else {
         const loginUrl = new URL('/login', req.url);
         loginUrl.searchParams.set('error', 'Gagal memverifikasi akun dengan Google');
-        return NextResponse.redirect(loginUrl);
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+        return res;
       }
     }
 
     if (!googleProfile.email || !googleProfile.sub) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('error', 'Email tidak ditemukan dari akun Google');
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+      return res;
     }
 
     // 3. Search existing user by email
@@ -116,7 +151,9 @@ export async function GET(req: NextRequest) {
           'error',
           'Email sudah terdaftar via password, silakan login dengan password biasa'
         );
-        return NextResponse.redirect(loginUrl);
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+        return res;
       }
     } else {
       // Rule 2c: If user does not exist, create a new User with passwordHash: null and role WAKIF
@@ -135,7 +172,9 @@ export async function GET(req: NextRequest) {
     if (!targetUser) {
       const loginUrl = new URL('/login', req.url);
       loginUrl.searchParams.set('error', 'Gagal memproses pengguna Google');
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+      return res;
     }
 
     // 4. Issue Access Token & Refresh Token using system token helper (lib/tokens.ts)
@@ -178,11 +217,16 @@ export async function GET(req: NextRequest) {
       maxAge: REFRESH_TOKEN_MAX_AGE,
     });
 
+    // Clear state cookie
+    response.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+
     return response;
   } catch (error) {
     console.error('Error in Google OAuth callback:', error);
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('error', 'Internal server error saat login Google');
-    return NextResponse.redirect(loginUrl);
+    const res = NextResponse.redirect(loginUrl);
+    res.cookies.set('amwal_oauth_state', '', { maxAge: 0, path: '/' });
+    return res;
   }
 }
