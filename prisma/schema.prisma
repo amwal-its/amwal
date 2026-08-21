@@ -511,6 +511,18 @@ model ZakatGoldPriceHistory {
   @@map("zakat_gold_price_history")
 }
 
+model FundPool {
+  id               String   @id @default(uuid())
+  kode             String   @unique @map("kode")
+  nama             String   @map("nama")
+  balance          Decimal  @default(0) @map("balance") @db.Decimal(18, 2)
+  totalDistributed Decimal  @default(0) @map("total_distributed") @db.Decimal(18, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  @@map("fund_pools")
+}
+
 model HewanBatch {
   id                           String           @id @default(uuid())
   jenisHewan                   HewanType        @map("jenis_hewan")
