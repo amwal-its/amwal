@@ -1,0 +1,8 @@
+[     454ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2341ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2364ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2375ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2377ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2480ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://docs.google.com/drivesharing/clientmodel?id=1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats&foreignService=kix&authuser=0&origin=https%3A%2F%2Fdocs.google.com:0
+[  190716ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://docs.googleapis.com/v1/documents/1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats:0
+[  200630ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://docs.googleapis.com/v1/documents/1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats:0

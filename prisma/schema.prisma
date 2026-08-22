@@ -84,6 +84,7 @@ enum HewanBatchStatus {
 enum SlotStatus {
   TERSEDIA
   TERISI
+  TERJUAL
   DIBATALKAN
 }
 
@@ -559,6 +560,7 @@ model QurbanOrder {
   metodePembayaran   MetodeBayar            @map("metode_pembayaran")
   statusPembayaran   QurbanPaymentStatus    @default(BELUM_BAYAR) @map("status_pembayaran")
   totalHarga         Decimal                @map("total_harga") @db.Decimal(18, 2)
+  nominalDibayar     Decimal                @default(0) @map("nominal_dibayar") @db.Decimal(18, 2)
   sisaTagihan        Decimal                @default(0) @map("sisa_tagihan") @db.Decimal(18, 2)
   enteredByPetugasId String?                @map("entered_by_petugas_id")
   enteredByPetugas   PetugasLapanganProfile? @relation(fields: [enteredByPetugasId], references: [id])

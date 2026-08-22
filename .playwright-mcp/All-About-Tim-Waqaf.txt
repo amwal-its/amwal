@@ -1,0 +1,176 @@
+﻿Tim Waqaf:
+* Bara Ardiwinata (5026231220)
+* Muhammad Ade Dzakwan (5026231154)
+* Naufal Zaky Nugraha (50262310..)
+
+
+LOGBOOK TIM WAQAF
+
+
+No
+	Tanggal
+	Deskripsi
+	Bukti
+	1.
+	
+
+	Meet pertama koordinasi penetapan tugas Tim Waqaf
+	
+
+	2.
+	
+
+	Pembagian tugas internal Tim Waqaf
+	
+
+	3.
+	
+
+	Meet kedua progress awal Tim Waqaf
+	
+
+	4.
+	
+
+	Koordinasi dengan Tim Gemastik untuk penyelarasan batasan tugas
+	
+
+	5.
+	22 Mei 2026
+	Pembuatan Fitur #1: Sistem Autentikasi & Integrasi Backend
+• Perancangan halaman login (app/login/page.tsx).
+• Implementasi backend autentikasi & integrasi flow login-register (components/auth-flow.tsx).
+	Commit 3d4eb21, 9425ced, & 766d203 (Oleh: Bara & Naufal).
+	6.
+	25 Mei 2026
+	Pembuatan Fitur #2: Dashboard Utama & UI Desktop
+• Pengembangan halaman dashboard responsif mobile-first.
+• Integrasi bottom navigation bar (components/bottom-nav.tsx) dan header pencarian.
+	Commit e2643d0 (Oleh: Bara & Ade).
+	7.
+	27 Mei 2026
+	Pembuatan Fitur #3: Penyempurnaan Dashboard & Sistem Gamifikasi
+• Implementasi fitur Check-In Harian (Daily Check-in) untuk mengklaim "Poin Berkah" (XP).
+• Integrasi state management poin berkah harian (lib/points.ts).
+	Commit c8a457d & file app/dashboard/page.tsx (Oleh: Bara).
+	8.
+	05 Juni 2026
+	Pembuatan Fitur #4: Modul Zakat Hub (Kalkulator Zakat Multi-Kategori)
+• Pembuatan kalkulator zakat interaktif untuk Zakat Fitrah, Zakat Penghasilan, Emas/Perak, dan Tabungan.
+• Implementasi nishab otomatis dan perhitungan kewajiban zakat secara syariah.
+	File app/zakat/page.tsx (Oleh: Ade & Naufal).
+	9.
+	12 Juni 2026
+	Pembuatan Fitur #5: Modul Wakaf (Katalog & Detail Program)
+• Pembuatan daftar katalog wakaf dengan filter kategori (Uang, Pendidikan, Kesehatan, Masjid).
+• Halaman detail program wakaf (app/wakaf/page.tsx) dengan progress bar pengumpulan dana dan data Nazhir.
+	File app/catalog/page.tsx & app/wakaf/page.tsx (Oleh: Bara & Ade).
+	10.
+	18 Juni 2026
+	Pembuatan Fitur #6: Modul Infaq, Sedekah, & Qurban
+• Implementasi form nominal kustom infaq serta pilihan pembayaran (QRIS, E-Wallet, VA).
+• Pembuatan katalog hewan qurban beserta spesifikasi berat, harga, dan daerah penyaluran.
+	File app/infaq/page.tsx & app/qurban/page.tsx (Oleh: Naufal).
+	11.
+	22 Juni 2026
+	Pembuatan Fitur #7: Chatbot AI (Tanya AI Amwal) & Education Hub
+• Pembuatan asisten cerdas berbasis chat (app/ai-chat/page.tsx) untuk konsultasi syariah.
+• Pembuatan pusat edukasi dan artikel syariah (app/education/page.tsx).
+	File app/ai-chat/page.tsx & app/education/page.tsx (Oleh: Ade).
+	12.
+	26 Juni 2026
+	Integrasi & Migrasi Desain Repositori
+• Penggabungan seluruh aset desain, layout responsif mobile-first, dan optimalisasi styling Tailwind CSS dari repositori desain tim.
+	Commit 2921608 (Oleh: Bara).
+	13.
+	30 Juni 2026
+	Sistem Notifikasi, Riwayat Transaksi & Penerbitan Tanda Terima Syariah
+• Pembuatan modul riwayat transaksi, status pembayaran, serta rincian tanda terima digital.
+	File app/dashboard/history & app/dashboard/notifications (Oleh: Naufal).
+	________________
+
+
+DESKRIPSI PROGRESS KEMAJUAN
+
+
+Hingga akhir Juni 2026, Tim Waqaf telah berhasil mengembangkan sebagian besar fitur utama aplikasi Amwal sesuai dengan roadmap yang telah disusun. Pengembangan diawali dengan implementasi sistem autentikasi pengguna beserta integrasi backend untuk mendukung proses registrasi dan login secara aman. Selanjutnya, tim membangun dashboard utama yang responsif dengan pendekatan mobile-first, dilengkapi navigasi utama, sistem pencarian, serta mekanisme gamifikasi melalui fitur Daily Check-in dan Poin Berkah untuk meningkatkan keterlibatan pengguna.
+Pada aspek layanan filantropi Islam, telah berhasil dikembangkan modul Zakat, Wakaf, Infaq, Sedekah, dan Qurban. Modul Zakat mendukung berbagai jenis perhitungan zakat secara otomatis sesuai ketentuan syariah, sedangkan modul Wakaf menyediakan katalog program, halaman detail program, serta informasi progres pengumpulan dana. Modul Infaq dan Sedekah telah dilengkapi pilihan nominal dan metode pembayaran, sementara modul Qurban menyediakan katalog hewan, pilihan paket, serta alur transaksi hingga konfirmasi pembayaran.
+Selain fitur transaksi, aplikasi juga telah dilengkapi dengan Education Hub sebagai pusat edukasi mengenai ekonomi syariah dan Tanya AI Amwal, yaitu chatbot berbasis kecerdasan buatan yang membantu pengguna memperoleh informasi mengenai zakat, wakaf, infaq, sedekah, dan qurban. Fitur pendukung lainnya seperti halaman profil pengguna, pengaturan akun, sistem notifikasi, riwayat transaksi, serta penerbitan tanda terima digital juga telah selesai diimplementasikan sehingga menghasilkan pengalaman pengguna yang lebih terintegrasi.
+Seluruh komponen antarmuka telah diintegrasikan ke dalam satu repositori dengan desain yang konsisten dan responsif. Berdasarkan capaian tersebut, aplikasi telah memiliki alur penggunaan yang lengkap mulai dari autentikasi pengguna, eksplorasi program, simulasi dan transaksi ibadah finansial syariah, hingga dokumentasi riwayat transaksi dan penyediaan konten edukasi. Tahapan selanjutnya akan difokuskan pada penyempurnaan integrasi backend, pengujian sistem secara menyeluruh, optimasi performa aplikasi, serta persiapan demonstrasi dan finalisasi produk.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Pada saat pengembangan kita mengalami kendala tentu dalam bingungnya menyatukan pendapat dan pemahaman antara stakeholder dan developer. Hal ini memicu banyaknya revisi dan visi pengembangan yang kurang jelas. Sehingga hal tersebut menghambat timeline dari pengembangan web app ini.
+Rencana Pengembangan Kedepan
+Untuk rencana pengembangan kedepan adalah kita memastikan dengan baik proses pengembagan berjalan dengan baik.
+________________
+
+
+
+
+SCREENSHOT WEBSITE
+
+
+Authentication Page
+  
+  
+
+
+
+Homepage and Notification Page
+  
+  
+
+________________
+
+
+Profile and settings page
+  
+  
+
+
+
+Waqaf Page:
+  
+  
+  
+
+  
+  
+
+
+Zakat Page:
+      
+  
+
+
+
+Qurban Page:
+      
+________________
+  
+
+
+Page Riwayat
+  
+
+
+Page Edukasi:
+      
+  
+
+
+Point Page

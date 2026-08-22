@@ -1,0 +1,8 @@
+[     650ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[     724ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/roboto/v48/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMa3yUBA.woff2 @ https://docs.google.com/document/d/1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats/edit?usp=sharing:18
+[    1167ms] [INFO] Slow network is detected. See https://www.chromestatus.com/feature/5636954674692096 for more details. Fallback font will be used while loading: https://fonts.gstatic.com/s/roboto/v48/KFO7CnqEu92Fr1ME7kSn66aGLdTylUAMaxKUBGEe.woff2 @ https://docs.google.com/_/docs/_/js/k=docs.client_js_prod_integrated.id.YcSaLS0yiBk.es5.O/am=QAgEOABg/d=0/wt=0/rs=AGWKN8kcgR48OfDMSFWFaduDEktmPojnSg/m=kix_app:566
+[    2059ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2074ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2077ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2079ms] [ERROR] Failed to load resource: net::ERR_FAILED @ chrome-extension://invalid/:0
+[    2120ms] [WARNING] An iframe which has both allow-scripts and allow-same-origin for its sandbox attribute can escape its sandboxing. @ https://docs.google.com/drivesharing/clientmodel?id=1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats&foreignService=kix&authuser=0&origin=https%3A%2F%2Fdocs.google.com:0
