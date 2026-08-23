@@ -21,11 +21,9 @@ interface RouteRule {
 // Route di luar daftar ini dianggap publik (tidak diperiksa proxy).
 const PROTECTED_ROUTES: RouteRule[] = [
   { prefix: '/dashboard/admin', roles: ['ADMIN'] },
-  // Entri zakat offline boleh diampu ADMIN/PETUGAS_LAPANGAN (fungsi amil)
   { prefix: '/api/admin/zakat/orders', roles: ['ADMIN', 'PETUGAS_LAPANGAN'] },
-  // Manajemen mustahik boleh diampu ADMIN/PETUGAS_LAPANGAN (fungsi amil)
   { prefix: '/api/admin/mustahiq', roles: ['ADMIN', 'PETUGAS_LAPANGAN'] },
-  { prefix: '/api/admin', roles: ['ADMIN'] },
+  { prefix: '/api/admin', roles: ['ADMIN', 'PETUGAS_LAPANGAN'] },
   { prefix: '/dashboard/nadzir', roles: ['NADZIR'] },
   { prefix: '/api/nadzir', roles: ['NADZIR'] },
   { prefix: '/dashboard/petugas', roles: ['PETUGAS_LAPANGAN'] },
