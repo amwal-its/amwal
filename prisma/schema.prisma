@@ -312,6 +312,7 @@ model WaqfPrincipalLedger {
   waqfProgramId             String      @unique @map("waqf_program_id")
   waqfProgram               WaqfProgram @relation(fields: [waqfProgramId], references: [id])
   pokokDanaTerkumpul        Decimal     @default(0) @map("pokok_dana_terkumpul") @db.Decimal(18, 2)
+  totalHasilAvailable       Decimal     @default(0) @map("total_hasil_available") @db.Decimal(18, 2)
   hasilInvestasiTersalurkan Decimal     @default(0) @map("hasil_investasi_tersalurkan") @db.Decimal(18, 2)
   updatedAt                 DateTime    @updatedAt @map("updated_at")
 
@@ -337,6 +338,9 @@ model FundWithdrawalRequest {
   waqfProgramId String           @map("waqf_program_id")
   waqfProgram   WaqfProgram      @relation(fields: [waqfProgramId], references: [id])
   amount        Decimal          @map("amount") @db.Decimal(18, 2)
+  peruntukan    String?          @map("peruntukan")
+  rekeningTujuan String?         @map("rekening_tujuan")
+  adminNotes    String?          @map("admin_notes")
   requestedById String           @map("requested_by_id")
   requestedBy   User             @relation("RequestedBy", fields: [requestedById], references: [id])
   approvedById  String?          @map("approved_by_id")
