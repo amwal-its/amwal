@@ -461,12 +461,16 @@ model ZakatOrder {
 }
 
 model MustahiqProfile {
-  id           String   @id @default(uuid())
-  namaMustahiq String   @map("nama_mustahiq")
-  kategoriAsnaf Asnaf   @map("kategori_asnaf")
-  alamat       String?  @map("alamat")
-  noTelepon    String?  @map("no_telepon")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id               String             @id @default(uuid())
+  namaMustahiq     String             @map("nama_mustahiq")
+  nik              String?            @map("nik") // tersimpan terenkripsi AES-256
+  kategoriAsnaf    Asnaf              @map("kategori_asnaf")
+  alamat           String?            @map("alamat")
+  noTelepon        String?            @map("no_telepon")
+  statusVerifikasi VerificationStatus @default(PENDING) @map("status_verifikasi")
+  adminNotes       String?            @map("admin_notes")
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @updatedAt @map("updated_at")
 
   zakatDistributions ZakatDistribution[]
 

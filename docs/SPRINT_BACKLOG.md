@@ -63,7 +63,7 @@
 **Detail Logic:**  
 - Membuat storage bucket di Supabase dengan RLS policies yang sesuai untuk dokumen privat vs media publik.
 - Menyusun draft dokumentasi arsitektur (`DOMAIN_GLOSSARY.md`, `DECISION_LOG.md`).  
-**DoD:** Upload file dari backend API ke Supabase Storage terverifikasi sukses.
+**DoD:** Upload file dari backend API ke Supabase Storage terverifikasi sukses. — **DONE** (lihat `lib/storage.ts`)
 
 ---
 
@@ -153,8 +153,8 @@ Body: { "jenisBeras": "string", "konversiHargaPerJiwa": 45000, "referensiSk": "S
 ```
 - `isActive: true` default. Jika Admin membuat config baru untuk `jenisBeras` yang sama, config lama di-set `isActive: false` (tetap tersimpan untuk histori).  
 **Acceptance Criteria (DoD):**  
-- [ ] Minimal 3 varian seed (Standar/Premium/Organik) dengan harga berbeda.
-- [ ] Kalkulator FITRAH (Task 2.3) WAJIB mengambil `konversiHargaPerJiwa` dari tabel ini, BUKAN hardcode/input bebas dari client.
+- [x] Minimal 3 varian seed (Standar/Premium/Organik) dengan harga berbeda.
+- [x] Kalkulator FITRAH (Task 2.3) WAJIB mengambil `konversiHargaPerJiwa` dari tabel ini, BUKAN hardcode/input bebas dari client.
 
 ---
 
@@ -169,8 +169,8 @@ Body: { "jenisBeras": "string", "konversiHargaPerJiwa": 45000, "referensiSk": "S
 - `goldPricePerGram` **TIDAK LAGI** di-input manual dari client untuk kalkulasi resmi — wajib mengambil data terbaru dari `ZakatGoldPriceHistory`.
 - `hargaBerasPerKg` untuk FITRAH wajib mengambil dari `ZakatFitrahConfig` sesuai `jenisBeras` pilihan user.  
 **Acceptance Criteria (DoD):**  
-- [ ] Unit test per jenis zakat lolos.
-- [ ] `nisabDigunakan` tersimpan konsisten sesuai acuan sistem.
+- [x] Unit test per jenis zakat lolos.
+- [x] `nisabDigunakan` tersimpan konsisten sesuai acuan sistem.
 
 ---
 
@@ -198,9 +198,9 @@ Body: { "pricePerGram": 1350000 }
 ```
 - Insert record baru `source: 'MANUAL_FALLBACK'` yang otomatis menjadi cache aktif.  
 **Acceptance Criteria (DoD):**  
-- [ ] Simulasi API down → endpoint tetap mengembalikan harga dari cache, tidak HTTP 500.
-- [ ] Cache < 6 jam → dibuktikan TIDAK melakukan network call baru ke provider eksternal.
-- [ ] Admin manual override → langsung menjadi harga aktif berikutnya.
+- [x] Simulasi API down → endpoint tetap mengembalikan harga dari cache, tidak HTTP 500.
+- [x] Cache < 6 jam → dibuktikan TIDAK melakukan network call baru ke provider eksternal.
+- [x] Admin manual override → langsung menjadi harga aktif berikutnya.
 
 ---
 
@@ -215,8 +215,8 @@ Body: { "pricePerGram": 1350000 }
 - Generate `nomorKwitansi` (`ZKT-YYYY-XXXX`).
 - Jika metode pembayaran digital → integrasikan pembuatan invoice Midtrans/Xendit.  
 **Acceptance Criteria (DoD):**  
-- [ ] `isAnonymous: true` tersimpan dengan benar di DB.
-- [ ] Order tersimpan dengan status `MENUNGGU_PEMBAYARAN`.
+- [x] `isAnonymous: true` tersimpan dengan benar di DB.
+- [x] Order tersimpan dengan status `MENUNGGU_PEMBAYARAN`.
 
 ---
 
@@ -313,9 +313,9 @@ Body: {
 - Jika `UANG` → input `nominalRp`. Jika `BERAS` → input `jumlahBerasKg` dan `konversiHargaPerKg` (dari `ZakatFitrahConfig`).
 - Auto-generate `nomorKwitansi` (`ZKT-OFF-YYYY-XXXX`) dan set status `TERVERIFIKASI`.  
 **Acceptance Criteria (DoD):**  
-- [ ] Mendukung zakat beras dan zakat uang.
-- [ ] `isAnonymous: true` tersimpan dengan benar.
-- [ ] Saldo `FundPool` terkait ter-increment otomatis.
+- [x] Mendukung zakat beras dan zakat uang.
+- [x] `isAnonymous: true` tersimpan dengan benar.
+- [x] Saldo `FundPool` terkait ter-increment otomatis.
 
 ---
 
@@ -330,8 +330,8 @@ Body: {
 - Update `ZakatOrder.status` → `TERVERIFIKASI`.
 - Tambahkan saldo `FundPool` sesuai `jenisZakat` (`ZAKAT_MAAL`, `ZAKAT_FITRAH`, dll) secara atomic `$transaction`.  
 **Acceptance Criteria (DoD):**  
-- [ ] Webhook bersifat idempotent (duplicate payload diabaikan dengan HTTP 200).
-- [ ] Saldo `FundPool` ter-increment dengan tepat.
+- [x] Webhook bersifat idempotent (duplicate payload diabaikan dengan HTTP 200).
+- [x] Saldo `FundPool` ter-increment dengan tepat.
 
 ---
 
@@ -410,8 +410,8 @@ Body: {
 - Input body: `namaLengkap`, `nik`, `kategoriAsnafEnum` (8 Asnaf: FAKIR, MISKIN, AMIL, MUALLAF, RIQAB, GHARIMIN, FISABILILLAH, IBNU_SABIL), `alamat`, `noHp`, `statusVerifikasi` (`PENDING`/`VERIFIED`/`REJECTED`).
 - NIK wajib dienkripsi AES-256.  
 **Acceptance Criteria (DoD):**  
-- [ ] Enkripsi NIK AES-256 teruji.
-- [ ] 8 Kategori Asnaf ter-validate.
+- [x] Enkripsi NIK AES-256 teruji.
+- [x] 8 Kategori Asnaf ter-validate.
 
 ---
 
@@ -426,8 +426,8 @@ Body: {
 - Potong `FundPool.balance` dan tambah `FundPool.totalDistributed` dalam `$transaction`.
 - Simpan `kategoriAsnaf`, `bentukBantuan` (`UANG`/`BERAS`), `buktiFotoUrl`.  
 **Acceptance Criteria (DoD):**  
-- [ ] Saldo `FundPool` berkurang secara atomic.
-- [ ] Return HTTP 400 jika saldo pool tidak mencukupi.
+- [x] Saldo `FundPool` berkurang secara atomic.
+- [x] Return HTTP 400 jika saldo pool tidak mencukupi.
 
 ---
 
