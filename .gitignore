@@ -24,14 +24,29 @@
 .DS_Store
 *.pem
 
-# debug
+# Security & Secret protection
+.env*
+!.env.example
+
+# Logs & Debug (strict blocking for all log files and task logs)
+*.log
+*.log.*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Playwright MCP & Temporary Dumps
+.playwright-mcp/
+/scratch/
+find-dialog.yml
+page-*.yml
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
 
 # vercel
 .vercel
