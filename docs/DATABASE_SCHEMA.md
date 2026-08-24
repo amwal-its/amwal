@@ -461,10 +461,14 @@ Ref: zakat_orders.transaction_id - transactions.id
 Table mustahiq_profiles {
   id uuid [pk, default: `gen_random_uuid()`]
   nama_mustahiq varchar(255) [not null]
+  nik varchar(255) // tersimpan terenkripsi AES-256
   kategori_asnaf asnaf_enum [not null]
   alamat text
   no_telepon varchar(20)
+  status_verifikasi verification_status_enum [not null, default: 'PENDING']
+  admin_notes text
   created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null]
 }
 
 Table zakat_distributions {

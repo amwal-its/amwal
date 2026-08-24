@@ -9,6 +9,14 @@ const VARIAN = [
   { jenisBeras: 'Organik', konversiHargaPerJiwa: '65000', referensiSk: 'SK BAZNAS 2026' },
 ];
 
+// 4 FundPool baseline (Task 1.3)
+const FUND_POOLS = [
+  { kode: 'ZAKAT_MAAL', nama: 'Zakat Maal' },
+  { kode: 'ZAKAT_FITRAH', nama: 'Zakat Fitrah' },
+  { kode: 'INFAK', nama: 'Infaq' },
+  { kode: 'SEDEKAH', nama: 'Sedekah' },
+];
+
 async function main() {
   for (const variant of VARIAN) {
     const existing = await prisma.zakatFitrahConfig.findFirst({
@@ -41,6 +49,15 @@ async function main() {
       });
     });
     console.log(`Seeded (created): ${variant.jenisBeras}`);
+  }
+
+  for (const pool of FUND_POOLS) {
+    await prisma.fundPool.upsert({
+      where: { kode: pool.kode },
+      update: {},
+      create: { kode: pool.kode, nama: pool.nama },
+    });
+    console.log(`Seeded FundPool: ${pool.kode}`);
   }
 
   console.log('Seed completed.');
