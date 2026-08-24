@@ -1,0 +1,119 @@
+- application [ref=e1]:
+  - banner "Panel menu" [ref=e2]:
+    - generic [ref=e5]:
+      - link "Beranda Dokumen" [ref=e7] [cursor=pointer]:
+        - /url: https://docs.google.com/document/u/0/?authuser=0&usp=docs_web
+      - generic [ref=e14]:
+        - generic "All About Tim Waqaf" [ref=e16]:
+          - generic [ref=e17]:
+            - generic: All About Tim Waqaf
+            - textbox "Ganti nama" [ref=e19]: All About Tim Waqaf
+          - 'button "Status dokumen: Disimpan ke Drive." [ref=e22]':
+            - generic [ref=e27] [cursor=pointer]: Disimpan ke Drive
+        - generic [ref=e30]:
+          - button [disabled] [ref=e32]
+          - button [ref=e36]
+          - generic [ref=e41]:
+            - button "Bagikan" [disabled] [ref=e42]: Bagikan
+            - button "Tindakan berbagi cepat" [ref=e44]
+          - 'button "Akun Google: Naufal Zaky Nugraha (zakymuslim7@gmail.com)" [ref=e48] [cursor=pointer]':
+            - img [ref=e50]
+            - img [ref=e55]
+    - generic [ref=e56]:
+      - menubar [ref=e58]:
+        - menuitem "File" [ref=e59] [cursor=pointer]
+        - menuitem "Edit" [ref=e60] [cursor=pointer]
+        - menuitem "Tampilan" [ref=e61] [cursor=pointer]
+        - menuitem "Sisipkan" [ref=e62] [cursor=pointer]
+        - menuitem "Format" [ref=e63] [cursor=pointer]
+        - menuitem "Alat" [ref=e64] [cursor=pointer]
+        - menuitem "Ekstensi" [ref=e65] [cursor=pointer]
+        - menuitem "Bantuan" [ref=e66] [cursor=pointer]
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - toolbar "Telusuri menu (Alt+/)" [ref=e69]:
+            - combobox "Menu" [ref=e71]
+          - toolbar "Utama" [ref=e72]:
+            - button "Urungkan (Ctrl+Z)" [ref=e73] [cursor=pointer]
+            - button "Ulangi (Ctrl+Y)" [ref=e78] [cursor=pointer]
+            - button "Cetak (Ctrl+P)" [disabled] [ref=e83]
+            - button "Pemeriksaan ejaan dan tata bahasa (Ctrl+Alt+X)" [disabled] [ref=e88]
+            - button "Terapkan format" [ref=e93] [cursor=pointer]
+            - combobox "Zoom" [ref=e98] [cursor=pointer]:
+              - option "Daftar Zoom. 100% dipilih." [selected] [ref=e101]:
+                - textbox "Zoom" [ref=e102]: 100%
+            - separator [disabled] [ref=e106]
+            - listbox "Gaya" [disabled] [ref=e107]:
+              - option "Gaya" [disabled] [selected] [ref=e110]: Teks normal
+            - separator [disabled] [ref=e114]
+            - listbox "Font" [ref=e115] [cursor=pointer]:
+              - option "Arial" [selected] [ref=e118]
+            - separator [disabled] [ref=e122]
+            - button "Perkecil ukuran font (Ctrl+Shift+koma)" [ref=e123] [cursor=pointer]
+            - combobox "Ukuran font" [ref=e128] [cursor=pointer]:
+              - option "Daftar Ukuran font. 11 dipilih." [selected] [ref=e131]:
+                - textbox "Ukuran font" [ref=e132]: "11"
+            - button "Perbesar ukuran font (Ctrl+Shift+titik)" [ref=e133] [cursor=pointer]
+            - separator [disabled] [ref=e138]
+            - button "Tebalkan (Ctrl+B)" [pressed] [ref=e139] [cursor=pointer]
+            - button "Miringkan (Ctrl+I)" [ref=e144] [cursor=pointer]
+            - button "Garis bawahi (Ctrl+U)" [ref=e149] [cursor=pointer]
+            - button "Warna teks" [ref=e154] [cursor=pointer]
+            - button "Warna sorotan" [ref=e161] [cursor=pointer]
+            - separator [disabled] [ref=e168]
+            - button "Yang lain" [disabled] [ref=e169] [cursor=pointer]
+        - toolbar "Mode dan tampilan" [ref=e176]:
+          - button [disabled] [ref=e177]
+          - separator [disabled] [ref=e181]
+          - button "Sembunyikan menu (Ctrl+Shift+F)" [ref=e182] [cursor=pointer]
+  - generic [ref=e189]:
+    - generic [ref=e194]:
+      - generic [ref=e195]: "22"
+      - generic [ref=e200]: "21"
+      - generic [ref=e205]: "20"
+      - generic [ref=e210]: "19"
+      - generic [ref=e215]: "18"
+      - generic [ref=e220]: "17"
+      - generic [ref=e225]: "16"
+      - generic [ref=e230]: "15"
+      - generic [ref=e235]: "14"
+      - generic [ref=e240]: "13"
+      - generic [ref=e245]: "12"
+      - generic [ref=e250]: "11"
+      - generic [ref=e255]: "10"
+      - generic [ref=e260]: "9"
+      - generic [ref=e265]: "8"
+      - generic [ref=e270]: "7"
+      - generic [ref=e275]: "6"
+      - generic [ref=e280]: "5"
+      - generic [ref=e285]: "4"
+      - generic [ref=e290]: "3"
+      - generic [ref=e295]: "2"
+      - generic [ref=e300]: "1"
+      - generic [ref=e309]: "1"
+      - generic [ref=e314]: "2"
+      - generic [ref=e319]: "3"
+      - generic [ref=e324]: "4"
+      - generic [ref=e329]: "5"
+      - generic [ref=e334]: "6"
+      - generic [ref=e339]: "7"
+      - generic [ref=e344]: "8"
+      - generic [ref=e349]: "9"
+      - generic [ref=e354]: "10"
+      - generic [ref=e359]: "11"
+      - generic [ref=e364]: "12"
+      - generic [ref=e369]: "13"
+      - generic [ref=e374]: "14"
+      - generic [ref=e379]: "15"
+      - generic [ref=e384]: "16"
+      - generic [ref=e389]: "17"
+      - generic [ref=e394]: "18"
+      - generic [ref=e399]: "19"
+      - generic [ref=e404]: "20"
+      - generic [ref=e409]: "21"
+    - img [ref=e430]
+  - iframe [active] [ref=e431]:
+    - textbox "Konten dokumen" [active] [ref=f29e1]
+    - group
+  - link "Aktifkan dukungan pembaca layar" [ref=e432] [cursor=pointer]:
+    - /url: "#"

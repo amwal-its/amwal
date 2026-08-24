@@ -84,6 +84,7 @@ enum HewanBatchStatus {
 enum SlotStatus {
   TERSEDIA
   TERISI
+  TERJUAL
   DIBATALKAN
 }
 
@@ -561,7 +562,8 @@ model HewanBatch {
   galeriFotoUrls               Json?            @map("galeri_foto_urls")
   createdAt                    DateTime         @default(now()) @map("created_at")
 
-  qurbanAnimalSlots QurbanAnimalSlot[]
+  qurbanAnimalSlots             QurbanAnimalSlot[]
+  qurbanDistributionAllocations QurbanDistributionAllocation[]
 
   @@map("hewan_batches")
 }
@@ -592,6 +594,7 @@ model QurbanOrder {
   metodePembayaran   MetodeBayar            @map("metode_pembayaran")
   statusPembayaran   QurbanPaymentStatus    @default(BELUM_BAYAR) @map("status_pembayaran")
   totalHarga         Decimal                @map("total_harga") @db.Decimal(18, 2)
+  nominalDibayar     Decimal                @default(0) @map("nominal_dibayar") @db.Decimal(18, 2)
   sisaTagihan        Decimal                @default(0) @map("sisa_tagihan") @db.Decimal(18, 2)
   enteredByPetugasId String?                @map("entered_by_petugas_id")
   enteredByPetugas   PetugasLapanganProfile? @relation(fields: [enteredByPetugasId], references: [id])
@@ -674,6 +677,8 @@ model PermohonanPenyaluranInstitusional {
   nomorRekeningPemohon String?          @map("nomor_rekening_pemohon")
   namaBank             String?          @map("nama_bank")
   status               PermohonanStatus @default(DIAJUKAN) @map("status")
+  adminNotes           String?          @map("admin_notes")
+  alokasiDagingDisetujuiKg Decimal?         @map("alokasi_daging_disetujui_kg") @db.Decimal(10, 2)
   approvedByAdminId    String?          @map("approved_by_admin_id")
   approvedByAdmin      User?            @relation("ApprovedPermohonanByAdmin", fields: [approvedByAdminId], references: [id])
   createdAt            DateTime         @default(now()) @map("created_at")
@@ -689,6 +694,8 @@ model QurbanDistributionAllocation {
   permohonan    PermohonanPenyaluranInstitusional? @relation(fields: [permohonanId], references: [id])
   qurbanOrderId String?                            @map("qurban_order_id")
   qurbanOrder   QurbanOrder?                       @relation(fields: [qurbanOrderId], references: [id])
+  hewanBatchId  String                             @map("hewan_batch_id")
+  hewanBatch    HewanBatch                         @relation(fields: [hewanBatchId], references: [id])
   jumlahBagian  Decimal?                           @map("jumlah_bagian") @db.Decimal(10, 2)
   tanggalSalur  DateTime?                          @map("tanggal_salur") @db.Date
   buktiFotoUrl  String?                            @map("bukti_foto_url")

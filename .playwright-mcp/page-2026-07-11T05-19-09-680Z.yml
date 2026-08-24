@@ -1,0 +1,198 @@
+- application [ref=e1]:
+  - iframe [ref=e2]:
+    
+  - iframe [ref=e3]:
+    
+  - banner "Panel menu" [ref=e4]:
+    - generic [ref=e7]:
+      - link "Beranda Dokumen" [ref=e9] [cursor=pointer]:
+        - /url: https://docs.google.com/document/?usp=docs_web
+      - generic [ref=e16]:
+        - generic "All About Tim Waqaf" [ref=e18]:
+          - generic [ref=e20]: All About Tim Waqaf
+          - 'button "Status dokumen: Disimpan ke Drive." [ref=e24]'
+        - generic [ref=e32]:
+          - button "Chipmunk Anonim" [ref=e784]:
+            - img "Chipmunk Anonim" [ref=e789] [cursor=pointer]
+          - button "Tampilkan semua komentar" [ref=e37] [cursor=pointer]
+          - generic [ref=e40]:
+            - button "Bagikan. Siapa saja yang memiliki link. Siapa saja yang memiliki link dapat mengakses. Tidak perlu masuk ke sistem." [disabled] [ref=e41]: Bagikan
+            - button "Tindakan berbagi cepat" [disabled] [ref=e43]
+          - link "Login" [ref=e47] [cursor=pointer]:
+            - /url: https://accounts.google.com/ServiceLogin?service=wise&passive=1209600&osid=1&continue=https://docs.google.com/document/d/1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats/edit?usp%3Dsharing&followup=https://docs.google.com/document/d/1TBGi6_Rd1CQYmy31U1nXJcD3lSHRPrhNXNJbOvN3ats/edit?usp%3Dsharing&ltmpl=docs&ec=GAZAGQ
+    - generic [ref=e48]:
+      - menubar [ref=e50]:
+        - menuitem "File" [ref=e51] [cursor=pointer]
+        - menuitem "Edit" [ref=e52] [cursor=pointer]
+        - menuitem "Tampilan" [ref=e53] [cursor=pointer]
+        - menuitem "Sisipkan" [ref=e54] [cursor=pointer]
+        - menuitem "Format" [ref=e55] [cursor=pointer]
+        - menuitem "Alat" [ref=e56] [cursor=pointer]
+        - menuitem "Ekstensi" [ref=e57] [cursor=pointer]
+        - menuitem "Bantuan" [ref=e58] [cursor=pointer]
+      - generic [ref=e59]:
+        - generic [ref=e60]:
+          - toolbar "Telusuri menu (Alt+/)" [ref=e61]:
+            - combobox "Menu" [ref=e63]
+          - toolbar "Utama" [ref=e64]:
+            - button "Urungkan (Ctrl+Z)" [ref=e65] [cursor=pointer]
+            - button "Ulangi (Ctrl+Y)" [ref=e70] [cursor=pointer]
+            - button "Cetak (Ctrl+P)" [ref=e75] [cursor=pointer]
+            - button "Pemeriksaan ejaan dan tata bahasa (Ctrl+Alt+X)" [ref=e80] [cursor=pointer]
+            - button "Terapkan format" [ref=e85] [cursor=pointer]
+            - combobox "Zoom" [ref=e90] [cursor=pointer]:
+              - option "Daftar Zoom. 100% dipilih." [selected] [ref=e93]:
+                - textbox "Zoom" [ref=e94]: 100%
+            - separator [disabled] [ref=e98]
+            - listbox "Gaya" [ref=e99] [cursor=pointer]:
+              - option "Daftar Gaya. Teks normal dipilih." [selected] [ref=e102]: Teks normal
+            - separator [disabled] [ref=e106]
+            - listbox "Font" [ref=e107] [cursor=pointer]:
+              - option "Arial" [selected] [ref=e110]
+            - separator [disabled] [ref=e114]
+            - button "Perkecil ukuran font (Ctrl+Shift+koma)" [ref=e115] [cursor=pointer]
+            - combobox "Ukuran font" [ref=e120] [cursor=pointer]:
+              - option "Daftar Ukuran font. 11 dipilih." [selected] [ref=e123]:
+                - textbox "Ukuran font" [ref=e124]: "11"
+            - button "Perbesar ukuran font (Ctrl+Shift+titik)" [ref=e125] [cursor=pointer]
+            - separator [disabled] [ref=e130]
+            - button "Yang lain" [disabled] [ref=e161] [cursor=pointer]
+        - toolbar "Mode dan tampilan" [ref=e168]:
+          - button "Mode edit" [ref=e169] [cursor=pointer]:
+            - generic [ref=e172]: Mengedit
+          - separator [disabled] [ref=e176]
+          - button "Sembunyikan menu (Ctrl+Shift+F)" [ref=e177] [cursor=pointer]
+  - generic [ref=e184]:
+    - generic [ref=e189]:
+      - generic [ref=e190]: "22"
+      - generic [ref=e195]: "21"
+      - generic [ref=e200]: "20"
+      - generic [ref=e205]: "19"
+      - generic [ref=e210]: "18"
+      - generic [ref=e215]: "17"
+      - generic [ref=e220]: "16"
+      - generic [ref=e225]: "15"
+      - generic [ref=e230]: "14"
+      - generic [ref=e235]: "13"
+      - generic [ref=e240]: "12"
+      - generic [ref=e245]: "11"
+      - generic [ref=e250]: "10"
+      - generic [ref=e255]: "9"
+      - generic [ref=e260]: "8"
+      - generic [ref=e265]: "7"
+      - generic [ref=e270]: "6"
+      - generic [ref=e275]: "5"
+      - generic [ref=e280]: "4"
+      - generic [ref=e285]: "3"
+      - generic [ref=e290]: "2"
+      - generic [ref=e295]: "1"
+      - generic [ref=e304]: "1"
+      - generic [ref=e309]: "2"
+      - generic [ref=e314]: "3"
+      - generic [ref=e319]: "4"
+      - generic [ref=e324]: "5"
+      - generic [ref=e329]: "6"
+      - generic [ref=e334]: "7"
+      - generic [ref=e339]: "8"
+      - generic [ref=e344]: "9"
+      - generic [ref=e349]: "10"
+      - generic [ref=e354]: "11"
+      - generic [ref=e359]: "12"
+      - generic [ref=e364]: "13"
+      - generic [ref=e369]: "14"
+      - generic [ref=e374]: "15"
+      - generic [ref=e379]: "16"
+      - generic [ref=e384]: "17"
+      - generic [ref=e389]: "18"
+      - generic [ref=e394]: "19"
+      - generic [ref=e399]: "20"
+      - generic [ref=e404]: "21"
+    - generic [ref=e419]:
+      - generic:
+        - generic [ref=e423]:
+          - button
+        - generic:
+          - list
+    - generic [ref=e428]:
+      - generic [ref=e429]: "30"
+      - generic [ref=e434]: "29"
+      - generic [ref=e439]: "28"
+      - generic [ref=e444]: "27"
+      - generic [ref=e449]: "26"
+      - generic [ref=e454]: "25"
+      - generic [ref=e459]: "24"
+      - generic [ref=e464]: "23"
+      - generic [ref=e469]: "22"
+      - generic [ref=e474]: "21"
+      - generic [ref=e479]: "20"
+      - generic [ref=e484]: "19"
+      - generic [ref=e489]: "18"
+      - generic [ref=e494]: "17"
+      - generic [ref=e499]: "16"
+      - generic [ref=e504]: "15"
+      - generic [ref=e509]: "14"
+      - generic [ref=e514]: "13"
+      - generic [ref=e519]: "12"
+      - generic [ref=e524]: "11"
+      - generic [ref=e529]: "10"
+      - generic [ref=e534]: "9"
+      - generic [ref=e539]: "8"
+      - generic [ref=e544]: "7"
+      - generic [ref=e549]: "6"
+      - generic [ref=e554]: "5"
+      - generic [ref=e559]: "4"
+      - generic [ref=e564]: "3"
+      - generic [ref=e569]: "2"
+      - generic [ref=e574]: "1"
+      - generic [ref=e583]: "1"
+      - generic [ref=e588]: "2"
+      - generic [ref=e593]: "3"
+      - generic [ref=e598]: "4"
+      - generic [ref=e603]: "5"
+      - generic [ref=e608]: "6"
+      - generic [ref=e613]: "7"
+      - generic [ref=e618]: "8"
+      - generic [ref=e623]: "9"
+      - generic [ref=e628]: "10"
+      - generic [ref=e633]: "11"
+      - generic [ref=e638]: "12"
+      - generic [ref=e643]: "13"
+      - generic [ref=e648]: "14"
+      - generic [ref=e653]: "15"
+      - generic [ref=e658]: "16"
+      - generic [ref=e663]: "17"
+      - generic [ref=e668]: "18"
+      - generic [ref=e673]: "19"
+      - generic [ref=e678]: "20"
+      - generic [ref=e683]: "21"
+      - generic [ref=e688]: "22"
+      - generic [ref=e693]: "23"
+      - generic [ref=e698]: "24"
+      - generic [ref=e703]: "25"
+      - generic [ref=e708]: "26"
+      - generic [ref=e713]: "27"
+      - generic [ref=e718]: "28"
+      - generic [ref=e723]: "29"
+    - img [ref=e731]
+    - generic "Tab dokumen" [ref=e734]:
+      - button "Sembunyikan tab & garis batas" [ref=e736] [cursor=pointer]:
+        - button "Kembali" [disabled] [ref=e737]:
+          - button "Kembali" [disabled] [ref=e741]
+      - generic [ref=e747]:
+        - generic [ref=e749]:
+          - heading "Tab dokumen" [ref=e750]
+          - button "Tambahkan tab" [ref=e753]
+        - tree "Tab dokumen" [ref=e757]:
+          - generic [ref=e759] [cursor=pointer]:
+            - treeitem "Tab 1" [selected] [ref=e760]:
+              - generic [ref=e767]: Tab 1
+              - button "Pilihan tab" [ref=e770]
+            - generic [ref=e775]: Tajuk yang Anda tambahkan ke dokumen akan muncul di sini.
+  - iframe [active] [ref=e776]:
+    - textbox "Konten dokumen" [active] [ref=f1e1]
+    - group
+  - link "Aktifkan dukungan pembaca layar" [ref=e777] [cursor=pointer]:
+    - /url: "#"
+  - region [ref=e778]: Untuk mengaktifkan dukungan pembaca layar, tekan Ctrl+Alt+Z. Untuk mempelajari pintasan keyboard, tekan Ctrl+garis miring.
+  - generic [ref=e779]: Banner disembunyikan
+  - region
