@@ -52,7 +52,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
             qurbanOrderId: { in: lunasOrdersIds }
           },
           data: {
-            status: 'TERJUAL'
+            status: 'TERISI'
           }
         });
       }

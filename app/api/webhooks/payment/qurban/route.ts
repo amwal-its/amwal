@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         if (newStatus === 'LUNAS') {
           await tx.qurbanAnimalSlot.updateMany({
             where: { qurbanOrderId: order_id },
-            data: { status: 'TERJUAL' }
+            data: { status: 'TERISI' }
           });
         }
       } else if (transaction_status === 'expire' || transaction_status === 'cancel' || transaction_status === 'deny') {

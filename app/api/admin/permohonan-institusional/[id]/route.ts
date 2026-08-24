@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const updated = await prisma.permohonanPenyaluranInstitusional.update({
       where: { id },
       data: {
-        status,
+        status: status as any,
         adminNotes: adminNotes || permohonan.adminNotes,
         alokasiDagingDisetujuiKg: status === 'DISETUJUI' && alokasiDagingDisetujuiKg !== undefined 
           ? Number(alokasiDagingDisetujuiKg) 

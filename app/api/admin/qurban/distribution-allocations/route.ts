@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
         _sum: { jumlahBagian: true }
       });
 
-      const currentTotal = Number(aggregations._sum.jumlahBagian || 0);
+      const currentTotal = Number(aggregations._sum?.jumlahBagian || 0);
       const requested = Number(jumlahBagian);
 
       // 3. Validation
