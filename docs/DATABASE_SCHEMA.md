@@ -308,11 +308,26 @@ Table waqf_principal_ledgers {
   id uuid [pk, default: `gen_random_uuid()`]
   waqf_program_id uuid [not null, unique]
   pokok_dana_terkumpul decimal(18,2) [not null, default: 0]
+  total_hasil_available decimal(18,2) [not null, default: 0]
   hasil_investasi_tersalurkan decimal(18,2) [not null, default: 0]
   updated_at timestamp [not null]
 }
 
 Ref: waqf_principal_ledgers.waqf_program_id - waqf_programs.id
+
+Table waqf_yield_entries {
+  id uuid [pk, default: `gen_random_uuid()`]
+  waqf_program_id uuid [not null]
+  amount decimal(18,2) [not null]
+  source_description varchar(255) [not null]
+  recorded_by_admin_id uuid [not null]
+  recorded_at timestamp [not null, default: `now()`]
+
+  Note: 'Catatan inflow hasil investasi (yield) wakaf produktif oleh Admin. Wajib validasi jenisWakaf === PRODUKTIF_KEKAL dan dijalankan dalam $transaction bareng penambahan total_hasil_available di waqf_principal_ledgers.'
+}
+
+Ref: waqf_yield_entries.waqf_program_id > waqf_programs.id
+Ref: waqf_yield_entries.recorded_by_admin_id > users.id
 
 Table program_progress_reports {
   id uuid [pk, default: `gen_random_uuid()`]
@@ -331,13 +346,19 @@ Table fund_withdrawal_requests {
   id uuid [pk, default: `gen_random_uuid()`]
   waqf_program_id uuid [not null]
   amount decimal(18,2) [not null]
+  peruntukan text
+  rekening_tujuan varchar(255)
   requested_by_id uuid [not null]
   approved_by_id uuid
   status withdrawal_status_enum [not null, default: 'PENDING']
   admin_notes text
   created_at timestamp [not null, default: `now()`]
 
-  Note: 'admin_notes: alasan approve/reject, wajib diisi Admin saat status=REJECTED (validasi di application layer)'
+  Note: '''
+  peruntukan: Rencana penggunaan/alokasi dana penarikan (opsional).
+  rekening_tujuan: Nomor rekening/informasi bank tujuan pencairan dana (opsional).
+  admin_notes: Alasan approve/reject, wajib diisi Admin saat status=REJECTED (validasi di application layer).
+  '''
 }
 
 Ref: fund_withdrawal_requests.waqf_program_id > waqf_programs.id
@@ -512,6 +533,18 @@ Table zakat_gold_price_history {
   perlu fetch ulang API eksternal tiap request, cukup baca row ini jika
   fetched_at < 6 jam lalu.
   '''
+}
+
+Table fund_pools {
+  id uuid [pk, default: `gen_random_uuid()`]
+  kode varchar(50) [not null, unique]
+  nama varchar(100) [not null]
+  balance decimal(18,2) [not null, default: 0]
+  total_distributed decimal(18,2) [not null, default: 0]
+  created_at timestamp [not null, default: `now()`]
+  updated_at timestamp [not null]
+
+  Note: 'Ledger pembukuan agregat murni, BUKAN penampungan dana nyata — prinsip non-custodial tetap berlaku, dana tetap mengalir langsung via disbursementDestination di setiap Transaction.'
 }
 
 // ------------------------------------------------------------

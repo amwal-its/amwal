@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { WithdrawalStatus } from '@/app/generated/prisma/client';
+import { WithdrawalStatus, Prisma } from '@/app/generated/prisma/client';
 import { z } from 'zod';
 
 const patchWithdrawalRequestSchema = z.object({
@@ -16,8 +16,22 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getSession();
-    if (!session || session.role !== 'ADMIN') {
+    let userId = req.headers.get('x-user-id');
+    let userRole = req.headers.get('x-user-role');
+
+    if (!userId || !userRole) {
+      try {
+        const session = await getSession();
+        if (session) {
+          userId = session.userId;
+          userRole = session.role;
+        }
+      } catch {
+        // cookies() called outside request context (e.g. unit tests)
+      }
+    }
+
+    if (!userId || userRole !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized: Akses ditolak. Peran ADMIN diperlukan.' },
         { status: 401 }
@@ -77,7 +91,7 @@ export async function PATCH(
         data: {
           status: WithdrawalStatus.REJECTED,
           adminNotes: adminNotes.trim(),
-          approvedById: session.userId,
+          approvedById: userId,
         },
       });
 
@@ -90,48 +104,89 @@ export async function PATCH(
       );
     }
 
-    // Logika APPROVED: Validasi saldo hasil available pada WaqfPrincipalLedger
+    // Logika APPROVED: Percabangan Eksplisit Berdasarkan jenisWakaf
+    const jenisWakaf = withdrawalRequest.waqfProgram.jenisWakaf;
     const ledger = withdrawalRequest.waqfProgram.principalLedger;
-    const availableBalance = ledger ? Number(ledger.totalHasilAvailable) : 0;
     const requestAmount = Number(withdrawalRequest.amount);
 
-    if (requestAmount > availableBalance) {
+    if (jenisWakaf === 'HABIS_PAKAI') {
+      const saldoPokok = ledger ? Number(ledger.pokokDanaTerkumpul) : 0;
+      if (requestAmount > saldoPokok) {
+        return NextResponse.json(
+          { error: 'Saldo pokok tidak mencukupi' },
+          { status: 400 }
+        );
+      }
+
+      // Branch 1: HABIS_PAKAI -> Decrement pokokDanaTerkumpul
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const updatedRequest = await tx.fundWithdrawalRequest.update({
+          where: { id: withdrawalRequestId },
+          data: {
+            status: WithdrawalStatus.APPROVED,
+            adminNotes: adminNotes ? adminNotes.trim() : null,
+            approvedById: userId,
+          },
+        });
+
+        const updatedLedger = await tx.waqfPrincipalLedger.update({
+          where: { waqfProgramId: withdrawalRequest.waqfProgramId },
+          data: {
+            pokokDanaTerkumpul: { decrement: requestAmount },
+          },
+        });
+
+        return { request: updatedRequest, ledger: updatedLedger };
+      });
+
       return NextResponse.json(
-        { error: 'Saldo hasil tidak mencukupi' },
-        { status: 400 }
+        {
+          message: 'Pengajuan penarikan dana wakaf habis pakai berhasil disetujui',
+          data: result.request,
+          ledger: result.ledger,
+        },
+        { status: 200 }
+      );
+    } else {
+      // Branch 2: PRODUKTIF_KEKAL -> Decrement totalHasilAvailable & Increment hasilInvestasiTersalurkan (pokok dana tetap utuh)
+      const saldoHasil = ledger ? Number(ledger.totalHasilAvailable) : 0;
+      if (requestAmount > saldoHasil) {
+        return NextResponse.json(
+          { error: 'Saldo hasil tidak mencukupi' },
+          { status: 400 }
+        );
+      }
+
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const updatedRequest = await tx.fundWithdrawalRequest.update({
+          where: { id: withdrawalRequestId },
+          data: {
+            status: WithdrawalStatus.APPROVED,
+            adminNotes: adminNotes ? adminNotes.trim() : null,
+            approvedById: userId,
+          },
+        });
+
+        const updatedLedger = await tx.waqfPrincipalLedger.update({
+          where: { waqfProgramId: withdrawalRequest.waqfProgramId },
+          data: {
+            totalHasilAvailable: { decrement: requestAmount },
+            hasilInvestasiTersalurkan: { increment: requestAmount },
+          },
+        });
+
+        return { request: updatedRequest, ledger: updatedLedger };
+      });
+
+      return NextResponse.json(
+        {
+          message: 'Pengajuan penarikan hasil wakaf produktif berhasil disetujui',
+          data: result.request,
+          ledger: result.ledger,
+        },
+        { status: 200 }
       );
     }
-
-    // Atomic update inside $transaction
-    const result = await prisma.$transaction(async (tx) => {
-      const updatedRequest = await tx.fundWithdrawalRequest.update({
-        where: { id: withdrawalRequestId },
-        data: {
-          status: WithdrawalStatus.APPROVED,
-          adminNotes: adminNotes ? adminNotes.trim() : null,
-          approvedById: session.userId,
-        },
-      });
-
-      const updatedLedger = await tx.waqfPrincipalLedger.update({
-        where: { waqfProgramId: withdrawalRequest.waqfProgramId },
-        data: {
-          totalHasilAvailable: { decrement: requestAmount },
-          hasilInvestasiTersalurkan: { increment: requestAmount },
-        },
-      });
-
-      return { request: updatedRequest, ledger: updatedLedger };
-    });
-
-    return NextResponse.json(
-      {
-        message: 'Pengajuan penarikan dana berhasil disetujui',
-        data: result.request,
-        ledger: result.ledger,
-      },
-      { status: 200 }
-    );
   } catch (error) {
     console.error('Error in PATCH /api/admin/withdrawal-requests/[id]:', error);
     return NextResponse.json(

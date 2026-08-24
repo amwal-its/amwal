@@ -46,7 +46,7 @@ async function main() {
 
     // Cukup saldo: guard update harus sukses (count 1)
     const nominal = D(100000);
-    const updated = await prisma.$transaction(async (tx) =>
+    const updated = await prisma.$transaction(async (tx: Prisma.TransactionClient) =>
       tx.fundPool.updateMany({
         where: { kode: poolKode, balance: { gte: nominal } },
         data: { balance: { decrement: nominal }, totalDistributed: { increment: nominal } },
@@ -60,7 +60,7 @@ async function main() {
 
     // Saldo tidak cukup: guard update harus count 0 (route → HTTP 400)
     const tooBig = D(999999999);
-    const blocked = await prisma.$transaction(async (tx) =>
+    const blocked = await prisma.$transaction(async (tx: Prisma.TransactionClient) =>
       tx.fundPool.updateMany({
         where: { kode: poolKode, balance: { gte: tooBig } },
         data: { balance: { decrement: tooBig }, totalDistributed: { increment: tooBig } },

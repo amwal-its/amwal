@@ -35,7 +35,7 @@ async function main() {
       continue;
     }
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.zakatFitrahConfig.updateMany({
         where: { jenisBeras: variant.jenisBeras, isActive: true },
         data: { isActive: false },

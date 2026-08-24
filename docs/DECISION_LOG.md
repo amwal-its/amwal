@@ -105,3 +105,11 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 - Provider gold price API spesifik belum ditentukan final (Awan riset saat eksekusi Task 2.9, prioritas provider yang quote langsung IDR/gram)
 - Kebijakan account linking (user yang sudah punya akun password lalu coba login Google dengan email sama) ditunda ke Post-Staging — V.1 cukup tolak dengan pesan jelas
 - Field `buktiCashUrl` di form entri offline Qurban (Task 5.8) masih opsional, perlu keputusan tim apakah dijadikan wajib untuk akuntabilitas lebih ketat
+
+## Putaran 7 — Keputusan Teknis & Arsitektur Sprint 3 & 4
+
+| # | Topik | Keputusan & Catatan Teknis |
+|---|---|---|
+| 1 | Model `WaqfYieldEntry` & Fiqih Wakaf Produktif vs Habis Pakai | Fiqih wakaf uang: Pada wakaf produktif (`PRODUKTIF_KEKAL`), pokok dana (`pokokDanaTerkumpul`) bersifat abadi dan tidak boleh berkurang. Ditambahkan entitas `WaqfYieldEntry` (POST `/api/admin/wakaf/programs/[id]/yield-entries`) untuk mencatat inflow hasil investasi ke `totalHasilAvailable`. Percabangan eksplisit diterapkan pada withdrawal: `HABIS_PAKAI` mendecement `pokokDanaTerkumpul`, sedangkan `PRODUKTIF_KEKAL` mendecement `totalHasilAvailable` dan mengincrement `hasilInvestasiTersalurkan` (pokok tetap utuh 100%). |
+| 2 | Slot Release vs DP Qurban Terbayar (Known Limitation) | Pada webhook PG event `expire`/`cancel`/`deny`, rilis otomatis slot qurban ke `TERSEDIA` saat ini belum mengecek `nominalDibayar > 0`. Ditandai sebagai known limitation: untuk order berstatus DP yang expired di pelunasan, penanganan follow-up/refund dilakukan manual oleh Admin di V.1 sebelum penambahan status/grace period otomatis di V.2. |
+| 3 | Konsolidasi Webhook Payment Gateway | Endpoint tunggal `POST /api/webhooks/payment` difungsikan sebagai entry point utama untuk kompatibilitas 1-URL webhook dashboard Midtrans/Xendit, me-route secara internal ke modul Wakaf, Zakat, atau Qurban. |

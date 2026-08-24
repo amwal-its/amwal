@@ -26,6 +26,8 @@ error `{error, details?}`.
 | GET | `/api/wakaf/programs/:id` | Publik | Detail program + `WaqfPrincipalLedger` |
 | PATCH | `/api/wakaf/programs/:id/publish` | NADZIR (owner) | Ubah status DRAFT → LIVE (mengunci `jenisWakaf`) |
 | POST | `/api/wakaf/programs/:id/progress` | NADZIR (owner) | Submit `ProgramProgressReport` |
+| POST | `/api/admin/wakaf/programs/:id/yield-entries` | ADMIN | Catat `WaqfYieldEntry` (inflow hasil investasi wakaf produktif) & increment `totalHasilAvailable` |
+| GET | `/api/wakaf/programs/:id/yield-entries` | ADMIN / NADZIR (owner) | List riwayat hasil investasi wakaf produktif (`recordedAt DESC`) + `ledgerSummary` |
 | POST | `/api/wakaf/orders` | WAKIF / ADMIN (offline) | Buat `WaqfOrder` (uang/barang, digital/offline) |
 | GET | `/api/wakaf/orders/:id` | WAKIF (owner) / ADMIN | Detail order |
 | PATCH | `/api/admin/wakaf/orders/:id/verify` | ADMIN | `{ status: TERVERIFIKASI\|DITOLAK }` |
@@ -90,3 +92,25 @@ error `{error, details?}`.
   "error": "Validation failed",
   "details": { "nominal": { "_errors": ["Nominal wajib diisi untuk bentuk_wakaf UANG"] } }
 }
+```
+
+**Response `GET /api/wakaf/programs/:id/yield-entries` (200 OK):**
+```json
+{
+  "data": [
+    {
+      "id": "3489bccb-6758-432e-9f65-00d3c53e66ae",
+      "waqfProgramId": "d4bece54-16ea-45f3-8c42-4ae4c7af0827",
+      "amount": "5000000.00",
+      "sourceDescription": "Bagi hasil sewa toko kuartal 1",
+      "recordedByAdminId": "d5735d9c-22c0-4319-86b6-446721019524",
+      "recordedAt": "2026-08-25T06:00:00.000Z"
+    }
+  ],
+  "ledgerSummary": {
+    "pokokDanaTerkumpul": "50000000.00",
+    "totalHasilAvailable": "5000000.00",
+    "hasilInvestasiTersalurkan": "0.00"
+  }
+}
+```

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { WaqfType, WaqfStatus, VerificationStatus } from '@/app/generated/prisma/client';
+import { WaqfType, WaqfStatus, VerificationStatus, Prisma } from '@/app/generated/prisma/client';
 import { z } from 'zod';
 
 const createWaqfProgramSchema = z.object({
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
     } = parsed.data;
 
     // Execute atomic creation of WaqfProgram AND initial WaqfPrincipalLedger
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const program = await tx.waqfProgram.create({
         data: {
           nadzirProfileId: nadzirProfile.id,

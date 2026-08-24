@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { reserveSlot } from '@/lib/qurban';
+import { Prisma } from '@/app/generated/prisma/client';
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Get the batch to calculate total price
       const batch = await tx.hewanBatch.findUnique({
         where: { id: hewanBatchId }

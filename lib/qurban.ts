@@ -19,7 +19,7 @@ export async function reserveSlot(
     throw new Error('Slot tidak mencukupi atau sudah dipesan orang lain');
   }
 
-  const slotIds = availableSlots.map(s => s.id);
+  const slotIds = availableSlots.map((s: { id: string; nomorSlot: number }) => s.id);
 
   await tx.qurbanAnimalSlot.updateMany({
     where: {

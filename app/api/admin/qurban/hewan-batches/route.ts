@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { Prisma } from '@/app/generated/prisma/client';
 
 export async function POST(req: NextRequest) {
   const session = await getSession();
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'jenisHewan, totalSlot, and hargaPerSlot are required' }, { status: 400 });
     }
 
-    const hewanBatch = await prisma.$transaction(async (tx) => {
+    const hewanBatch = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const batch = await tx.hewanBatch.create({
         data: {
           jenisHewan,

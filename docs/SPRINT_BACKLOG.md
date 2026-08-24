@@ -518,6 +518,45 @@ Body: {
 
 ---
 
+### Task 5.2b — UI Pencatatan & Riwayat Hasil Investasi (`WaqfYieldEntry`) — BARU
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler — GET endpoint baru, belum ada sebelumnya]  
+**Target Route / Endpoint:** `POST /api/admin/wakaf/programs/[id]/yield-entries`, `GET /api/wakaf/programs/[id]/yield-entries`, Dashboard `/nadzir/dashboard` & `/admin/wakaf`  
+**Target Database:** `WaqfYieldEntry` (read untuk GET), `WaqfPrincipalLedger` (read, untuk breakdown saldo)  
+**RBAC & Middleware Guard:**
+- `POST` → `ADMIN` (sudah ada)
+- `GET` (list riwayat) → `ADMIN` atau `NADZIR` (owner program) — **bukan publik**, karena `sourceDescription` bisa berisi detail operasional sensitif (mis. nama penyewa, rincian usaha). Transparansi publik cukup lewat angka agregat di halaman detail program (Task 5.1), bukan rincian per-entry.
+
+**Detail Alur Logic & Input/Output:**
+
+```
+GET /api/wakaf/programs/[id]/yield-entries
+```
+- Response: `{ data: WaqfYieldEntry[], ledgerSummary: { pokokDanaTerkumpul, totalHasilAvailable, hasilInvestasiTersalurkan } }`
+- Urut terbaru dulu (`recordedAt DESC`)
+
+**UI — Dashboard Nadzir/Admin, halaman detail program:**
+
+1. **Tampilkan section "Ledger Wakaf Produktif" HANYA jika `jenisWakaf === 'PRODUKTIF_KEKAL'`** — untuk `HABIS_PAKAI`, section ini disembunyikan total (bukan disabled, disembunyikan) karena konsep ini tidak berlaku sama sekali di tipe itu.
+2. Breakdown 3 angka berdampingan (bukan lagi satu angka "dana terkumpul" generik seperti Task 5.1 versi awal):
+   - **Pokok Dana (Kekal)**: `pokokDanaTerkumpul` — beri label kecil "Tidak pernah berkurang" sebagai penegasan visual prinsip fiqih ke Nadzir/Admin
+   - **Hasil Tersedia**: `totalHasilAvailable`
+   - **Hasil Tersalurkan**: `hasilInvestasiTersalurkan`
+3. Tombol **"Catat Hasil Investasi"** (hanya muncul untuk role `ADMIN`, **tidak muncul** untuk `NADZIR` — sesuai keputusan kontrol internal FIX 1, pencatatan resmi hanya lewat Admin) → buka modal form:
+   - Input `amount` (pakai komponen `AmountInput` dari Design System)
+   - Input `sourceDescription` (textarea, placeholder: *"mis. Bagi hasil sewa toko kuartal 1"*)
+   - **Modal konfirmasi** sebelum submit (reuse `ConfirmationModal`, pola sama seperti entri offline Wakaf/Zakat/Qurban) — tampilkan ringkasan sebelum benar-benar submit, karena ini langsung menambah saldo yang bisa dicairkan
+4. **Riwayat Hasil Investasi**: list card di bawah breakdown, tiap card menampilkan `amount`, `sourceDescription`, `recordedAt`, dan nama Admin pencatat (`recordedByAdminId` di-resolve ke nama)
+5. Jika `NADZIR` yang membuka halaman ini (bukan Admin): tampilkan breakdown & riwayat sebagai **read-only**, tanpa tombol "Catat Hasil Investasi" — Nadzir bisa lihat transparansi tapi tidak bisa input sendiri.
+
+**Acceptance Criteria (DoD):**
+- [ ] Section ledger sama sekali tidak render untuk program `HABIS_PAKAI` (cek dengan inspect element, bukan cuma visual disembunyikan CSS)
+- [ ] Tombol "Catat Hasil Investasi" tidak muncul sama sekali untuk role `NADZIR` (bukan cuma disabled)
+- [ ] Modal konfirmasi wajib muncul sebelum submit — tidak bisa submit langsung dari form
+- [ ] Setelah submit sukses, breakdown 3 angka dan list riwayat ter-refresh otomatis tanpa perlu reload manual
+- [ ] Label "Tidak pernah berkurang" pada Pokok Dana terlihat jelas, tidak tersamar di antara elemen lain.
+
+---
+
 ## 🟡 Awan — Frontend Zakat
 
 ### Task 5.3 — UI Kalkulator Zakat — Update: Sumber Harga Emas

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
-import { TransactionPaymentStatus, WaqfOrderStatus } from '@/app/generated/prisma/client';
+import { TransactionPaymentStatus, WaqfOrderStatus, Prisma } from '@/app/generated/prisma/client';
 
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || 'secret_webhook_key_123';
 
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
 
     // 6. Execute Atomic Updates inside $transaction
     if (isSuccess) {
-      const updatedData = await prisma.$transaction(async (tx) => {
+      const updatedData = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         // Update Transaction if linked
         if (transaction) {
           await tx.transaction.update({
@@ -189,7 +189,7 @@ export async function POST(req: NextRequest) {
         { status: 200 }
       );
     } else if (isFailed) {
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         if (transaction) {
           await tx.transaction.update({
             where: { id: transaction.id },

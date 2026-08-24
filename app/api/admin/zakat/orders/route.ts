@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     const prefix = `ZKT-OFF-${year}-`;
     const seq = (await prisma.zakatOrder.count({ where: { nomorKwitansi: { startsWith: prefix } } })) + 1;
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const order = await tx.zakatOrder.create({
         data: {
           nomorKwitansi: generateNomorKwitansi(seq),

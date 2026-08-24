@@ -301,6 +301,7 @@ model WaqfProgram {
   principalLedger          WaqfPrincipalLedger?
   progressReports          ProgramProgressReport[]
   withdrawalRequests       FundWithdrawalRequest[]
+  yieldEntries             WaqfYieldEntry[]
   waqfOrders               WaqfOrder[]
   mauqufAlaihDistributions MauqufAlaihDistribution[]
 
@@ -351,6 +352,18 @@ model FundWithdrawalRequest {
   mauqufAlaihDistributions MauqufAlaihDistribution[]
 
   @@map("fund_withdrawal_requests")
+}
+
+model WaqfYieldEntry {
+  id                String      @id @default(uuid())
+  waqfProgramId     String      @map("waqf_program_id")
+  waqfProgram       WaqfProgram @relation(fields: [waqfProgramId], references: [id])
+  amount            Decimal     @map("amount") @db.Decimal(18, 2)
+  sourceDescription String      @map("source_description")
+  recordedByAdminId String      @map("recorded_by_admin_id")
+  recordedAt        DateTime    @default(now()) @map("recorded_at")
+
+  @@map("waqf_yield_entries")
 }
 
 model WaqfOrder {
@@ -407,7 +420,7 @@ model Transaction {
   jenisTransaksi          TransactionType          @map("jenis_transaksi")
   amount                  Decimal                  @map("amount") @db.Decimal(18, 2)
   paymentMethod           String?                  @map("payment_method")
-  paymentGatewayRef       String?                  @map("payment_gateway_ref")
+  paymentGatewayRef       String?                  @unique @map("payment_gateway_ref")
   statusPembayaran        TransactionPaymentStatus @default(PENDING) @map("status_pembayaran")
   disbursementDestination String                   @map("disbursement_destination")
   createdAt               DateTime                 @default(now()) @map("created_at")

@@ -114,7 +114,7 @@ export async function GET(req: NextRequest) {
       take: limit,
     });
 
-    const data = mustahiqs.map((m) => ({ ...m, nik: decryptAES256(m.nik ?? '') || null }));
+    const data = mustahiqs.map((m: { id: string; namaMustahiq: string; nik: string | null; kategoriAsnaf: any; alamat: string | null; noTelepon: string | null; statusVerifikasi: any; createdAt: Date }) => ({ ...m, nik: decryptAES256(m.nik ?? '') || null }));
 
     return NextResponse.json({ message: 'Berhasil mengambil daftar mustahik', data }, { status: 200 });
   } catch (error) {

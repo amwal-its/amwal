@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
+import { Prisma } from '@/app/generated/prisma/client';
 import { z } from 'zod';
 
 const fitrahConfigSchema = z.object({
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const { jenisBeras, konversiHargaPerJiwa, referensiSk, tahunBerlaku } = parsed.data;
 
-    const config = await prisma.$transaction(async (tx) => {
+    const config = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.zakatFitrahConfig.updateMany({
         where: { jenisBeras, isActive: true },
         data: { isActive: false },

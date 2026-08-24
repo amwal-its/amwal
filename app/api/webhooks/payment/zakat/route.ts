@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Status pembayaran bukan SUCCESS, diabaikan' }, { status: 200 });
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Cari order: via nomorKwitansi (orderId) atau transactionId
       let order = orderId
         ? await tx.zakatOrder.findUnique({ where: { nomorKwitansi: orderId } })

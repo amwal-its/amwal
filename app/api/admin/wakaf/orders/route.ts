@@ -180,7 +180,7 @@ export async function POST(req: NextRequest) {
         : WaqfOrderStatus.MENUNGGU_VERIFIKASI;
 
     // 5. Eksekusi Pembuatan Order & Update Ledger dalam $transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const nomorKwitansi = await generateNomorKwitansi(tx);
 
       const order = await tx.waqfOrder.create({
