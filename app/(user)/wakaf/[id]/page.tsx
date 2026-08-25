@@ -8,6 +8,7 @@ import { WakafStatsGrid } from '@/components/wakaf/wakaf-stats-grid';
 import { WakafNazhirCard } from '@/components/wakaf/wakaf-nazhir-card';
 import { WakafTransparencyCard } from '@/components/wakaf/wakaf-transparency-card';
 import { WakafBottomCta } from '@/components/wakaf/wakaf-bottom-cta';
+import { WakafShareButton } from '@/components/wakaf/wakaf-share-button';
 import { Sparkles, Building2, Coins, ShieldCheck } from 'lucide-react';
 import { DescriptionToggle } from './description-toggle';
 
@@ -119,6 +120,11 @@ export default async function WakafDetailPage({ params }: PageProps) {
                 Wakaf Fisik / Sosial
               </span>
             )}
+
+            {/* Share Program Button */}
+            <div className="ml-auto">
+              <WakafShareButton judul={program.judul} variant="button" />
+            </div>
           </div>
 
           {/* Heading 1: Program Title */}

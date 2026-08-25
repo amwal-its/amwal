@@ -15,7 +15,8 @@ export const metadata = {
 export default async function DashboardPage() {
   const session = await getSession();
 
-  let userName = 'Ahmad Abdullah';
+  let userName = 'Tamu';
+  const isLoggedIn = !!session?.userId;
   if (session?.userId) {
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
@@ -57,5 +58,5 @@ export default async function DashboardPage() {
     console.error('Error fetching dashboard programs:', err);
   }
 
-  return <DashboardView userName={userName} programs={programs} />;
+  return <DashboardView userName={userName} programs={programs} isLoggedIn={isLoggedIn} />;
 }
