@@ -36,8 +36,21 @@ const PROTECTED_ROUTES: RouteRule[] = [
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Endpoint GET /api/wakaf/programs dan /api/wakaf/programs/[id] bersifat publik
-  if (req.method === 'GET' && pathname.startsWith('/api/wakaf/programs')) {
+  // Endpoint publik dengan optional auth (katalog, donasi wakaf, webhooks, sertifikat)
+  const isPublicWithOptionalAuth =
+    (req.method === 'GET' && (
+      pathname.startsWith('/api/wakaf/programs') ||
+      pathname.startsWith('/api/certificates')
+    )) ||
+    (req.method === 'POST' && (
+      pathname === '/api/wakaf/orders' ||
+      pathname.startsWith('/api/wakaf/orders') ||
+      pathname === '/api/waqf/donate' ||
+      pathname.startsWith('/api/waqf/donate')
+    )) ||
+    pathname.startsWith('/api/webhooks');
+
+  if (isPublicWithOptionalAuth) {
     const token = req.cookies.get('amwal_token')?.value;
     if (token) {
       try {
