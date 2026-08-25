@@ -717,8 +717,8 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
   - Laporan penyaluran qurban/zakat diterbitkan.
   - Status pengajuan Nadzir / withdrawal disetujui atau ditolak.  
 **Acceptance Criteria (DoD):**  
-- [ ] Record notifikasi ter-create otomatis di DB.
-- [ ] User login dapat membaca dan menandai notifikasi as read.
+- [x] Record notifikasi ter-create otomatis di DB.
+- [x] User login dapat membaca dan menandai notifikasi as read.
 
 ---
 
