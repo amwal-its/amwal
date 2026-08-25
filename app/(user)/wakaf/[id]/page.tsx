@@ -11,6 +11,9 @@ import { WakafBottomCta } from '@/components/wakaf/wakaf-bottom-cta';
 import { Sparkles, Building2, Coins, ShieldCheck } from 'lucide-react';
 import { DescriptionToggle } from './description-toggle';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
@@ -47,6 +50,11 @@ export default async function WakafDetailPage({ params }: PageProps) {
           statusVerifikasi: true,
         },
       },
+      yieldEntries: {
+        orderBy: {
+          recordedAt: 'desc',
+        },
+      },
       _count: {
         select: {
           waqfOrders: {
@@ -68,6 +76,13 @@ export default async function WakafDetailPage({ params }: PageProps) {
   const hasilInvestasiTersalurkan = Number(program.principalLedger?.hasilInvestasiTersalurkan || 0);
   const targetDana = Number(program.targetDana || 0);
   const totalWakif = program._count?.waqfOrders || 0;
+
+  const formattedYieldEntries = (program.yieldEntries || []).map((y) => ({
+    id: y.id,
+    amount: Number(y.amount),
+    sourceDescription: y.sourceDescription,
+    recordedAt: y.recordedAt,
+  }));
 
   const isProduktif = program.jenisWakaf === 'PRODUKTIF_KEKAL';
 
@@ -125,6 +140,7 @@ export default async function WakafDetailPage({ params }: PageProps) {
             pokokDanaTerkumpul={pokokDanaTerkumpul}
             totalHasilAvailable={totalHasilAvailable}
             hasilInvestasiTersalurkan={hasilInvestasiTersalurkan}
+            yieldEntries={formattedYieldEntries}
           />
 
           {/* Section: Stats Grid (Wakif / Donatur & Penerima Manfaat) */}

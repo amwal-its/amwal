@@ -4,6 +4,9 @@ import { getSession } from '@/lib/session';
 import { DashboardView } from '@/components/dashboard/dashboard-view';
 import { ProgramItem } from '@/components/dashboard/featured-programs';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export const metadata = {
   title: 'Beranda | Amwal - Platform Wakaf, Zakat & Qurban Terpercaya',
   description: 'Kelola amal ibadah Anda dengan mudah, amanah dan transparan bersama Amwal.',

@@ -29,11 +29,11 @@ export interface SessionPayload {
  *   }
  */
 export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('amwal_token')?.value;
-  if (!token) return null;
-
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get('amwal_token')?.value;
+    if (!token) return null;
+
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload as unknown as SessionPayload;
   } catch {

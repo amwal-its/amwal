@@ -29,10 +29,17 @@ export async function POST(
       }
     }
 
-    if (!userId || userRole !== 'ADMIN') {
+    if (!userId) {
       return NextResponse.json(
-        { error: 'Unauthorized: Akses ditolak. Peran ADMIN diperlukan.' },
+        { error: 'Unauthorized: Autentikasi diperlukan.' },
         { status: 401 }
+      );
+    }
+
+    if (userRole !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Forbidden: Akses ditolak. Peran ADMIN diperlukan.' },
+        { status: 403 }
       );
     }
 
