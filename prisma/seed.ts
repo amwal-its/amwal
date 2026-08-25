@@ -172,6 +172,24 @@ async function main() {
   });
   console.log(`Seeded NadzirProfile: ${nadzirProfile.namaLembaga}`);
 
+  // 3b. Seed Single Shared Anonymous User (System)
+  const SYSTEM_ANONYMOUS_USER_ID = '00000000-0000-0000-0000-000000000001';
+  await prisma.user.upsert({
+    where: { id: SYSTEM_ANONYMOUS_USER_ID },
+    update: {
+      name: 'Hamba Allah (Sistem)',
+      email: 'hamba.allah@amwal.internal',
+      role: Role.WAKIF,
+    },
+    create: {
+      id: SYSTEM_ANONYMOUS_USER_ID,
+      email: 'hamba.allah@amwal.internal',
+      name: 'Hamba Allah (Sistem)',
+      role: Role.WAKIF,
+    },
+  });
+  console.log('Seeded Single Shared Anonymous User (Hamba Allah)');
+
   // 4. Seed Waqf Programs & Ledgers
   for (let i = 0; i < WAQF_PROGRAMS.length; i++) {
     const progData = WAQF_PROGRAMS[i];

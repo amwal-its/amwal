@@ -47,6 +47,30 @@ async function generateKwitansiNumber(tx: Prisma.TransactionClient) {
   return `${prefix}${seqFormatted}`;
 }
 
+export const SYSTEM_ANONYMOUS_USER_ID = '00000000-0000-0000-0000-000000000001';
+export const SYSTEM_ANONYMOUS_EMAIL = 'hamba.allah@amwal.internal';
+
+async function ensureSystemAnonymousUser(tx: Prisma.TransactionClient): Promise<string> {
+  const existing = await tx.user.findUnique({
+    where: { id: SYSTEM_ANONYMOUS_USER_ID },
+  });
+  if (existing) {
+    return existing.id;
+  }
+
+  const user = await tx.user.upsert({
+    where: { id: SYSTEM_ANONYMOUS_USER_ID },
+    update: {},
+    create: {
+      id: SYSTEM_ANONYMOUS_USER_ID,
+      name: 'Hamba Allah (Sistem)',
+      email: SYSTEM_ANONYMOUS_EMAIL,
+      role: 'WAKIF',
+    },
+  });
+  return user.id;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -95,54 +119,78 @@ export async function POST(req: NextRequest) {
 
       // Resolve wakifId for Transaction foreign key
       let effectiveWakifId = sessionUserId;
+
       if (!effectiveWakifId) {
-        let existingUser = null;
         const cleanEmail = email && email.trim() !== '' ? email.trim() : null;
         const cleanPhone = noTelepon && noTelepon.trim() !== '' ? noTelepon.trim() : null;
 
-        // 1. Check if user already exists by email
-        if (cleanEmail) {
-          existingUser = await tx.user.findUnique({ where: { email: cleanEmail } });
-        }
-
-        // 2. If not found by email, check if user exists by phone
-        if (!existingUser && cleanPhone) {
-          existingUser = await tx.user.findUnique({ where: { phone: cleanPhone } });
-        }
-
-        if (existingUser) {
-          effectiveWakifId = existingUser.id;
+        // Opsi C: Pure Anonymous (Hamba Allah tanpa kontak personal) -> Single Shared Anonymous User
+        if (isAnonymous && !cleanEmail && !cleanPhone) {
+          effectiveWakifId = await ensureSystemAnonymousUser(tx);
+        } else if (!cleanEmail && !cleanPhone) {
+          // No contact provided even if not marked isAnonymous
+          effectiveWakifId = await ensureSystemAnonymousUser(tx);
         } else {
-          // 3. Create or upsert a new guest user safely
-          const fallbackEmail =
-            cleanEmail ||
-            (cleanPhone
-              ? `guest-${cleanPhone.replace(/\D/g, '')}@amwal.id`
-              : `guest-${Date.now()}-${Math.floor(Math.random() * 10000)}@amwal.id`);
+          // Opsi B: Guest Donor with Contact Info
+          // Security Guard: WAJIB membatasi pencarian existing user HANYA ke akun guest (passwordHash=null & oauthProvider=null)
+          let existingGuestUser = null;
 
-          // Check if the phone is already taken by another user
-          let phoneToAssign = cleanPhone;
-          if (phoneToAssign) {
-            const phoneOwner = await tx.user.findUnique({ where: { phone: phoneToAssign } });
-            if (phoneOwner) {
-              phoneToAssign = null; // Avoid duplicate phone unique constraint crash
-            }
+          if (cleanEmail) {
+            existingGuestUser = await tx.user.findFirst({
+              where: {
+                email: cleanEmail,
+                passwordHash: null,
+                oauthProvider: null,
+              },
+            });
           }
 
-          const guestUser = await tx.user.upsert({
-            where: { email: fallbackEmail },
-            update: {
-              name: isAnonymous ? 'Hamba Allah' : namaWakif,
-              ...(phoneToAssign ? { phone: phoneToAssign } : {}),
-            },
-            create: {
-              name: isAnonymous ? 'Hamba Allah' : namaWakif,
-              email: fallbackEmail,
-              phone: phoneToAssign,
-              role: 'WAKIF',
-            },
-          });
-          effectiveWakifId = guestUser.id;
+          if (!existingGuestUser && cleanPhone) {
+            existingGuestUser = await tx.user.findFirst({
+              where: {
+                phone: cleanPhone,
+                passwordHash: null,
+                oauthProvider: null,
+              },
+            });
+          }
+
+          if (existingGuestUser) {
+            effectiveWakifId = existingGuestUser.id;
+          } else {
+            // Check if cleanEmail is already owned by a registered/authenticated user
+            let isEmailRegistered = false;
+            if (cleanEmail) {
+              const regUser = await tx.user.findUnique({ where: { email: cleanEmail } });
+              if (regUser) {
+                isEmailRegistered = true;
+              }
+            }
+
+            // Check if cleanPhone is already owned by any user
+            let phoneToAssign = cleanPhone;
+            if (phoneToAssign) {
+              const phoneOwner = await tx.user.findUnique({ where: { phone: phoneToAssign } });
+              if (phoneOwner) {
+                phoneToAssign = null; // Do not collide with existing phone
+              }
+            }
+
+            // Generate safe unique guest email
+            const fallbackEmail = isEmailRegistered || !cleanEmail
+              ? `guest-${Date.now()}-${Math.floor(Math.random() * 10000)}@amwal.internal`
+              : cleanEmail;
+
+            const newGuestUser = await tx.user.create({
+              data: {
+                name: isAnonymous ? 'Hamba Allah' : namaWakif,
+                email: fallbackEmail,
+                phone: phoneToAssign,
+                role: 'WAKIF',
+              },
+            });
+            effectiveWakifId = newGuestUser.id;
+          }
         }
       }
 
