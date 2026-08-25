@@ -1,44 +1,75 @@
-"use client";
+'use client';
 
 import React from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { Home, HandHeart, Clock, BookOpen } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 export function BottomNav() {
-  const router = useRouter();
   const pathname = usePathname();
 
-  const navItems = [
-    { label: 'Beranda', icon: Home, path: '/dashboard' },
-    { label: 'Wakaf', icon: HandHeart, path: '/catalog' },
-    { label: 'Riwayat', icon: Clock, path: '/dashboard/history' },
-    { label: 'Edukasi', icon: BookOpen, path: '/education' }
+  const tabs = [
+    {
+      name: 'Beranda',
+      href: '/dashboard',
+      activeIcon: '/assets/images/navbar/1-active.png',
+      deactiveIcon: '/assets/images/navbar/1-deactivated.png',
+      isActive: pathname === '/dashboard' || pathname === '/',
+    },
+    {
+      name: 'Wakaf',
+      href: '/wakaf',
+      activeIcon: '/assets/images/navbar/2-active.png',
+      deactiveIcon: '/assets/images/navbar/2-deactivated.png',
+      isActive: pathname.startsWith('/wakaf') || pathname.startsWith('/catalog'),
+    },
+    {
+      name: 'Riwayat',
+      href: '/riwayat',
+      activeIcon: '/assets/images/navbar/3-active.png',
+      deactiveIcon: '/assets/images/navbar/3-deactivated.png',
+      isActive: pathname.startsWith('/riwayat') || pathname.startsWith('/dashboard/history'),
+    },
+    {
+      name: 'Edukasi',
+      href: '/edukasi',
+      activeIcon: '/assets/images/navbar/4-active.png',
+      deactiveIcon: '/assets/images/navbar/4-deactivated.png',
+      isActive: pathname.startsWith('/edukasi') || pathname.startsWith('/education'),
+    },
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-gray-200 flex justify-around items-center h-16 z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] pb-safe">
-      {navItems.map((item) => {
-        // Highlight active if path matches or if pathname starts with path (except for /dashboard root)
-        const isActive = item.path === '/dashboard' 
-          ? pathname === '/dashboard' 
-          : pathname.startsWith(item.path);
-
-        const Icon = item.icon;
-        return (
-          <button 
-            key={item.path}
-            onClick={() => router.push(item.path)}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition duration-150 cursor-pointer ${
-              isActive ? 'text-amwal-secondary-teal' : 'text-gray-400 hover:text-amwal-secondary-teal'
-            }`}
+    <nav className="absolute bottom-0 left-0 right-0 z-50 bg-white border-t border-[#F3F4F6] shadow-[0px_-4px_12px_rgba(13,26,13,0.06)] h-[72px] sm:rounded-b-[40px] shrink-0">
+      <div className="w-full h-full grid grid-cols-4 items-center">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.name}
+            href={tab.href}
+            className="flex flex-col items-center justify-center h-full py-2 group cursor-pointer"
           >
-            <Icon size={22} className={isActive ? 'text-amwal-secondary-teal' : 'text-gray-400'} />
-            <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-semibold'}`}>
-              {item.label}
+            <div className="relative w-6 h-6 flex items-center justify-center">
+              <Image
+                src={tab.isActive ? tab.activeIcon : tab.deactiveIcon}
+                alt={tab.name}
+                width={24}
+                height={24}
+                className="object-contain transition-transform duration-150 group-hover:scale-105"
+              />
+            </div>
+            <span
+              className={`text-[12px] leading-[16px] mt-1 transition-colors duration-150 ${
+                tab.isActive
+                  ? 'text-[#439F46] font-medium'
+                  : 'text-[#6B7280] font-normal group-hover:text-gray-700'
+              }`}
+            >
+              {tab.name}
             </span>
-          </button>
-        );
-      })}
-    </div>
+          </Link>
+        ))}
+      </div>
+    </nav>
   );
 }
+

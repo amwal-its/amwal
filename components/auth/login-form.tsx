@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export function LoginForm() {
   const router = useRouter();
@@ -61,11 +62,11 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-0 sm:p-4 font-jakarta antialiased">
-      {/* Mobile Container 430px */}
-      <div className="w-full max-w-[430px] min-h-[932px] bg-white shadow-sm border border-gray-100 sm:rounded-3xl overflow-hidden pt-[48px] px-[16px] pb-[24px] flex flex-col justify-between">
+      {/* Mobile Phone Screen Container for Desktop */}
+      <div className="w-full max-w-[430px] h-[100dvh] sm:h-[844px] bg-white shadow-2xl border border-gray-200/80 sm:rounded-[40px] relative flex flex-col justify-between overflow-hidden pt-[36px] px-[20px] pb-[24px]">
         
         {/* Top Header */}
-        <div>
+        <div className="overflow-y-auto pr-0.5">
           {/* Back Button */}
           <Link
             href="/onboarding"
@@ -111,13 +112,12 @@ export function LoginForm() {
               <label className="block text-xs font-semibold text-gray-900 mb-1.5">
                 Email / Nomor HP
               </label>
-              <input
+              <Input
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="nama@email.com"
                 disabled={isLoading}
-                className="w-full px-4 py-3.5 bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
               />
             </div>
 
@@ -126,23 +126,26 @@ export function LoginForm() {
               <label className="block text-xs font-semibold text-gray-900 mb-1.5">
                 Kata Sandi
               </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={isLoading}
-                  className="w-full px-4 py-3.5 pr-11 bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={isLoading}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-gray-500 hover:text-gray-800 p-1 cursor-pointer transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5 stroke-[2]" />
+                    ) : (
+                      <Eye className="w-5 h-5 stroke-[2]" />
+                    )}
+                  </button>
+                }
+              />
             </div>
 
             {/* Primary Action Button */}
@@ -167,7 +170,7 @@ export function LoginForm() {
         </div>
 
         {/* Footer Link (Centered at bottom) */}
-        <div className="pt-6 pb-2 text-center">
+        <div className="pt-6 pb-2 text-center max-w-md mx-auto w-full">
           <Link
             href="/register"
             className="text-sm font-medium text-[#439F46] hover:underline cursor-pointer"
@@ -180,3 +183,4 @@ export function LoginForm() {
     </div>
   );
 }
+
