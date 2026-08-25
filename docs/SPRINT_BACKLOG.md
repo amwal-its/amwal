@@ -820,32 +820,60 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
 
 ---
 
-## Putaran 8 (Pasca-Demo) — Redesain Flow Guest & Akses Per-Modul
+# PUTARAN 8 (Pasca-Demo Prep & Hardening Modul Wakaf)
 
-### Task 8.1 (Bara, Prioritas 1 - Security Fix)
-Perbaiki Smart Guest Resolution: batasi pencarian existing user HANYA ke 
-passwordHash=null AND oauthProvider=null. Tambah Single Shared Anonymous 
-User (seed) untuk Opsi C. HAPUS logic random-email-per-transaksi untuk 
-kasus anonim total.
+## 🟢 Bara — Modul Wakaf & Public Access Routing
 
-### Task 8.2 (Bara)
-Modal Pre-Donasi 3-Opsi (Login/Guest/Anonim) di flow Wakaf -- reuse 
-ConfirmationModal pattern, styling sesuai Design System.
+### Task 8.1 — Smart Guest Resolution & Single Shared Anonymous User
+**Scope Utama:** [Backend Logic / Database Fix]  
+**Target Route:** `POST /api/wakaf/orders`  
+**Target Database:** `User`, `WaqfOrder`, `Transaction`  
+**RBAC & Middleware Guard:** Public / Guest  
+**Detail Alur Logic:**  
+- Donasi anonim total (*Hamba Allah*) dikaitkan ke **Single Shared Anonymous User** (`00000000-0000-0000-0000-000000000001`) untuk mencegah *data bloating*.
+- Isolasi keamanan pencocokan guest donor (`passwordHash: null` & `oauthProvider: null`) untuk mengunci celah *account hijacking* pada akun terdaftar.  
+**Acceptance Criteria (DoD):**  
+- [x] Single Shared Anonymous User ter-seed dan terhubung sempurna.
+- [x] Donor guest dengan email akun terdaftar tidak membajak akun terdaftar tersebut.
 
-### Task 8.3 (Bara)
-Update proxy.ts: pastikan halaman katalog/dashboard PUBLIK (bukan 
-redirect-to-login), proteksi login hanya di titik submit order. 
-Pindahkan entry point login ke menu Profile.
+---
 
-### Task 8.4 (Naufal/Awan -- verifikasi saja, kemungkinan tidak ada perubahan kode)
-Konfirmasi /api/zakat/orders dan /api/qurban/orders TETAP wajib role 
-WAKIF terautentikasi (tidak berubah dari desain awal) -- cukup regression 
-test, tidak perlu fitur baru.
+### Task 8.2 — Modal Pre-Donasi 3-Opsi & Polishing Guest Form
+**Scope Utama:** [Frontend UI/UX]  
+**Target Route:** `/wakaf/[id]/donate`  
+**Target Database:** `WaqfOrder`  
+**RBAC & Middleware Guard:** Public / Guest / Authenticated  
+**Detail Alur Logic:**  
+- Modal Pre-Donasi 3-Opsi (Login, Donatur Tamu/Guest, Hamba Allah).
+- Pembersihan toggle switch *redundant* "Hamba Allah" pada Mode Guest.  
+**Acceptance Criteria (DoD):**  
+- [x] Modal 3-Opsi berfungsi sebelum masuk form donasi.
+- [x] Form Guest tampil bersih tanpa toggle Hamba Allah.
 
-### Task 8.5 (Bara)
-Tombol Share Program (Web Share API + WhatsApp + Copy Link).
+---
 
-### DECISION_LOG.md Putaran 8
-Catat: alasan Single Shared Anonymous User (bukan incremental naming), 
-alasan Zakat/Qurban wajib-login (kebutuhan data Nisab/Asnaf/NIK/Akad), 
-dan security fix pembatasan guest-matching pool.
+### Task 8.3 — Proxy Routing Adjustment & Public Catalog Access
+**Scope Utama:** [Middleware & Routing Architecture]  
+**Target Route:** `/`, `/wakaf`, `/zakat`, `/qurban`, `/edukasi`, `/riwayat`  
+**Target Database:** N/A  
+**RBAC & Middleware Guard:** Public / Strict Auth Guard  
+**Detail Alur Logic:**  
+- Pembebasan rute Beranda `/` dan katalog publik tanpa paksaan redirect login.
+- Penjagaan strict auth guard `401 Unauthorized` khusus rute order Zakat (`POST /api/zakat/orders`) dan Qurban (`POST /api/qurban/orders`).  
+**Acceptance Criteria (DoD):**  
+- [x] Beranda `/` merender langsung (HTTP 200 OK) tanpa login.
+- [x] API Zakat & Qurban tetap 401 Unauthorized untuk guest.
+
+---
+
+### Task 8.5 / 5.1c — Fitur Bagikan Program Wakaf (Share Program)
+**Scope Utama:** [Frontend UI/Page Component]  
+**Target Route:** `/wakaf/[id]`  
+**Target Database:** `WaqfProgram`  
+**RBAC & Middleware Guard:** Publik  
+**Detail Alur Logic:**  
+- Integrasi Web Share API untuk browser mobile dengan fallback WhatsApp Direct Link & Copy Link Clipboard untuk desktop.
+- Polishing ukuran ikon `<Share2/>` (`w-4 h-4`) dan layout tombol proporsional.  
+**Acceptance Criteria (DoD):**  
+- [x] Native share & fallback desktop berfungsi sempurna.
+- [x] Visual ikon proporsional dan presisi.
