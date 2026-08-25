@@ -112,4 +112,12 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 |---|---|---|
 | 1 | Model `WaqfYieldEntry` & Fiqih Wakaf Produktif vs Habis Pakai | Fiqih wakaf uang: Pada wakaf produktif (`PRODUKTIF_KEKAL`), pokok dana (`pokokDanaTerkumpul`) bersifat abadi dan tidak boleh berkurang. Ditambahkan entitas `WaqfYieldEntry` (POST `/api/admin/wakaf/programs/[id]/yield-entries`) untuk mencatat inflow hasil investasi ke `totalHasilAvailable`. Percabangan eksplisit diterapkan pada withdrawal: `HABIS_PAKAI` mendecement `pokokDanaTerkumpul`, sedangkan `PRODUKTIF_KEKAL` mendecement `totalHasilAvailable` dan mengincrement `hasilInvestasiTersalurkan` (pokok tetap utuh 100%). |
 | 2 | Slot Release vs DP Qurban Terbayar (Known Limitation) | Pada webhook PG event `expire`/`cancel`/`deny`, rilis otomatis slot qurban ke `TERSEDIA` saat ini belum mengecek `nominalDibayar > 0`. Ditandai sebagai known limitation: untuk order berstatus DP yang expired di pelunasan, penanganan follow-up/refund dilakukan manual oleh Admin di V.1 sebelum penambahan status/grace period otomatis di V.2. |
-| 3 | Konsolidasi Webhook Payment Gateway | Endpoint tunggal `POST /api/webhooks/payment` difungsikan sebagai entry point utama untuk kompatibilitas 1-URL webhook dashboard Midtrans/Xendit, me-route secara internal ke modul Wakaf, Zakat, atau Qurban. |
+| 3 | Konsolidasi Webhook Payment Gateway | Endpoint tunggal `POST /api/webhooks/payment` difungsikan sebagai entry point utama untuk kompatibilitas 1-URL webhook dashboard Midtrans/Xendit, me-route secara internal ke modul Wakaf, Zakat, atau Qurban. |
+
+## Putaran 8 — Frontend Zakat UI & Flow Entri Amil (Sprint 5)
+
+| # | Topik | Keputusan & Catatan Teknis |
+|---|---|---|
+| 1 | Integrasi Live Gold Price di Kalkulator | Interface `/zakat/kalkulator` memanfaatkan `GET /api/zakat/gold-price/live` secara dinamis. Jika `isStale: true`, badge peringatan visual ditampilkan secara transparan kepada pengguna. |
+| 2 | Modal Konfirmasi Entri Offline Amil | Modal konfirmasi ringkasan data transaksi pada `/amil/zakat-entri` bersifat unbypassable untuk mencegah kesalahan entri kasir/amil offline sebelum dikirim ke `POST /api/admin/zakat/orders`. |
+| 3 | Privasi Donatur ("Hamba Allah") | Checkbox `isAnonymous: true` pada form bayar digital & entri amil menandai pesanan untuk disembunyikan di tampilan publik tanpa mengurangi data audit internal. |
