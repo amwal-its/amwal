@@ -45,6 +45,9 @@ page-*.yml
 # IDE & Editor files
 .idea/
 .vscode/
+.cursor/
+*mcp.json
+mcp.json
 *.swp
 *.swo
 
