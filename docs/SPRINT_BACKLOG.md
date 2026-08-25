@@ -569,8 +569,8 @@ GET /api/wakaf/programs/[id]/yield-entries
 - Tampilkan label info acuan harga emas: "Harga emas acuan: Rp X/gram (update: [tanggal])" dari response `GET /api/zakat/gold-price/live`.
 - Jika `isStale: true`, tampilkan badge "Harga belum ter-update hari ini".  
 **Acceptance Criteria (DoD):**  
-- [ ] Kalkulasi real-time bekerja akurat.
-- [ ] Label harga emas ter-render dinamis dari API.
+- [x] Kalkulasi real-time bekerja akurat.
+- [x] Label harga emas ter-render dinamis dari API.
 
 ---
 
@@ -584,8 +584,8 @@ GET /api/wakaf/programs/[id]/yield-entries
 - Pilihan bentuk zakat (Uang/Beras), checkbox "Hamba Allah" (`isAnonymous: true`).
 - Modal konfirmasi ringkasan transaksi sebelum submit entri amil.  
 **Acceptance Criteria (DoD):**  
-- [ ] Form terintegrasi dengan API order digital & offline.
-- [ ] Modal konfirmasi entri amil bekerja.
+- [x] Form terintegrasi dengan API order digital & offline.
+- [x] Modal konfirmasi entri amil bekerja.
 
 ---
 
