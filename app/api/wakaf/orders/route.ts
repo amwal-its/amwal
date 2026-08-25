@@ -97,25 +97,48 @@ export async function POST(req: NextRequest) {
       let effectiveWakifId = sessionUserId;
       if (!effectiveWakifId) {
         let existingUser = null;
-        if (email && email.trim() !== '') {
-          existingUser = await tx.user.findUnique({ where: { email: email.trim() } });
-        } else if (noTelepon && noTelepon.trim() !== '') {
-          existingUser = await tx.user.findUnique({ where: { phone: noTelepon.trim() } });
+        const cleanEmail = email && email.trim() !== '' ? email.trim() : null;
+        const cleanPhone = noTelepon && noTelepon.trim() !== '' ? noTelepon.trim() : null;
+
+        // 1. Check if user already exists by email
+        if (cleanEmail) {
+          existingUser = await tx.user.findUnique({ where: { email: cleanEmail } });
+        }
+
+        // 2. If not found by email, check if user exists by phone
+        if (!existingUser && cleanPhone) {
+          existingUser = await tx.user.findUnique({ where: { phone: cleanPhone } });
         }
 
         if (existingUser) {
           effectiveWakifId = existingUser.id;
         } else {
+          // 3. Create or upsert a new guest user safely
           const fallbackEmail =
-            email?.trim() ||
-            (noTelepon ? `${noTelepon.trim().replace(/\D/g, '')}@amwal.id` : `guest-${Date.now()}-${Math.floor(Math.random() * 10000)}@amwal.id`);
+            cleanEmail ||
+            (cleanPhone
+              ? `guest-${cleanPhone.replace(/\D/g, '')}@amwal.id`
+              : `guest-${Date.now()}-${Math.floor(Math.random() * 10000)}@amwal.id`);
+
+          // Check if the phone is already taken by another user
+          let phoneToAssign = cleanPhone;
+          if (phoneToAssign) {
+            const phoneOwner = await tx.user.findUnique({ where: { phone: phoneToAssign } });
+            if (phoneOwner) {
+              phoneToAssign = null; // Avoid duplicate phone unique constraint crash
+            }
+          }
+
           const guestUser = await tx.user.upsert({
             where: { email: fallbackEmail },
-            update: { name: isAnonymous ? 'Hamba Allah' : namaWakif },
+            update: {
+              name: isAnonymous ? 'Hamba Allah' : namaWakif,
+              ...(phoneToAssign ? { phone: phoneToAssign } : {}),
+            },
             create: {
               name: isAnonymous ? 'Hamba Allah' : namaWakif,
               email: fallbackEmail,
-              phone: noTelepon?.trim() || null,
+              phone: phoneToAssign,
               role: 'WAKIF',
             },
           });

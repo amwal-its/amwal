@@ -65,7 +65,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Buf
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(75, 85, 99); // #4B5563
-  doc.text('NAZHIR WAKAF UANG RESMI BADAN WAKAF INDONESIA (BWI)', width / 2, 31, { align: 'center' });
+  doc.text('LEMBAGA PENGELOLA WAKAF UANG YAYASAN MANARUL ILMI ITS', width / 2, 31, { align: 'center' });
   doc.text('Gedung Pusat Riset Manarul Ilmi ITS, Kampus ITS Sukolilo, Surabaya 60111', width / 2, 35, { align: 'center' });
 
   // Divider Line
@@ -194,11 +194,11 @@ export async function generateCertificatePdf(data: CertificateData): Promise<Buf
   doc.setTextColor(146, 64, 14); // amber-800
   doc.text('NOMOR REGISTRASI BADAN WAKAF INDONESIA (BWI)', width / 2, bwiBoxY + 7, { align: 'center' });
 
-  doc.setFontSize(11);
+  doc.setFontSize(10.5);
   doc.setFont('helvetica', 'bold');
-  const bwiText = data.nomorRegistrasiBwi
+  const bwiText = data.nomorRegistrasiBwi && data.nomorRegistrasiBwi.trim() !== ''
     ? data.nomorRegistrasiBwi.toUpperCase()
-    : 'DALAM PROSES PENCATATAN & REKONSILIASI BWI RI';
+    : 'Menunggu Proses Registrasi BWI';
   doc.setTextColor(180, 83, 9);
   doc.text(bwiText, width / 2, bwiBoxY + 15, { align: 'center' });
 
