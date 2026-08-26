@@ -19,31 +19,6 @@ interface FeaturedProgramsProps {
 }
 
 export function FeaturedPrograms({ programs = [] }: FeaturedProgramsProps) {
-  const defaultPrograms: ProgramItem[] = [
-    {
-      id: 'default-1',
-      judul: 'Pembangunan Gedung Sekolah Yatim',
-      kategori: 'Pendidikan',
-      bannerUrl: '/assets/images/wakaf/wakaf-dana-abadi-untuk-pendidikan-agama-islam.png',
-      targetDana: 1000000000,
-      pokokDanaTerkumpul: 450000000,
-      durasiHari: 45,
-      namaLembaga: 'Dompet Dhuafa',
-    },
-    {
-      id: 'default-2',
-      judul: 'Wakaf Alat Kesehatan Klinik Umat',
-      kategori: 'Kesehatan',
-      bannerUrl: '/assets/images/wakaf/wakaf-air-bersih-desa-nurul-amanah.png',
-      targetDana: 300000000,
-      pokokDanaTerkumpul: 140000000,
-      durasiHari: 45,
-      namaLembaga: 'Lazismu',
-    },
-  ];
-
-  const displayPrograms = programs.length > 0 ? programs : defaultPrograms;
-
   const formatJuta = (val: number) => {
     if (val >= 1000000000) {
       return `Rp ${(val / 1000000000).toFixed(1)} Miliar`;
@@ -73,7 +48,7 @@ export function FeaturedPrograms({ programs = [] }: FeaturedProgramsProps) {
 
       {/* Program Cards */}
       <div className="flex flex-col gap-3.5">
-        {displayPrograms.map((p) => {
+        {programs.map((p) => {
           const percent = p.targetDana > 0 ? Math.min(100, Math.round((p.pokokDanaTerkumpul / p.targetDana) * 100)) : 0;
           return (
             <Link

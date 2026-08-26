@@ -503,6 +503,17 @@ Body: {
 
 ---
 
+### Task 5.1c — Tombol Bagikan Program Wakaf (BARU)
+**Scope Utama:** [Frontend UI/Page]  
+**Target Route:** app/(user)/wakaf/[id]/page.tsx  
+**Detail Alur Logic:** `navigator.share()` (Web Share API) jika didukung browser (mobile),  fallback ke "Salin Link" (clipboard) + tombol WhatsApp share (wa.me/?text=...) untuk desktop.
+**Acceptance Criteria (DoD):** 
+- [ ] Tombol muncul di halaman detail program
+- [ ] Fallback clipboard jelas ada notifikasi "Link disalin" 
+- [ ] Link yang dibagikan mengarah ke halaman detail program yang benar
+
+---
+
 ### Task 5.2 — Form Donasi Wakaf & Dashboard Nadzir — Update: Checkbox Anonim + OAuth
 **Scope Utama:** [Frontend UI/Page]  
 **Target Route:** `/wakaf/[id]/donate`, `/nadzir/dashboard`, `/login`, `/register`  
@@ -806,3 +817,35 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
 - [ ] ~~Infaq/Sedekah~~ — ditunda (Putaran 6)
 - [ ] ~~Dashboard Analitik RFMD~~ — ditunda (Putaran 6, riset terpisah)
 - [ ] ~~Facebook OAuth~~ — ditunda (Putaran 6, hanya Google masuk scope)
+
+---
+
+## Putaran 8 (Pasca-Demo) — Redesain Flow Guest & Akses Per-Modul
+
+### Task 8.1 (Bara, Prioritas 1 - Security Fix)
+Perbaiki Smart Guest Resolution: batasi pencarian existing user HANYA ke 
+passwordHash=null AND oauthProvider=null. Tambah Single Shared Anonymous 
+User (seed) untuk Opsi C. HAPUS logic random-email-per-transaksi untuk 
+kasus anonim total.
+
+### Task 8.2 (Bara)
+Modal Pre-Donasi 3-Opsi (Login/Guest/Anonim) di flow Wakaf -- reuse 
+ConfirmationModal pattern, styling sesuai Design System.
+
+### Task 8.3 (Bara)
+Update proxy.ts: pastikan halaman katalog/dashboard PUBLIK (bukan 
+redirect-to-login), proteksi login hanya di titik submit order. 
+Pindahkan entry point login ke menu Profile.
+
+### Task 8.4 (Naufal/Awan -- verifikasi saja, kemungkinan tidak ada perubahan kode)
+Konfirmasi /api/zakat/orders dan /api/qurban/orders TETAP wajib role 
+WAKIF terautentikasi (tidak berubah dari desain awal) -- cukup regression 
+test, tidak perlu fitur baru.
+
+### Task 8.5 (Bara)
+Tombol Share Program (Web Share API + WhatsApp + Copy Link).
+
+### DECISION_LOG.md Putaran 8
+Catat: alasan Single Shared Anonymous User (bukan incremental naming), 
+alasan Zakat/Qurban wajib-login (kebutuhan data Nisab/Asnaf/NIK/Akad), 
+dan security fix pembatasan guest-matching pool.

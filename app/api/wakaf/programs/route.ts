@@ -105,7 +105,8 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = req.nextUrl;
+    const url = new URL(req.url, 'http://localhost:3000');
+    const searchParams = url.searchParams;
     const kategori = searchParams.get('kategori');
     const search = searchParams.get('search');
     const statusParam = searchParams.get('status');

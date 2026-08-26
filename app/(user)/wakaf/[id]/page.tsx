@@ -8,8 +8,12 @@ import { WakafStatsGrid } from '@/components/wakaf/wakaf-stats-grid';
 import { WakafNazhirCard } from '@/components/wakaf/wakaf-nazhir-card';
 import { WakafTransparencyCard } from '@/components/wakaf/wakaf-transparency-card';
 import { WakafBottomCta } from '@/components/wakaf/wakaf-bottom-cta';
+import { WakafShareButton } from '@/components/wakaf/wakaf-share-button';
 import { Sparkles, Building2, Coins, ShieldCheck } from 'lucide-react';
 import { DescriptionToggle } from './description-toggle';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -47,6 +51,11 @@ export default async function WakafDetailPage({ params }: PageProps) {
           statusVerifikasi: true,
         },
       },
+      yieldEntries: {
+        orderBy: {
+          recordedAt: 'desc',
+        },
+      },
       _count: {
         select: {
           waqfOrders: {
@@ -68,6 +77,13 @@ export default async function WakafDetailPage({ params }: PageProps) {
   const hasilInvestasiTersalurkan = Number(program.principalLedger?.hasilInvestasiTersalurkan || 0);
   const targetDana = Number(program.targetDana || 0);
   const totalWakif = program._count?.waqfOrders || 0;
+
+  const formattedYieldEntries = (program.yieldEntries || []).map((y) => ({
+    id: y.id,
+    amount: Number(y.amount),
+    sourceDescription: y.sourceDescription,
+    recordedAt: y.recordedAt,
+  }));
 
   const isProduktif = program.jenisWakaf === 'PRODUKTIF_KEKAL';
 
@@ -104,6 +120,11 @@ export default async function WakafDetailPage({ params }: PageProps) {
                 Wakaf Fisik / Sosial
               </span>
             )}
+
+            {/* Share Program Button */}
+            <div className="ml-auto">
+              <WakafShareButton judul={program.judul} variant="button" />
+            </div>
           </div>
 
           {/* Heading 1: Program Title */}
@@ -125,6 +146,7 @@ export default async function WakafDetailPage({ params }: PageProps) {
             pokokDanaTerkumpul={pokokDanaTerkumpul}
             totalHasilAvailable={totalHasilAvailable}
             hasilInvestasiTersalurkan={hasilInvestasiTersalurkan}
+            yieldEntries={formattedYieldEntries}
           />
 
           {/* Section: Stats Grid (Wakif / Donatur & Penerima Manfaat) */}

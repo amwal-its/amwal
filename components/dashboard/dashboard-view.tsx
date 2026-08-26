@@ -10,11 +10,13 @@ import { BottomNav } from '@/components/bottom-nav';
 interface DashboardViewProps {
   userName?: string;
   programs?: ProgramItem[];
+  isLoggedIn?: boolean;
 }
 
 export function DashboardView({
   userName = 'Ahmad Abdullah',
   programs = [],
+  isLoggedIn = true,
 }: DashboardViewProps) {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-0 sm:p-4 font-jakarta antialiased">
