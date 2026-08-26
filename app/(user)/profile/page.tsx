@@ -60,7 +60,7 @@ export default async function ProfilePage() {
       docs.push({
         id: tx.certificate.id,
         title: 'Sertifikat Wakaf Syariah',
-        date: tx.certificate.createdAt.toLocaleDateString('id-ID', {
+        date: (tx.certificate.issuedAt ? new Date(tx.certificate.issuedAt) : new Date()).toLocaleDateString('id-ID', {
           day: 'numeric',
           month: 'short',
           year: 'numeric',
