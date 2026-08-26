@@ -27,7 +27,7 @@ export function CategoryGrid() {
   ];
 
   return (
-    <div className="mx-4 sm:mx-6 my-5">
+    <div className="mx-5 sm:mx-6 my-5">
       <div className="grid grid-cols-4 gap-3 sm:gap-4">
         {categories.map((cat, idx) => (
           <Link
@@ -35,16 +35,17 @@ export function CategoryGrid() {
             href={cat.href}
             className="flex flex-col items-center gap-2 group cursor-pointer"
           >
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-[#EEF7EE] hover:bg-[#d8edd8] flex items-center justify-center border border-emerald-100/60 shadow-2xs group-hover:scale-105 active:scale-95 transition-all duration-200">
+            {/* Soft Green Pill-Square Icon Box */}
+            <div className="w-[62px] h-[62px] sm:w-[68px] sm:h-[68px] rounded-[22px] bg-[#EAF5EB] group-hover:bg-[#DBEEDD] border border-[#D5EBD7] flex items-center justify-center group-hover:scale-105 active:scale-95 transition-all duration-200 shrink-0">
               <Image
                 src={cat.iconSrc}
                 alt={cat.name}
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 className="object-contain"
               />
             </div>
-            <span className="text-xs sm:text-sm font-medium text-gray-800 group-hover:text-[#439F46] transition-colors">
+            <span className="text-xs sm:text-sm font-medium text-[#1E293B] group-hover:text-[#439F46] transition-colors text-center">
               {cat.name}
             </span>
           </Link>

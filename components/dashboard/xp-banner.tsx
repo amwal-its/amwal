@@ -20,7 +20,7 @@ export function XpBanner({ initialXp = 200 }: XpBannerProps) {
   };
 
   return (
-    <div className="mx-4 sm:mx-6 my-4 bg-gradient-to-r from-[#0F3D1A] to-[#164e23] border border-emerald-900/50 rounded-2xl p-4 sm:p-5 text-white shadow-md flex items-center justify-between gap-3 relative overflow-hidden">
+    <div className="mx-5 sm:mx-6 my-4 bg-gradient-to-r from-[#0F3D1A] to-[#164e23] border border-emerald-900/50 rounded-2xl p-4 sm:p-5 text-white shadow-md flex items-center justify-between gap-3 relative overflow-hidden">
       {/* Background glow circle */}
       <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-[#439F46]/20 rounded-full blur-xl pointer-events-none" />
 

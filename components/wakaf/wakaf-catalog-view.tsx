@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Search, Clock, Building2, ChevronRight, Coins, ShieldCheck, Heart } from 'lucide-react';
-import { BottomNav } from '@/components/dashboard/bottom-nav';
+import { BottomNav } from '@/components/bottom-nav';
 
 export interface CatalogProgramItem {
   id: string;

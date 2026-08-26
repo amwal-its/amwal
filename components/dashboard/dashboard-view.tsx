@@ -24,7 +24,7 @@ export function DashboardView({
       <div className="w-full max-w-[430px] h-[100dvh] sm:h-[844px] bg-white shadow-2xl border border-gray-200/80 sm:rounded-[40px] relative flex flex-col justify-between overflow-hidden">
         
         {/* Top Header Section */}
-        <TopAppBar />
+        <TopAppBar isLoggedIn={isLoggedIn} />
 
         {/* Scrollable Main Content Area */}
         <main className="flex-1 overflow-y-auto pb-[80px]">

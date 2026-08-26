@@ -30,7 +30,7 @@ export function FeaturedPrograms({ programs = [] }: FeaturedProgramsProps) {
   };
 
   return (
-    <div className="mx-4 sm:mx-6 my-6">
+    <div className="mx-5 sm:mx-6 my-6">
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 mb-3.5">
         <h3 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight">
@@ -73,30 +73,33 @@ export function FeaturedPrograms({ programs = [] }: FeaturedProgramsProps) {
               {/* Info & Progress */}
               <div className="min-w-0 flex-1 flex flex-col justify-between">
                 <div>
+                  {/* Category Pill Badge Above Title */}
+                  <span className="inline-block bg-[#EAF5EB] text-[#439F46] text-[10px] font-semibold px-2 py-0.5 rounded-md mb-1.5">
+                    {p.kategori || 'Pendidikan'}
+                  </span>
+
                   <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#439F46] transition-colors line-clamp-2 mb-1">
                     {p.judul}
                   </h4>
-                  <p className="text-[11px] text-gray-500 truncate flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-gray-400" />
-                    <span>{p.namaLembaga || 'Badan Pengelola Wakaf'}</span>
+                  <p className="text-[11px] text-gray-500 truncate">
+                    {p.namaLembaga || 'Badan Pengelola Wakaf'}
                   </p>
                 </div>
 
                 {/* Progress Bar & Sub-info */}
                 <div className="mt-2">
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1.5">
+                  <div className="w-full h-1.5 bg-[#E2EEF8] rounded-full overflow-hidden mb-1.5">
                     <div
-                      className="h-full bg-[#439F46] rounded-full"
+                      className="h-full bg-[#188B46] rounded-full"
                       style={{ width: `${Math.max(4, percent)}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold">
-                    <span className="text-gray-900">
+                  <div className="flex items-center justify-between text-[10px] sm:text-[11px]">
+                    <span className="text-[#188B46] font-semibold">
                       Terkumpul {formatJuta(p.pokokDanaTerkumpul)}
                     </span>
-                    <span className="text-gray-400 font-medium flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <span className="text-gray-400 font-medium">
                       {p.durasiHari || 45} hari lagi
                     </span>
                   </div>
