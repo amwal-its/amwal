@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sparkles, Award, CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
+import { Sparkles, CheckCircle2 } from 'lucide-react';
 
 interface XpBannerProps {
   initialXp?: number;
@@ -19,14 +20,20 @@ export function XpBanner({ initialXp = 200 }: XpBannerProps) {
   };
 
   return (
-    <div className="mx-4 sm:mx-6 my-4 bg-gradient-to-r from-[#0F3D1A] to-[#164e23] border border-emerald-900/50 rounded-2xl p-4 sm:p-5 text-white shadow-md flex items-center justify-between gap-3 relative overflow-hidden">
+    <div className="mx-5 sm:mx-6 my-3 bg-gradient-to-r from-[#0F3D1A] to-[#164e23] border border-emerald-900/50 rounded-2xl p-4 sm:p-5 text-white shadow-md flex items-center justify-between gap-3 relative overflow-hidden">
       {/* Background glow circle */}
       <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-[#439F46]/20 rounded-full blur-xl pointer-events-none" />
 
       {/* Left side: Points Info */}
       <div className="flex items-center gap-3 relative z-10">
-        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#006D34] text-emerald-300 flex items-center justify-center shadow-inner shrink-0">
-          <Award className="w-5 h-5" />
+        <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-[#006D34] flex items-center justify-center shadow-inner shrink-0 p-1">
+          <Image
+            src="/assets/images/dashboard/point-icon.png"
+            alt="Poin Berkah"
+            width={28}
+            height={28}
+            className="object-contain"
+          />
         </div>
 
         <div>
@@ -64,3 +71,4 @@ export function XpBanner({ initialXp = 200 }: XpBannerProps) {
     </div>
   );
 }
+

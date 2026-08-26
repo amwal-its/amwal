@@ -121,3 +121,22 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 | 1 | Integrasi Live Gold Price di Kalkulator | Interface `/zakat/kalkulator` memanfaatkan `GET /api/zakat/gold-price/live` secara dinamis. Jika `isStale: true`, badge peringatan visual ditampilkan secara transparan kepada pengguna. |
 | 2 | Modal Konfirmasi Entri Offline Amil | Modal konfirmasi ringkasan data transaksi pada `/amil/zakat-entri` bersifat unbypassable untuk mencegah kesalahan entri kasir/amil offline sebelum dikirim ke `POST /api/admin/zakat/orders`. |
 | 3 | Privasi Donatur ("Hamba Allah") | Checkbox `isAnonymous: true` pada form bayar digital & entri amil menandai pesanan untuk disembunyikan di tampilan publik tanpa mengurangi data audit internal. |
+
+## Putaran 9 — System Notifikasi Real-time & Event Triggers (Sprint 6)
+
+| # | Topik | Keputusan & Catatan Teknis |
+|---|---|---|
+| 1 | Centralized Notification Service | Dibuat helper `createNotification()` di `lib/notification.service.ts` yang menyimpan record `Notification` di DB dan mengeksekusi trigger FCM push notification secara graceful (fallback tanpa error jika credential FCM belum dikonfigurasi). |
+| 2 | Endpoints & UI Notifikasi | `GET /api/notifications` dan `PATCH /api/notifications/[id]/read` disediakan untuk mengelola notifikasi pengguna. Komponen UI `NotificationCenter` menampilkan jumlah belum dibaca dan daftar notifikasi real-time. |
+| 3 | Integrasi Event Triggers | Event penting seperti penolakan penarikan dana Nadzir (`/api/admin/withdrawal-requests/[id]`) dan verifikasi setoran petugas (`/api/admin/setoran/[id]/verify`) telah terhubung otomatis untuk mengirim notifikasi ke user target. |
+
+## Putaran 10 — Hardening & Staging Readiness Final (Sprint 7)
+
+| # | Topik | Keputusan & Catatan Teknis |
+|---|---|---|
+| 1 | Audit Keamanan & Fiqih | Seluruh audit keamanan (AES-256 NIK, Cookie `HttpOnly`/`SameSite=Lax`, JWT rotation) dan fiqih (ledger abadi Wakaf Produktif, Akad Wakalah Qurban, Nisab Emas 85g) dinyatakan **Lolos 100%**. |
+| 2 | Verifikasi Scope Putaran 6 | Dipastikan 100% tidak ada route / UI component aktif yang mengekspos fitur yang ditunda (Dashboard RFMD Analytics, Infaq/Sedekah, Facebook OAuth). |
+| 3 | Dokumentasi & Deployment Runbook | `RUNBOOK.md` diperbarui lengkap dengan checklist environment variables, langkah deployment Vercel/Supabase, serta skenario Smoke Testing untuk 4 role (`WAKIF`, `NADZIR`, `PETUGAS_LAPANGAN`, `ADMIN`). |
+
+
+

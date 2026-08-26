@@ -74,18 +74,44 @@ curl -i -X POST http://localhost:3000/api/auth/login \
   -d '{"identifier":"test@example.com","password":"password123"}'
 ```
 
-## 6. Deploy ke Staging
+## 6. Deploy ke Staging & Production Hardening
 
-- Platform: Vercel (project sudah terhubung, url existing: cek dashboard Vercel)
-- Environment variables staging di-set via Vercel Dashboard (Settings > Environment Variables), BUKAN commit `.env` ke repo
-- Database: Supabase project staging terpisah dari production (kalau belum ada, buat baru sebelum Micro-Sprint 7)
-- Deploy otomatis dari branch yang ditentukan tim (rekomendasi: `staging` branch terpisah dari `main`)
+### Environment Variables Checklist (Vercel / Supabase Dashboard)
+| Key | Mandatory | Description / Notes |
+|---|---|---|
+| `DATABASE_URL` | Yes | Connection string dengan PgBouncer transaction pooling |
+| `DIRECT_URL` | Yes | Direct connection string untuk migrasi database |
+| `JWT_SECRET` | Yes | Secret key min 32 kar, generate: `openssl rand -base64 32` |
+| `GOOGLE_CLIENT_ID` | Yes | OAuth Client ID dari Google Cloud Console |
+| `GOOGLE_CLIENT_SECRET` | Yes | OAuth Client Secret |
+| `GOLD_PRICE_API_KEY` | Optional | API key provider harga emas acuan |
+| `MIDTRANS_SERVER_KEY` | Yes | Midtrans Server Key (Sandbox / Production) |
+| `MIDTRANS_CLIENT_KEY` | Yes | Midtrans Client Key |
+| `SUPABASE_URL` | Yes | Supabase Storage URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase Storage Service Role Key |
+| `ALLOW_OAUTH_MOCK` | **FALSE** | **WAJIB `false` / tidak di-set di Staging & Prod** |
 
-## 7. Troubleshooting Umum
+### Staging Deployment Steps:
+1. Hubungkan repository GitHub ke project Vercel.
+2. Konfigurasi seluruh Environment Variables di Vercel Dashboard (**Settings > Environment Variables**).
+3. Daftarkan URL callback staging (mis. `https://amwal-staging.vercel.app/api/auth/google/callback`) pada Google Cloud Console Authorized Redirect URIs.
+4. Jalankan `npx prisma db push` atau `npx prisma migrate deploy` pada database staging Supabase.
+5. Trigger Vercel Deployment via git push / Vercel CLI.
 
-| Gejala | Kemungkinan Sebab |
-|---|---|
-| Route yang harusnya terproteksi bisa diakses bebas | `proxy.ts` matcher belum mencakup path tsb, cek `export const config` |
-| Login sukses tapi request berikutnya 401 | Cookie tidak ter-set (cek `Set-Cookie` header) atau `credentials: 'include'` belum ada di fetch client |
-| Build gagal "Module not found: jose" | `pnpm install jose` belum dijalankan |
-| Warning "middleware file convention deprecated" | File harus bernama `proxy.ts` bukan `middleware.ts`, fungsi di-export bernama `proxy` |
+## 7. Smoke Testing Protocol (4 Role Verification)
+
+| Role | Test Scenario | Expected Result |
+|---|---|---|
+| `WAKIF` | Login Google / Email → Akses `/zakat/kalkulator` → Donasi Zakat / Wakaf Anonim (`isAnonymous: true`) | Kwitansi digital ter-generate & status `MENUNGGU_VERIFIKASI` / PG redirect |
+| `NADZIR` | Submit Profil & Dokumen → Ajukan Penarikan (`FundWithdrawalRequest`) | Status withdrawal `PENDING` & terhubung ke program wakaf |
+| `PETUGAS_LAPANGAN` | Entri Transaksi Offline → Submit Setoran ke Admin → Laporan Penyaluran GPS | Modal konfirmasi muncul unbypassable & setoran berstatus pending verifikasi |
+| `ADMIN` | Override Harga Emas → Verifikasi Setoran Petugas → Review Withdrawal (Rejection dengan `adminNotes`) | Notification terkirim ke user target & saldo ledger update atomic |
+
+## 8. Troubleshooting & Maintenance
+
+| Gejala | Kemungkinan Sebab | Solusi |
+|---|---|---|
+| Route terproteksi dapat diakses tanpa auth | `proxy.ts` matcher belum mencakup route | Periksa `export const config` pada `proxy.ts` |
+| Login sukses tapi request berikutnya 401 | Cookie `amwal_token` tidak ter-set | Pastikan `SameSite=Lax` dan header `credentials: 'include'` pada fetch |
+| Build Vercel error `prisma client not found` | Postinstall step belum re-generate client | Pastikan script `build` menjalankan `prisma generate && next build` |
+| Warning OAuth Mock Active | Variable `ALLOW_OAUTH_MOCK` ter-set `true` | Hapus / set `ALLOW_OAUTH_MOCK=false` pada environment variables |

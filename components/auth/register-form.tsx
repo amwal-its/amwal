@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, AlertCircle, Loader2, CheckCircle2, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export function RegisterForm() {
   const router = useRouter();
@@ -94,11 +95,11 @@ export function RegisterForm() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-0 sm:p-4 font-jakarta antialiased">
-      {/* Mobile Container 430px */}
-      <div className="w-full max-w-[430px] min-h-[932px] bg-white shadow-sm border border-gray-100 sm:rounded-3xl overflow-hidden pt-[48px] px-[16px] pb-[24px] flex flex-col justify-between">
+      {/* Mobile Phone Screen Container for Desktop */}
+      <div className="w-full max-w-[430px] h-[100dvh] sm:h-[844px] bg-white shadow-2xl border border-gray-200/80 sm:rounded-[40px] relative flex flex-col justify-between overflow-hidden pt-[36px] px-[20px] pb-[24px]">
         
         {/* Top Section */}
-        <div>
+        <div className="overflow-y-auto pr-0.5">
           {/* Back button */}
           <Link
             href="/onboarding"
@@ -141,13 +142,12 @@ export function RegisterForm() {
               <label className="block text-xs font-semibold text-gray-900 mb-1">
                 Nama Lengkap
               </label>
-              <input
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ketik Nama Lengkap"
                 disabled={isLoading}
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
               />
             </div>
 
@@ -156,13 +156,12 @@ export function RegisterForm() {
               <label className="block text-xs font-semibold text-gray-900 mb-1">
                 Email / Nomor HP
               </label>
-              <input
+              <Input
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 placeholder="nama@email.com"
                 disabled={isLoading}
-                className="w-full px-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
               />
             </div>
 
@@ -171,23 +170,26 @@ export function RegisterForm() {
               <label className="block text-xs font-semibold text-gray-900 mb-1">
                 Kata Sandi
               </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 pr-11 bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={isLoading}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-gray-500 hover:text-gray-800 p-1 cursor-pointer transition-colors"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5 stroke-[2]" />
+                    ) : (
+                      <Eye className="w-5 h-5 stroke-[2]" />
+                    )}
+                  </button>
+                }
+              />
             </div>
 
             {/* Field 4: Konfirmasi Sandi */}
@@ -195,63 +197,57 @@ export function RegisterForm() {
               <label className="block text-xs font-semibold text-gray-900 mb-1">
                 Konfirmasi Sandi
               </label>
-              <div className="relative">
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  disabled={isLoading}
-                  className="w-full px-4 py-3 pr-11 bg-white border border-gray-200 rounded-2xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 cursor-pointer"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+              <Input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={isLoading}
+                rightElement={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-gray-500 hover:text-gray-800 p-1 cursor-pointer transition-colors"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5 stroke-[2]" />
+                    ) : (
+                      <Eye className="w-5 h-5 stroke-[2]" />
+                    )}
+                  </button>
+                }
+              />
             </div>
 
-            {/* Switch Toggle Row: Syarat & Ketentuan */}
-            <div className="flex items-center justify-between py-2 border-t border-b border-gray-50 my-1">
-              <div>
-                <p className="text-xs font-semibold text-gray-900">
+
+            {/* Terms & Conditions Row with right-aligned checkbox */}
+            <div className="flex items-center justify-between py-2.5 border-t border-b border-gray-50 my-2">
+              <div className="flex flex-col items-start">
+                <span className="text-xs font-semibold text-gray-900">
                   Saya menyetujui Syarat & Ketentuan
-                </p>
+                </span>
                 <button
                   type="button"
                   onClick={() => setShowTermsModal(true)}
-                  className="text-xs text-gray-400 hover:text-[#439F46] transition-colors cursor-pointer"
+                  className="text-xs text-gray-400 hover:text-[#439F46] transition-colors cursor-pointer mt-0.5"
                 >
                   Lihat
                 </button>
               </div>
 
-              {/* iOS style switch */}
-              <button
-                type="button"
-                role="switch"
-                aria-checked={agreeTerms}
-                onClick={() => setAgreeTerms(!agreeTerms)}
-                className={`w-12 h-7 flex items-center rounded-full p-1 transition-colors duration-200 cursor-pointer ${
-                  agreeTerms ? 'bg-[#439F46]' : 'bg-gray-200'
-                }`}
-              >
-                <div
-                  className={`bg-white w-5 h-5 rounded-full shadow-md transform transition-transform duration-200 ${
-                    agreeTerms ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                className="w-5 h-5 rounded-md border-gray-300 text-[#439F46] focus:ring-[#439F46]/30 accent-[#439F46] cursor-pointer ml-3 shrink-0"
+              />
             </div>
 
             {/* Primary Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-4 h-[52px] bg-[#439F46] hover:bg-[#388E3C] text-white font-semibold text-[16px] rounded-xl sm:rounded-2xl text-center active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-xs"
+              className="w-full mt-7 h-[52px] bg-[#439F46] hover:bg-[#388E3C] text-white font-semibold text-[16px] rounded-xl sm:rounded-2xl text-center active:scale-[0.99] transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-xs"
             >
               {isLoading ? (
                 <>
@@ -317,12 +313,6 @@ export function RegisterForm() {
             <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-gray-100 animate-in zoom-in-95">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-base font-bold text-gray-900">Syarat & Ketentuan Amwal</h3>
-                <button
-                  onClick={() => setShowTermsModal(false)}
-                  className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:text-gray-900 flex items-center justify-center cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
 
               <div className="text-xs text-gray-600 leading-relaxed max-h-60 overflow-y-auto space-y-2 pr-1 mb-5">
@@ -332,13 +322,12 @@ export function RegisterForm() {
               </div>
 
               <button
-                onClick={() => {
-                  setAgreeTerms(true);
-                  setShowTermsModal(false);
-                }}
-                className="w-full bg-[#439F46] hover:bg-[#388E3C] text-white font-bold py-3 px-4 rounded-xl text-sm transition-all cursor-pointer"
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="w-full bg-[#439F46] hover:bg-[#388E3C] text-white font-bold py-3 px-4 rounded-xl text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
               >
-                Saya Paham & Setuju
+                <X className="w-4 h-4 text-white stroke-[2.5]" />
+                <span>Tutup</span>
               </button>
             </div>
           </div>

@@ -79,10 +79,59 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(
+    // Generate JWT Access Token & Refresh Token upon successful registration
+    const {
+      signAccessToken,
+      generateRefreshToken,
+      hashToken,
+      ACCESS_TOKEN_COOKIE,
+      REFRESH_TOKEN_COOKIE,
+      ACCESS_TOKEN_MAX_AGE,
+      REFRESH_TOKEN_MAX_AGE,
+    } = await import('../../../../lib/tokens');
+
+    const accessToken = signAccessToken({
+      id: newUser.id,
+      role: newUser.role,
+      email: newUser.email,
+      phone: newUser.phone,
+    });
+
+    const rawRefreshToken = generateRefreshToken();
+    const tokenHash = hashToken(rawRefreshToken);
+    const refreshExpiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE * 1000);
+
+    await prisma.refreshToken.create({
+      data: {
+        userId: newUser.id,
+        tokenHash,
+        expiresAt: refreshExpiresAt,
+      },
+    });
+
+    const response = NextResponse.json(
       { message: 'User registered successfully', user: newUser },
       { status: 201 }
     );
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    response.cookies.set(ACCESS_TOKEN_COOKIE, accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: ACCESS_TOKEN_MAX_AGE,
+    });
+
+    response.cookies.set(REFRESH_TOKEN_COOKIE, rawRefreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: REFRESH_TOKEN_MAX_AGE,
+    });
+
+    return response;
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
