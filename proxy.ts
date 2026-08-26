@@ -12,6 +12,7 @@ interface RouteRule {
 
 // Routes requiring authentication + optional role authorization
 const PROTECTED_ROUTES: RouteRule[] = [
+  { prefix: '/profile' },
   { prefix: '/riwayat' },
   { prefix: '/backoffice', roles: ['ADMIN', 'NADZIR', 'PETUGAS_LAPANGAN'] },
   { prefix: '/zakat/bayar' },
@@ -95,6 +96,7 @@ export const config = {
   matcher: [
     '/login',
     '/register',
+    '/profile/:path*',
     '/riwayat/:path*',
     '/backoffice/:path*',
     '/zakat/bayar/:path*',

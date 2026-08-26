@@ -78,7 +78,7 @@ export function TopAppBar({ isLoggedIn = true }: TopAppBarProps) {
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <Link
-                  href="/riwayat"
+                  href="/profile"
                   onClick={() => setIsMenuOpen(false)}
                   className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-[#439F46] transition-colors"
                 >
