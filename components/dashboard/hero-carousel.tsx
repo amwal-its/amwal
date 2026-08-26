@@ -47,7 +47,7 @@ export function HeroCarousel() {
   }, [slides.length]);
 
   return (
-    <div className="mx-5 sm:mx-6 my-2">
+    <div className="mx-5 sm:mx-6 mt-1 mb-5">
       {/* Slide Card Container */}
       <div className="relative h-[160px] sm:h-[180px] rounded-3xl overflow-hidden shadow-md">
         {slides.map((s, idx) => (

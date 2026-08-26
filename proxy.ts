@@ -1,121 +1,109 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 
-/**
- * PENTING: proxy berjalan di Edge Runtime, sehingga TIDAK bisa
- * memakai library `jsonwebtoken` (butuh Node.js crypto module).
- * Gunakan `jose` yang kompatibel Edge Runtime untuk verifikasi token.
- *
- * Secret harus dalam bentuk Uint8Array untuk `jose`.
- */
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fallback_secret_please_change_in_production'
 );
 
 interface RouteRule {
   prefix: string;
-  roles: string[];
+  roles?: string[];
 }
 
-// Daftar prefix route yang wajib diautentikasi + role yang diizinkan.
-// Route di luar daftar ini dianggap publik (tidak diperiksa proxy).
+// Routes requiring authentication + optional role authorization
 const PROTECTED_ROUTES: RouteRule[] = [
+  { prefix: '/riwayat' },
+  { prefix: '/backoffice', roles: ['ADMIN', 'NADZIR', 'PETUGAS_LAPANGAN'] },
+  { prefix: '/zakat/bayar' },
+  { prefix: '/qurban/bayar' },
   { prefix: '/dashboard/admin', roles: ['ADMIN'] },
-  { prefix: '/api/admin/zakat/orders', roles: ['ADMIN', 'PETUGAS_LAPANGAN'] },
-  { prefix: '/api/admin/mustahiq', roles: ['ADMIN', 'PETUGAS_LAPANGAN'] },
   { prefix: '/api/admin', roles: ['ADMIN', 'PETUGAS_LAPANGAN'] },
   { prefix: '/dashboard/nadzir', roles: ['NADZIR'] },
   { prefix: '/api/nadzir', roles: ['NADZIR'] },
   { prefix: '/dashboard/petugas', roles: ['PETUGAS_LAPANGAN'] },
   { prefix: '/api/petugas', roles: ['PETUGAS_LAPANGAN'] },
-  { prefix: '/api/wakaf', roles: ['WAKIF', 'NADZIR', 'ADMIN'] },
-  { prefix: '/api/zakat', roles: ['WAKIF', 'ADMIN', 'PETUGAS_LAPANGAN'] },
-  { prefix: '/api/qurban', roles: ['WAKIF', 'ADMIN', 'PETUGAS_LAPANGAN'] },
+  { prefix: '/api/wakaf/create', roles: ['NADZIR', 'ADMIN'] },
 ];
+
+const AUTH_ROUTES = ['/login', '/register'];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const token = req.cookies.get('amwal_token')?.value;
 
-  // Endpoint publik dengan optional auth (katalog, donasi wakaf, webhooks, sertifikat)
-  const isPublicWithOptionalAuth =
-    (req.method === 'GET' && (
-      pathname.startsWith('/api/wakaf/programs') ||
-      pathname.startsWith('/api/certificates')
-    )) ||
-    (req.method === 'POST' && (
-      pathname === '/api/wakaf/orders' ||
-      pathname.startsWith('/api/wakaf/orders') ||
-      pathname === '/api/waqf/donate' ||
-      pathname.startsWith('/api/waqf/donate')
-    )) ||
-    pathname.startsWith('/api/webhooks');
+  let session: { userId: string; role?: string; email?: string; phone?: string } | null = null;
 
-  if (isPublicWithOptionalAuth) {
-    const token = req.cookies.get('amwal_token')?.value;
-    if (token) {
-      try {
-        const { payload } = await jwtVerify(token, JWT_SECRET);
-        const role = payload.role as string | undefined;
-        const requestHeaders = new Headers(req.headers);
-        requestHeaders.set('x-user-id', String(payload.userId ?? ''));
-        if (role) requestHeaders.set('x-user-role', role);
-        return NextResponse.next({ request: { headers: requestHeaders } });
-      } catch {
-        // Token invalid/expired, tapi endpoint publik — izinkan lewat tanpa header user
+  if (token) {
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET);
+      session = payload as unknown as { userId: string; role?: string; email?: string; phone?: string };
+    } catch {
+      session = null;
+    }
+  }
+
+  // 1. If user is logged in and visits /login or /register -> redirect to /dashboard
+  if (session && AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
+    const dashboardUrl = new URL('/dashboard', req.url);
+    return NextResponse.redirect(dashboardUrl);
+  }
+
+  // 2. Check if route is protected
+  const matchedRule = PROTECTED_ROUTES.find((rule) => pathname.startsWith(rule.prefix));
+
+  if (matchedRule) {
+    if (!session) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const loginUrl = new URL('/login', req.url);
+      loginUrl.searchParams.set('callbackUrl', pathname);
+      const res = NextResponse.redirect(loginUrl);
+      if (token) {
+        res.cookies.set('amwal_token', '', { path: '/', maxAge: 0 });
+      }
+      return res;
+    }
+
+    // Role check if rule has specified roles
+    if (matchedRule.roles && matchedRule.roles.length > 0) {
+      if (!session.role || !matchedRule.roles.includes(session.role)) {
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'Forbidden: Insufficient privileges' }, { status: 403 });
+        }
+        const unauthUrl = new URL('/dashboard?error=unauthorized', req.url);
+        return NextResponse.redirect(unauthUrl);
       }
     }
-    return NextResponse.next();
   }
 
-  const matched = PROTECTED_ROUTES.find((rule) => pathname.startsWith(rule.prefix));
-  if (!matched) {
-    return NextResponse.next();
+  // Forward session identity headers
+  const requestHeaders = new Headers(req.headers);
+  if (session) {
+    requestHeaders.set('x-user-id', String(session.userId ?? ''));
+    if (session.role) requestHeaders.set('x-user-role', session.role);
   }
 
-  const token = req.cookies.get('amwal_token')?.value;
-  if (!token) {
-    return denyAccess(req, pathname);
-  }
-
-  try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
-    const role = payload.role as string | undefined;
-
-    if (!role || !matched.roles.includes(role)) {
-      return denyAccess(req, pathname);
-    }
-
-    // Teruskan identitas user ke Route Handler via request header,
-    // supaya API Route tidak perlu verifikasi token dua kali.
-    const requestHeaders = new Headers(req.headers);
-    requestHeaders.set('x-user-id', String(payload.userId ?? ''));
-    requestHeaders.set('x-user-role', role);
-
-    return NextResponse.next({ request: { headers: requestHeaders } });
-  } catch {
-    // Token invalid/expired
-    return denyAccess(req, pathname);
-  }
-}
-
-function denyAccess(req: NextRequest, pathname: string) {
-  // Untuk request API, balas JSON 401 (konsisten dgn format error project)
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  // Untuk halaman dashboard, redirect ke login
-  const loginUrl = new URL('/login', req.url);
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
+    '/login',
+    '/register',
+    '/riwayat/:path*',
+    '/backoffice/:path*',
+    '/zakat/bayar/:path*',
+    '/qurban/bayar/:path*',
+    '/dashboard/admin/:path*',
+    '/dashboard/nadzir/:path*',
+    '/dashboard/petugas/:path*',
     '/api/admin/:path*',
     '/api/nadzir/:path*',
     '/api/petugas/:path*',
-    '/api/wakaf/:path*',
-    '/api/zakat/:path*',
-    '/api/qurban/:path*',
   ],
 };
