@@ -118,19 +118,19 @@ export function ProfileView({ user }: ProfileViewProps) {
         <main className="flex-1 overflow-y-auto px-5 sm:px-6 py-5 space-y-5 pb-24">
           
           {/* Section 1: Profile Details (Figma: 648:3812) */}
-          <div className="flex items-center gap-4">
-            {/* Avatar with brand green border */}
-            <div className="w-16 h-16 rounded-full p-[3px] border-2 border-[#00AB55] shrink-0 flex items-center justify-center overflow-hidden bg-emerald-50 shadow-2xs">
-              <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#006D34] to-[#00AB55] text-white font-bold text-xl flex items-center justify-center uppercase">
+          <div className="flex items-center gap-4 py-1">
+            {/* Enlarged Avatar with brand green border */}
+            <div className="w-20 h-20 rounded-full p-[3px] border-[2.5px] border-[#00AB55] shrink-0 flex items-center justify-center overflow-hidden bg-emerald-50 shadow-sm">
+              <div className="w-full h-full rounded-full bg-gradient-to-tr from-[#006D34] to-[#00AB55] text-white font-bold text-2xl flex items-center justify-center uppercase tracking-wide">
                 {user.name ? user.name.slice(0, 2) : 'AA'}
               </div>
             </div>
 
             <div className="min-w-0 flex-1">
-              <h2 className="text-lg sm:text-xl font-bold text-[#1E293B] tracking-tight truncate">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1E293B] tracking-tight truncate">
                 {user.name || 'Ahmad Abdullah'}
               </h2>
-              <p className="text-xs sm:text-sm font-medium text-[#64748B] truncate mt-0.5">
+              <p className="text-xs sm:text-sm font-medium text-[#64748B] truncate mt-1">
                 {user.email || user.phone || 'ahmad.abdullah@email.com'}
               </p>
             </div>
@@ -142,8 +142,14 @@ export function ProfileView({ user }: ProfileViewProps) {
             <div className="absolute -right-6 -bottom-6 w-24 h-24 bg-[#00AB55]/30 rounded-full blur-xl pointer-events-none" />
 
             <div className="flex items-center gap-3.5 relative z-10">
-              <div className="w-11 h-11 rounded-xl bg-[#006D34] border border-[#00AB55]/40 flex items-center justify-center shrink-0 shadow-inner">
-                <Sparkles size={22} className="text-amber-300" />
+              <div className="w-14 h-14 rounded-2xl bg-[#006D34]/80 border border-[#00AB55]/40 flex items-center justify-center shrink-0 shadow-inner overflow-hidden relative p-1">
+                <Image
+                  src="/assets/images/profile/icon-coin.png"
+                  alt="XP Coin"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-contain drop-shadow-sm"
+                />
               </div>
               <div>
                 <span className="block text-[10px] font-bold text-emerald-300 tracking-wider uppercase">

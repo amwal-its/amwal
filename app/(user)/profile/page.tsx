@@ -26,7 +26,7 @@ export default async function ProfilePage() {
     include: {
       transactions: {
         where: {
-          statusPembayaran: 'PAID',
+          statusPembayaran: 'LUNAS',
         },
         include: {
           certificate: true,
