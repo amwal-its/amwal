@@ -19,7 +19,7 @@ export default async function AdminOverviewPage() {
   const session = await getSession();
 
   if (!session || session.role !== 'ADMIN') {
-    redirect('/login?redirect=/admin');
+    redirect('/login');
   }
 
   // 1. Fetch all completed/lunas transactions for exact financial aggregation
@@ -39,19 +39,45 @@ export default async function AdminOverviewPage() {
     },
   });
 
-  // 2. Fetch pending counts for Super Admin Approval Center
+  // 2. Fetch pending counts for Super Admin Approval Center, clean donor counts & BWI certificate metrics
   const [
     pendingNadzirCount,
     pendingWithdrawalsCount,
     pendingPermohonanCount,
     totalProgramLive,
     totalProgramAll,
+    totalRegisteredUsers,
+    totalGuestUsers,
+    certificatesWithBwiCount,
+    totalCertificatesCount,
   ] = await Promise.all([
     prisma.nadzirProfile.count({ where: { statusVerifikasi: 'PENDING' } }),
     prisma.fundWithdrawalRequest.count({ where: { status: 'PENDING' } }),
     prisma.permohonanPenyaluranInstitusional.count({ where: { status: 'DIAJUKAN' } }),
     prisma.waqfProgram.count({ where: { status: 'LIVE' } }),
     prisma.waqfProgram.count(),
+    prisma.user.count({
+      where: {
+        id: { not: '00000000-0000-0000-0000-000000000001' },
+        OR: [
+          { passwordHash: { not: null } },
+          { oauthProvider: { not: null } },
+        ],
+      },
+    }),
+    prisma.user.count({
+      where: {
+        id: { not: '00000000-0000-0000-0000-000000000001' },
+        passwordHash: null,
+        oauthProvider: null,
+      },
+    }),
+    prisma.certificate.count({
+      where: {
+        nomorRegistrasiBwi: { not: null },
+      },
+    }),
+    prisma.certificate.count(),
   ]);
 
   // 3. Fetch top 5 active waqf programs with ledger & latest physical progress
@@ -135,7 +161,9 @@ export default async function AdminOverviewPage() {
   lunasTransactions.forEach((tx) => {
     const amt = Number(tx.amount);
     totalDanaTerkumpul += amt;
-    if (tx.wakifId) uniqueWakifIds.add(tx.wakifId);
+    if (tx.wakifId && tx.wakifId !== '00000000-0000-0000-0000-000000000001') {
+      uniqueWakifIds.add(tx.wakifId);
+    }
 
     if (tx.jenisTransaksi === 'WAKAF') wakafVolume += amt;
     else if (tx.jenisTransaksi === 'ZAKAT') zakatVolume += amt;
@@ -260,6 +288,10 @@ export default async function AdminOverviewPage() {
     totalProgramLive,
     totalProgramAll,
     totalDonaturUnik: uniqueWakifIds.size,
+    totalRegisteredUsers,
+    totalGuestUsers,
+    certificatesWithBwiCount,
+    totalCertificatesCount,
     totalTransactionsCount: lunasTransactions.length,
     pendingApprovals: {
       nadzir: pendingNadzirCount,

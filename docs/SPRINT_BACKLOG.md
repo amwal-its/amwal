@@ -877,3 +877,156 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
 **Acceptance Criteria (DoD):**  
 - [x] Native share & fallback desktop berfungsi sempurna.
 - [x] Visual ikon proporsional dan presisi.
+
+---
+
+# MICRO-SPRINT 9 (Target: Jumat) — Payment Production, WhatsApp Engine, Dashboard Finalization
+
+## ⚠️ Keputusan Arsitektur Baru: Baileys Sebagai Service Terpisah
+Baileys TIDAK berjalan di dalam `amwalheti` (Vercel serverless tidak
+mendukung koneksi WebSocket persisten + filesystem session). Dibangun
+sebagai service Node.js long-running terpisah (`amwal-baileys-service`),
+diakses `amwalheti` via internal HTTP API. Dicatat resmi di
+`DECISION_LOG.md` Putaran 9.
+
+---
+
+## 🟢 Bara
+
+### Task 9.1 — Hardening Midtrans Webhook Handler (Real, Bukan Simulasi)
+
+**Scope Utama:** [Backend API Handler]
+
+**Detail Endpoint & HTTP Method:** `POST /api/webhooks/payment` (extend
+handler konsolidasi yang sudah ada dari FIX 4 Sprint 3-4)
+
+**Target Database:** `Transaction`, cascade update `WaqfOrder`/`ZakatOrder`/`QurbanOrder`
+
+**RBAC & Middleware Guard:** Signature-based (SHA-512 Midtrans), bukan JWT — endpoint dikecualikan dari `proxy.ts`
+
+**Detail Alur Logic & Input/Output:**
+- Ganti kredensial Midtrans dari sandbox dummy ke **Sandbox Simulator resmi** Midtrans (server key asli dari akun sandbox, bukan hardcode)
+- Verifikasi signature: `SHA512(order_id + status_code + gross_amount + ServerKey)` **wajib match**, tolak 403 jika tidak
+- Mapping status Midtrans → enum kita: `settlement`/`capture` → `LUNAS`, `pending` → `PENDING`, `expire`/`cancel`/`deny` → `GAGAL` (+ trigger slot release untuk Qurban, sudah ada dari Task 3.6)
+- **Setelah** status jadi `LUNAS`: panggil `sendWhatsAppNotification()` (fungsi baru, lihat Task 9.2) secara **best-effort** — bungkus try-catch terpisah, kegagalan WA **tidak boleh** menggagalkan proses inti (update ledger tetap jalan meski WA gagal kirim)
+
+**Acceptance Criteria (DoD):**
+- [ ] Transaksi sungguhan dari Sandbox Simulator Midtrans (bukan mock internal) berhasil diproses end-to-end untuk ketiga modul
+- [ ] Signature invalid → 403, tidak ada perubahan data
+- [ ] Kegagalan `sendWhatsAppNotification()` (simulasikan service down) TIDAK menyebabkan update ledger gagal/rollback
+
+---
+
+### Task 9.2 — Baileys WA Engine (Service Terpisah) + Panel Admin
+
+**Scope Utama:** [Backend Service Terpisah] + [Frontend UI/Page — panel di `amwalheti`]
+
+**Detail Endpoint & HTTP Method:**
+- Di `amwal-baileys-service` (Node.js standalone): `GET /qr`, `GET /status`, `POST /send-message` (internal, protected `X-Internal-Secret` header)
+- Di `amwalheti`: `GET /api/admin/baileys/status` — proxy server-side ke service, `GET /api/admin/baileys/qr` — proxy QR
+
+**Target Database:** Tidak ada tabel baru untuk V.1 (sesi Baileys disimpan file-based di service sendiri)
+
+**RBAC & Middleware Guard:** Panel `/admin/pengaturan` → role `ADMIN`; proxy endpoint di `amwalheti` juga `ADMIN`-only
+
+**Detail Alur Logic & Input/Output:**
+- Service scaffold pakai `@whiskeysockets/baileys`, auth state `useMultiFileAuthState`
+- **Nomor yang dipakai: nomor sekunder/uji, BUKAN nomor resmi WA utama YMI** (mitigasi risiko ban — lihat catatan arsitektur sebelumnya)
+- `sendWhatsAppNotification(phone, message)` — fungsi client HTTP sederhana di `lib/whatsapp.service.ts` (dalam `amwalheti`) yang `POST` ke service, dengan timeout pendek (mis. 5 detik) supaya tidak menggantung webhook Midtrans
+- Panel Admin: tampilkan QR code (base64 dari service) untuk discan, status koneksi (`connected`/`disconnected`/`qr_pending`)
+
+**Acceptance Criteria (DoD):**
+- [ ] Service berjalan independen dari `amwalheti`, tetap hidup meski `amwalheti` di-redeploy
+- [ ] QR muncul di panel Admin, scan berhasil → status berubah `connected`
+- [ ] `sendWhatsAppNotification()` gagal (service mati) → tidak melempar error ke pemanggilnya, cukup log + return `false`
+
+---
+
+### Task 9.3 — Trigger Notifikasi Otomatis Wakaf (Fungsi Reusable)
+
+**Scope Utama:** [Backend API Handler]
+
+**Detail Alur Logic & Input/Output:**
+- Di dalam Task 9.1, cabang `jenisTransaksi === 'WAKAF'`: compose pesan *"Jazakallahu khairan [nama/Hamba Allah], wakaf Anda untuk [judul program] sebesar Rp[nominal] telah kami terima. Sertifikat: [link]"*
+- Sediakan fungsi ini sebagai **export reusable** dari `lib/notification-templates.ts` supaya Awan/Naufal tinggal pakai pola sama untuk Zakat/Qurban di Task 9.6/9.8, bukan menulis ulang dari nol
+
+**Acceptance Criteria (DoD):**
+- [ ] Pesan terkirim (via service Baileys) berisi nama/anonim sesuai `isAnonymous`, nominal benar, link sertifikat valid
+- [ ] Fungsi template terpisah dari logic pengiriman, mudah dipakai modul lain
+
+---
+
+### Task 9.4 — Finalisasi Dashboard Admin Wakaf
+
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler — jika ada gap]
+
+**Detail Alur Logic & Input/Output:**
+- Audit ulang `wakaf/page.tsx` hasil porting kemarin: pastikan verifikasi program, `WaqfYieldEntry` ledger, dan audit `ProgramProgressReport.kuitansiUrls` semua terhubung data asli (lanjutan dari porting Prompt 2)
+- Perbaiki 3 quick-fix dari audit di atas (RBAC guard, label KPI, definisi "Donatur Terdaftar") — meski ditemukan di halaman `admin/page.tsx` overview, kerjakan sekalian karena satu file yang sama
+
+**Acceptance Criteria (DoD):**
+- [ ] Semua 3 quick-fix di atas closed
+- [ ] Approve/reject withdrawal & yield entry berfungsi penuh dari UI (bukan cuma via API test)
+
+---
+
+## 🟡 Awan
+
+### Task 9.5 — Finalisasi Dashboard Admin Zakat
+
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler]
+
+**Detail Endpoint & HTTP Method:** `GET /api/admin/zakat/orders`, `GET /api/admin/mustahiq`, `POST /api/admin/zakat/distributions` (semua sudah ada dari Sprint 3-4, sekarang di-wire ke UI)
+
+**Detail Alur Logic & Input/Output:**
+- Monitoring Zakat masuk: list `ZakatOrder` dengan filter jenis (Maal/Fitrah), status
+- Alokasi 8 Asnaf: form pilih `MustahiqProfile` + `ZakatDistribution`, tampilkan sisa `FundPool` (kalau dipakai) atau agregasi `ZakatOrder` LUNAS per kategori
+- Transparansi Mustahiq: list penerima + riwayat penyaluran (untuk audit internal, BUKAN publik — data mustahik sensitif)
+
+**Acceptance Criteria (DoD):**
+- [ ] Admin bisa lihat & alokasikan zakat ke mustahik dari UI end-to-end
+- [ ] Halaman mustahik TIDAK bisa diakses role non-ADMIN (data sensitif)
+
+---
+
+### Task 9.6 — Wiring Webhook Zakat ke Midtrans Real + Notifikasi WA
+
+**Scope Utama:** [Backend API Handler]
+
+**Detail Alur Logic & Input/Output:**
+- Pastikan cabang `jenisTransaksi === 'ZAKAT'` di handler Task 9.1 pakai kredensial Midtrans real yang sama
+- Tambah template pesan Zakat ke `lib/notification-templates.ts` (pola sama seperti Task 9.3), panggil `sendWhatsAppNotification()`
+
+**Acceptance Criteria (DoD):**
+- [ ] Transaksi Zakat sandbox real → notifikasi WA terkirim dengan template benar
+- [ ] Tidak ada duplikasi logic pengiriman WA (reuse fungsi Bara)
+
+---
+
+## 🔵 Naufal
+
+### Task 9.7 — Finalisasi Dashboard Admin Qurban
+
+**Scope Utama:** [Frontend UI/Page] + [Backend API Handler]
+
+**Detail Alur Logic & Input/Output:**
+- Manajemen `HewanBatch` & `QurbanAnimalSlot`: visual grid slot (reuse `SlotPicker`), status batch
+- Log distribusi: `QurbanDistributionReport` (foto, GPS, jumlah penerima) ditampilkan sebagai timeline per order
+- Audit `QurbanOrder` tunai vs digital, status `setoran_petugas_lapangan` terverifikasi/belum
+
+**Acceptance Criteria (DoD):**
+- [ ] Admin bisa monitor kuota slot 1/7 real-time dari dashboard
+- [ ] Log distribusi menampilkan foto & lokasi asli dari data yang sudah ada
+
+---
+
+### Task 9.8 — Wiring Webhook Qurban ke Midtrans Real + Notifikasi WA
+
+**Scope Utama:** [Backend API Handler]
+
+**Detail Alur Logic & Input/Output:**
+- Sama pola Task 9.6, untuk `jenisTransaksi === 'QURBAN'`, termasuk logic DP/pelunasan yang sudah ada (Task 3.6) tetap jalan dengan kredensial real
+- Template pesan khusus Qurban (sertakan info slot/kolektif jika relevan)
+
+**Acceptance Criteria (DoD):**
+- [ ] Transaksi Qurban sandbox real (termasuk skenario DP) → status & notifikasi WA benar di tiap tahap
