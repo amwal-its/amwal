@@ -1,61 +1,110 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Bell, User, LogIn, LogOut } from 'lucide-react';
 import Link from 'next/link';
-import { Search, Bell, User, LogIn } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface TopAppBarProps {
-  userName?: string;
   isLoggedIn?: boolean;
 }
 
-export function TopAppBar({ userName = 'Ahmad Abdullah', isLoggedIn = true }: TopAppBarProps) {
+export function TopAppBar({ isLoggedIn = true }: TopAppBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout failed:', err);
+    } finally {
+      setIsMenuOpen(false);
+      router.push('/login');
+      router.refresh();
+    }
+  };
 
   return (
-    <header className="w-full bg-white px-4 sm:px-6 pt-4 pb-3 flex items-center justify-between gap-3 border-b border-slate-100 sticky top-0 z-30 shadow-2xs">
-      {/* Search Input Bar */}
-      <div className="relative flex-1">
-        <Search className="w-5 h-5 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 shrink-0 pointer-events-none" />
+    <header className="w-full bg-white px-5 sm:px-6 py-3 flex items-center justify-between gap-3 border-b border-gray-100 sticky top-0 z-30 shadow-xs">
+      {/* Left: Search Input Bar */}
+      <div className="relative flex-1 flex items-center">
+        <Search size={16} className="text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none z-10 shrink-0" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Cari program wakaf, zakat, qurban..."
-          className="w-full pl-11 pr-4 py-2 sm:py-2.5 bg-[#E0EDFF]/50 hover:bg-[#E0EDFF]/70 focus:bg-white border border-transparent focus:border-[#439F46] rounded-2xl text-xs sm:text-sm text-gray-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/20 transition-all"
+          placeholder="Cari program..."
+          className="w-full pl-9 pr-3 py-2 bg-[#E0EDFF]/60 hover:bg-[#E0EDFF]/80 focus:bg-white border border-transparent focus:border-[#439F46] rounded-2xl text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/20 transition-all font-jakarta"
         />
       </div>
 
-      {/* Action Icons & Profile */}
+      {/* Right: Action Buttons (Notification Bell + Profile / Login Button) */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Notification Bell */}
+        {/* Notification Bell Icon */}
         <button
           aria-label="Notifikasi"
-          className="w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 border border-slate-200/60 text-gray-600 flex items-center justify-center shrink-0 relative cursor-pointer active:scale-95 transition-colors"
+          className="w-9 h-9 rounded-full bg-gray-50 hover:bg-gray-100 border border-gray-200/80 text-gray-600 flex items-center justify-center relative cursor-pointer active:scale-95 transition-all shrink-0"
         >
-          <Bell className="w-5 h-5 text-gray-600 shrink-0" />
-          <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-2.5 right-2.5 ring-2 ring-white" />
+          <Bell size={16} className="text-gray-700 shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-2 right-2 ring-2 ring-white" />
         </button>
 
-        {/* User Profile or Login Button */}
         {isLoggedIn ? (
-          <Link
-            href="/dashboard"
-            className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full bg-[#E0EDFF]/60 hover:bg-[#E0EDFF] border border-blue-100 text-gray-800 transition-all cursor-pointer"
-          >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#439F46] to-emerald-400 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
-              {userName ? userName.charAt(0).toUpperCase() : 'U'}
-            </div>
-            <span className="text-xs font-bold text-gray-800 hidden xs:inline max-w-[100px] truncate">
-              {userName ? userName.split(' ')[0] : 'User'}
-            </span>
-          </Link>
+          /* Profile Menu Dropdown Container */
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-label="Profil Pengguna"
+              className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#439F46] to-emerald-400 text-white font-bold text-xs flex items-center justify-center shadow-xs ring-2 ring-[#439F46]/20 hover:ring-[#439F46]/50 active:scale-95 transition-all cursor-pointer overflow-hidden shrink-0"
+            >
+              <User size={16} strokeWidth={2.5} className="text-white shrink-0" />
+            </button>
+
+            {/* Popup Menu Dropdown */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-44 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-gray-700 hover:bg-emerald-50 hover:text-[#439F46] transition-colors"
+                >
+                  <User size={15} className="text-gray-500" />
+                  <span>Profil Saya</span>
+                </Link>
+
+                <div className="my-1 border-t border-gray-100" />
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors text-left cursor-pointer"
+                >
+                  <LogOut size={15} className="text-rose-500" />
+                  <span>Keluar (Logout)</span>
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
+          /* Masuk Button */
           <Link
             href="/login"
-            className="flex items-center gap-1.5 py-2 px-3.5 rounded-full bg-[#439F46] hover:bg-[#388E3C] text-white font-semibold text-xs shadow-xs transition-all cursor-pointer active:scale-95"
+            className="h-9 px-3.5 rounded-full bg-[#439F46] hover:bg-[#388E3C] text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all cursor-pointer shrink-0"
           >
-            <LogIn className="w-4 h-4" />
+            <LogIn size={15} className="text-white shrink-0" />
             <span>Masuk</span>
           </Link>
         )}

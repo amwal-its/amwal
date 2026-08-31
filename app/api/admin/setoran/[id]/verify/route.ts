@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
+import { createNotification } from '@/lib/notification.service';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
@@ -14,6 +15,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const setoran = await prisma.setoranPetugasLapangan.findUnique({
       where: { id },
       include: {
+        petugas: true,
         setoranQurbanOrderLinks: {
           include: {
             qurbanOrder: true
@@ -62,6 +64,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       return verifiedSetoran;
     });
+
+    // Notify Petugas Lapangan on setoran verification
+    if (setoran.petugas?.userId) {
+      await createNotification({
+        userId: setoran.petugas.userId,
+        type: 'SETORAN_VERIFIED',
+        title: 'Setoran Tunai Diverifikasi Admin',
+        body: `Setoran Anda tanggal ${new Date(setoran.tanggal).toLocaleDateString('id-ID')} sejumlah Rp ${Number(setoran.jumlahSetor).toLocaleString('id-ID')} telah disetujui Admin.`,
+        relatedEntityId: setoran.id,
+      });
+    }
 
     return NextResponse.json({ success: true, data: updatedSetoran });
   } catch (error: any) {

@@ -728,8 +728,8 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
   - Laporan penyaluran qurban/zakat diterbitkan.
   - Status pengajuan Nadzir / withdrawal disetujui atau ditolak.  
 **Acceptance Criteria (DoD):**  
-- [ ] Record notifikasi ter-create otomatis di DB.
-- [ ] User login dapat membaca dan menandai notifikasi as read.
+- [x] Record notifikasi ter-create otomatis di DB.
+- [x] User login dapat membaca dan menandai notifikasi as read.
 
 ---
 
@@ -784,8 +784,8 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
 - **Fiqih Audit**: Validasi Akad Wakalah Qurban; Pemisahan Ledger Pokok vs Hasil Wakaf; 8 Asnaf Zakat; Nisab Zakat Emas 85 gram.
 - **Scope Verification**: Verifikasi ulang TIDAK ada elemen UI/route yang secara tidak sengaja mengekspos fitur RFMD Analytics atau Infaq (di-hide/tidak ter-render).  
 **Acceptance Criteria (DoD):**  
-- [ ] Zero critical security/fiqih vulnerabilities.
-- [ ] Scope Putaran 6 dipatuhi 100%.
+- [x] Zero critical security/fiqih vulnerabilities.
+- [x] Scope Putaran 6 dipatuhi 100%.
 
 ---
 
@@ -803,9 +803,9 @@ Body: { "buktiFotoUrl": "string", "videoUrl": "string", "lokasiPenyaluran": "str
 - Smoke Test 4 Role: Verify login & akses RBAC untuk `WAKIF`, `NADZIR`, `PETUGAS_LAPANGAN`, dan `ADMIN` di staging environment.
 - Update `RUNBOOK.md` dengan instruksi deployment & maintenance final.  
 **Acceptance Criteria (DoD):**  
-- [ ] Staging deployment sukses & dapat diakses publik.
-- [ ] Smoke test 4 role PASS.
-- [ ] `RUNBOOK.md` updated.
+- [x] Staging deployment sukses & dapat diakses publik.
+- [x] Smoke test 4 role PASS.
+- [x] `RUNBOOK.md` updated.
 
 ---
 

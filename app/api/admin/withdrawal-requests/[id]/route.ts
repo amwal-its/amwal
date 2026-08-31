@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { WithdrawalStatus, Prisma } from '@/app/generated/prisma/client';
 import { z } from 'zod';
+import { createNotification } from '@/lib/notification.service';
 
 const patchWithdrawalRequestSchema = z.object({
   status: z.enum(['APPROVED', 'REJECTED'], {
@@ -93,6 +94,15 @@ export async function PATCH(
           adminNotes: adminNotes.trim(),
           approvedById: userId,
         },
+      });
+
+      // Send Notification to Nadzir (requestedBy)
+      await createNotification({
+        userId: withdrawalRequest.requestedById,
+        type: 'WITHDRAWAL_REJECTED',
+        title: 'Pengajuan Penarikan Dana Ditolak',
+        body: `Pengajuan penarikan dana untuk program "${withdrawalRequest.waqfProgram.judul}" ditolak Admin. Alasan: ${adminNotes.trim()}`,
+        relatedEntityId: withdrawalRequestId,
       });
 
       return NextResponse.json(

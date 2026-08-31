@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Search, Clock, Building2, ChevronRight, Coins, ShieldCheck, Heart } from 'lucide-react';
-import { BottomNav } from '@/components/dashboard/bottom-nav';
+import { BottomNav } from '@/components/bottom-nav';
 
 export interface CatalogProgramItem {
   id: string;
@@ -64,12 +64,12 @@ export function WakafCatalogView({ initialPrograms }: WakafCatalogViewProps) {
       <div className="w-full max-w-[430px] min-h-screen sm:min-h-[932px] bg-white shadow-sm border border-gray-100 sm:rounded-3xl overflow-hidden flex flex-col justify-between relative pb-20">
         
         {/* Top Header & Navigation */}
-        <div className="pt-5 px-4 sticky top-0 bg-white/95 backdrop-blur-md z-30 pb-3 border-b border-gray-100">
+        <div className="pt-6 px-5 sm:px-6 sticky top-0 bg-white/95 backdrop-blur-md z-30 pb-3.5 border-b border-gray-100">
           <div className="flex items-center gap-3 mb-3.5">
             <button
               onClick={() => router.push('/dashboard')}
               aria-label="Kembali ke Dashboard"
-              className="w-9 h-9 -ml-1 text-gray-700 flex items-center justify-center hover:text-gray-900 active:scale-95 transition-all cursor-pointer"
+              className="w-10 h-10 -ml-2 text-gray-800 flex items-center justify-center hover:bg-slate-100 rounded-full active:scale-95 transition-all cursor-pointer"
             >
               <ArrowLeft className="w-6 h-6 stroke-[2.5]" />
             </button>
@@ -80,18 +80,20 @@ export function WakafCatalogView({ initialPrograms }: WakafCatalogViewProps) {
 
           {/* Search Bar Input */}
           <div className="relative mb-3">
-            <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari akad: ITS, Sumur, Agrobisnis..."
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 hover:bg-gray-100/80 focus:bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#439F46]/30 focus:border-[#439F46] transition-all"
             />
           </div>
 
-          {/* Horizontal Category Chips */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+          {/* Horizontal Category Chips (Hidden Scrollbar) */}
+          <div
+            className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat;
               return (
@@ -112,7 +114,7 @@ export function WakafCatalogView({ initialPrograms }: WakafCatalogViewProps) {
         </div>
 
         {/* Main List of Programs */}
-        <div className="p-4 flex-1">
+        <div className="px-5 sm:px-6 py-4 flex-1">
           {filteredPrograms.length === 0 ? (
             <div className="py-16 text-center text-gray-400 flex flex-col items-center">
               <Search className="w-10 h-10 mb-2 stroke-1 text-gray-300" />
@@ -123,58 +125,57 @@ export function WakafCatalogView({ initialPrograms }: WakafCatalogViewProps) {
             <div className="flex flex-col gap-3.5">
               {filteredPrograms.map((p) => {
                 const percent = p.targetDana > 0 ? Math.min(100, Math.round((p.pokokDanaTerkumpul / p.targetDana) * 100)) : 0;
-                const isProduktif = p.jenisWakaf === 'PRODUKTIF_KEKAL';
 
                 return (
                   <Link
                     key={p.id}
                     href={`/wakaf/${p.id}`}
-                    className="bg-white border border-gray-200/90 hover:border-[#439F46] rounded-2xl p-3.5 flex gap-3.5 shadow-2xs hover:shadow-xs transition-all group cursor-pointer"
+                    className="bg-white rounded-2xl overflow-hidden flex items-center shadow-xs border border-gray-100 hover:shadow-md transition-all group cursor-pointer"
                   >
-                    {/* Thumbnail Image with Category Badge */}
-                    <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                    {/* Full-bleed Left Banner Image (Figma: 139x139px) */}
+                    <div className="relative w-[139px] h-[139px] shrink-0 overflow-hidden bg-slate-100">
                       <Image
                         src={p.bannerUrl && p.bannerUrl.trim() !== '' ? p.bannerUrl : '/assets/images/wakaf/wakaf-pembangunan-masjid-al-furqon.png'}
                         alt={p.judul}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="120px"
+                        sizes="139px"
                       />
-                      <span className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
-                        {p.kategori.split(' ')[0] || 'Wakaf'}
-                      </span>
                     </div>
 
-                    {/* Program Info */}
-                    <div className="min-w-0 flex-1 flex flex-col justify-between">
+                    {/* Program Info Container */}
+                    <div className="flex-1 min-w-0 pl-3 pr-4 py-2.5 flex flex-col justify-between h-[139px]">
                       <div>
-                        {/* Title */}
-                        <h2 className="text-xs sm:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#439F46] transition-colors line-clamp-2 mb-1">
+                        {/* Category Pill Badge (Figma: bg #B7EFD1, text #3A6E57) */}
+                        <span className="inline-block bg-[#B7EFD1] text-[#3A6E57] text-[10px] font-medium px-2 py-0.5 rounded-[4px] mb-1">
+                          {p.kategori.split(' ')[0] || 'Wakaf'}
+                        </span>
+
+                        {/* Title (Figma: 14px Medium #1C2024, 2 lines) */}
+                        <h2 className="text-[13px] sm:text-[14px] font-medium text-[#1C2024] leading-[1.35] line-clamp-2 group-hover:text-[#439F46] transition-colors mb-0.5">
                           {p.judul}
                         </h2>
 
-                        {/* Nadzir Name & Verified */}
-                        <p className="text-[11px] text-gray-500 truncate flex items-center gap-1">
-                          <Building2 className="w-3 h-3 text-gray-400 shrink-0" />
-                          <span className="truncate">{p.namaLembaga || 'Yayasan Manarul Ilmi ITS'}</span>
+                        {/* Institution Name */}
+                        <p className="text-[10px] text-[#6B7280] truncate">
+                          {p.namaLembaga || 'Yayasan Manarul Ilmi ITS'}
                         </p>
                       </div>
 
                       {/* Progress Bar & Sub-info */}
-                      <div className="mt-2">
-                        <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1.5">
+                      <div className="pt-1">
+                        <div className="w-full h-1 bg-[#E4E7EC] rounded-full overflow-hidden mb-1.5">
                           <div
-                            className="h-full bg-[#439F46] rounded-full transition-all duration-700"
+                            className="h-full bg-[#1A6B38] rounded-full transition-all duration-700"
                             style={{ width: `${Math.max(4, percent)}%` }}
                           />
                         </div>
 
-                        <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold">
-                          <span className="text-gray-900">
+                        <div className="flex items-center justify-between text-[10px] text-[#6B7280]">
+                          <span className="text-[#1C2024] font-normal">
                             Terkumpul {formatJuta(p.pokokDanaTerkumpul)}
                           </span>
-                          <span className="text-gray-400 font-medium flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
+                          <span className="font-normal text-[#6B7280]">
                             {p.durasiHari || 45} hari lagi
                           </span>
                         </div>

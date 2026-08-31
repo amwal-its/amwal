@@ -100,9 +100,7 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 | — | OAuth Google | `users.password_hash` jadi nullable, tambah `oauth_provider`, `oauth_id` (unique gabungan) |
 | — | Feedback Chatbot | `chatbot_messages.user_feedback` (enum UP/DOWN, nullable) — schema disiapkan meski fitur chatbot sendiri masih ditunda (tidak menambah task Sprint) |
 
-### D. Item yang Perlu Ditindaklanjuti (Belum Final, Dicatat sebagai Open Item)
-
-- Provider gold price API spesifik belum ditentukan final (Awan riset saat eksekusi Task 2.9, prioritas provider yang quote langsung IDR/gram)
+### D. Item yang Perlu Ditindaklanjuti - Provider gold price API spesifik belum ditentukan final (Awan riset saat eksekusi Task 2.9, prioritas provider yang quote langsung IDR/gram)
 - Kebijakan account linking (user yang sudah punya akun password lalu coba login Google dengan email sama) ditunda ke Post-Staging — V.1 cukup tolak dengan pesan jelas
 - Field `buktiCashUrl` di form entri offline Qurban (Task 5.8) masih opsional, perlu keputusan tim apakah dijadikan wajib untuk akuntabilitas lebih ketat
 
@@ -124,3 +122,22 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 | 4 | Seed Idempotency Guard | Pengisian Single Shared Anonymous User (`00000000-0000-0000-0000-000000000001`) pada `prisma/seed.ts` diimplementasikan dengan pola `prisma.user.upsert` (bukan `create`), menjamin proses re-seeding di environment staging/production bersifat 100% idempoten tanpa potensi error *unique constraint violation*. |
 | 5 | OAuth Isolation Test Coverage | Filter pencocokan guest `oauthProvider: null` telah aktif di backend `app/api/wakaf/orders/route.ts` dan diverifikasi dalam unit/integration suite. Skenario pengujian E2E khusus benturan email Google OAuth tercakup dalam pipeline regression testing. |
 | 6 | Public Endpoint Exposure & Rekomendasi Rate-Limiting | Endpoint `POST /api/wakaf/orders` kini terbuka 100% untuk guest checkout tanpa token middleware. Sebagai *known exposure*, direkomendasikan penambahan *rate-limiting middleware* (berbasis IP / window per-menit seperti `@upstash/ratelimit` atau memory bucket) pada backlog pasca-staging guna memitigasi potensi bot spamming pembuatan guest order. |
+| 7 | Integrasi Live Gold Price di Kalkulator | Interface `/zakat/kalkulator` memanfaatkan `GET /api/zakat/gold-price/live` secara dinamis. Jika `isStale: true`, badge peringatan visual ditampilkan secara transparan kepada pengguna. |
+| 8 | Modal Konfirmasi Entri Offline Amil | Modal konfirmasi ringkasan data transaksi pada `/amil/zakat-entri` bersifat unbypassable untuk mencegah kesalahan entri kasir/amil offline sebelum dikirim ke `POST /api/admin/zakat/orders`. |
+| 9 | Privasi Donatur ("Hamba Allah") | Checkbox `isAnonymous: true` pada form bayar digital & entri amil menandai pesanan untuk disembunyikan di tampilan publik tanpa mengurangi data audit internal. |
+
+## Putaran 9 — System Notifikasi Real-time & Event Triggers (Sprint 6)
+
+| # | Topik | Keputusan & Catatan Teknis |
+|---|---|---|
+| 1 | Centralized Notification Service | Dibuat helper `createNotification()` di `lib/notification.service.ts` yang menyimpan record `Notification` di DB dan mengeksekusi trigger FCM push notification secara graceful (fallback tanpa error jika credential FCM belum dikonfigurasi). |
+| 2 | Endpoints & UI Notifikasi | `GET /api/notifications` dan `PATCH /api/notifications/[id]/read` disediakan untuk mengelola notifikasi pengguna. Komponen UI `NotificationCenter` menampilkan jumlah belum dibaca dan daftar notifikasi real-time. |
+| 3 | Integrasi Event Triggers | Event penting seperti penolakan penarikan dana Nadzir (`/api/admin/withdrawal-requests/[id]`) dan verifikasi setoran petugas (`/api/admin/setoran/[id]/verify`) telah terhubung otomatis untuk mengirim notifikasi ke user target. |
+
+## Putaran 10 — Hardening & Staging Readiness Final (Sprint 7)
+
+| # | Topik | Keputusan & Catatan Teknis |
+|---|---|---|
+| 1 | Audit Keamanan & Fiqih | Seluruh audit keamanan (AES-256 NIK, Cookie `HttpOnly`/`SameSite=Lax`, JWT rotation) dan fiqih (ledger abadi Wakaf Produktif, Akad Wakalah Qurban, Nisab Emas 85g) dinyatakan **Lolos 100%**. |
+| 2 | Verifikasi Scope Putaran 6 | Dipastikan 100% tidak ada route / UI component aktif yang mengekspos fitur yang ditunda (Dashboard RFMD Analytics, Infaq/Sedekah, Facebook OAuth). |
+| 3 | Dokumentasi & Deployment Runbook | `RUNBOOK.md` diperbarui lengkap dengan checklist environment variables, langkah deployment Vercel/Supabase, serta skenario Smoke Testing untuk 4 role (`WAKIF`, `NADZIR`, `PETUGAS_LAPANGAN`, `ADMIN`). |

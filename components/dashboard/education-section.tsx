@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, ChevronRight, Clock } from 'lucide-react';
+import Image from 'next/image';
+import { ChevronRight } from 'lucide-react';
 
 export function EducationSection() {
   const articles = [
@@ -8,22 +9,20 @@ export function EducationSection() {
       id: '1',
       category: 'Finansial Pintar',
       title: 'Manajemen Keuangan Syariah untuk Milenial',
-      readTime: '5 min baca',
       href: '/edukasi',
-      bgHeader: 'from-blue-600 to-indigo-700',
+      image: '/assets/images/education/pembagian-harta-waris-menurut-hukum-perdata.png',
     },
     {
       id: '2',
       category: 'Fiqih Muamalah',
       title: 'Perbedaan Mendasar Zakat, Infaq, dan Sedekah',
-      readTime: '4 min baca',
       href: '/edukasi',
-      bgHeader: 'from-emerald-600 to-teal-700',
+      image: '/assets/images/education/jangan-tunda-pembagian-warisan.png',
     },
   ];
 
   return (
-    <div className="mx-4 sm:mx-6 my-6">
+    <div className="mx-5 sm:mx-6 my-6">
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 mb-3.5">
         <h3 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight">
@@ -39,31 +38,37 @@ export function EducationSection() {
         </Link>
       </div>
 
-      {/* Horizontal Scroll / Grid Articles */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+      {/* Article Cards Grid */}
+      <div className="grid grid-cols-2 gap-3.5">
         {articles.map((item) => (
           <Link
             key={item.id}
             href={item.href}
-            className="bg-white border border-slate-200/90 hover:border-emerald-300 rounded-2xl overflow-hidden shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between group cursor-pointer"
+            className="bg-white border border-gray-100 hover:border-emerald-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
           >
-            {/* Top Color Accent */}
-            <div className={`h-24 bg-gradient-to-r ${item.bgHeader} p-3.5 flex items-start justify-between relative`}>
-              <span className="bg-white/90 backdrop-blur-xs text-slate-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-2xs">
-                {item.category}
-              </span>
-              <BookOpen className="w-4 h-4 text-white/70" />
+            {/* Top Cover Image */}
+            <div className="relative w-full h-28 bg-slate-100 overflow-hidden">
+              <Image
+                src={item.image}
+                alt={item.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="(max-width: 600px) 50vw, 200px"
+              />
             </div>
 
-            {/* Bottom Content */}
-            <div className="p-3.5 sm:p-4 flex-1 flex flex-col justify-between">
-              <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#439F46] transition-colors line-clamp-2 mb-2">
-                {item.title}
-              </h4>
+            {/* Bottom Text Content */}
+            <div className="p-3 flex-1 flex flex-col justify-between">
+              <div>
+                {/* Category Subtitle */}
+                <span className="text-[11px] font-semibold text-[#648BAA] block mb-1">
+                  {item.category}
+                </span>
 
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-medium">
-                <Clock className="w-3 h-3" />
-                <span>{item.readTime}</span>
+                {/* Title */}
+                <h4 className="text-xs font-bold text-gray-900 leading-snug group-hover:text-[#439F46] transition-colors line-clamp-2">
+                  {item.title}
+                </h4>
               </div>
             </div>
           </Link>

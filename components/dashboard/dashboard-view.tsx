@@ -5,7 +5,7 @@ import { HeroCarousel } from './hero-carousel';
 import { CategoryGrid } from './category-grid';
 import { EducationSection } from './education-section';
 import { FeaturedPrograms, ProgramItem } from './featured-programs';
-import { BottomNav } from './bottom-nav';
+import { BottomNav } from '@/components/bottom-nav';
 
 interface DashboardViewProps {
   userName?: string;
@@ -19,17 +19,17 @@ export function DashboardView({
   isLoggedIn = true,
 }: DashboardViewProps) {
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-start font-jakarta antialiased selection:bg-[#439F46] selection:text-white">
-      {/* Central responsive card container: mobile-first max-w-md, expanding gracefully on desktop */}
-      <div className="w-full max-w-md md:max-w-3xl lg:max-w-4xl bg-white shadow-xl min-h-screen relative flex flex-col pb-20">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-0 sm:p-4 font-jakarta antialiased">
+      {/* Phone Screen Container for Desktop View (430px width, 844px fixed height frame) */}
+      <div className="w-full max-w-[430px] h-[100dvh] sm:h-[844px] bg-white shadow-2xl border border-gray-200/80 sm:rounded-[40px] relative flex flex-col justify-between overflow-hidden">
         
-        {/* Top App Bar with Search & Profile */}
-        <TopAppBar userName={userName} isLoggedIn={isLoggedIn} />
+        {/* Top Header Section */}
+        <TopAppBar isLoggedIn={isLoggedIn} />
 
-        {/* Main Content Area */}
-        <main className="flex-1">
-          {/* 1. XP Gamification Banner (or welcome banner) */}
-          <XpBanner initialXp={isLoggedIn ? 200 : 0} />
+        {/* Scrollable Main Content Area */}
+        <main className="flex-1 overflow-y-auto pb-[80px]">
+          {/* 1. XP Gamification Banner */}
+          <XpBanner initialXp={200} />
 
           {/* 2. Hero Carousel Banners */}
           <HeroCarousel />
@@ -44,9 +44,18 @@ export function DashboardView({
           <FeaturedPrograms programs={programs} />
         </main>
 
-        {/* Bottom Navigation */}
+        {/* Unified Bottom Navigation */}
         <BottomNav />
       </div>
     </div>
   );
 }
+
+
+
+
+
+
+
+
+

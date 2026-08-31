@@ -74,13 +74,13 @@ export function RiwayatDetailView({ transaction }: RiwayatDetailViewProps) {
   const subtitleText = transaction.programDeskripsi || 'Bantu anak yatim & umat meraih cita';
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] sm:py-8 flex justify-center font-jakarta antialiased selection:bg-[#439F46] selection:text-white">
-      {/* Mobile Container Wrapper (Figma 661:574) */}
-      <div className="w-full max-w-[430px] min-h-[932px] bg-white sm:shadow-lg sm:border sm:border-gray-100 sm:rounded-3xl flex flex-col justify-between relative overflow-hidden">
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-0 sm:p-4 font-jakarta antialiased selection:bg-[#439F46] selection:text-white">
+      {/* Mobile Container Wrapper (Figma 661:574 matching Dashboard & Riwayat) */}
+      <div className="w-full max-w-[430px] h-[100dvh] sm:h-[844px] bg-white shadow-2xl border border-gray-200/80 sm:rounded-[40px] relative flex flex-col justify-between overflow-hidden">
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col pb-10">
+        <div className="flex-1 overflow-y-auto pb-8">
           {/* Header (Figma 661:575) */}
-          <div className="pt-6 px-4 pb-3 flex items-center gap-2.5">
+          <div className="pt-6 px-5 sm:px-6 pb-3 flex items-center gap-2.5 bg-white sticky top-0 z-20 border-b border-gray-50">
             <Link
               href="/riwayat"
               className="text-[#439F46] hover:opacity-80 transition-opacity p-1 -ml-1 cursor-pointer"

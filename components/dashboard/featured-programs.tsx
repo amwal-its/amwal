@@ -30,7 +30,7 @@ export function FeaturedPrograms({ programs = [] }: FeaturedProgramsProps) {
   };
 
   return (
-    <div className="mx-4 sm:mx-6 my-6">
+    <div className="mx-5 sm:mx-6 my-6">
       {/* Section Header */}
       <div className="flex items-center justify-between gap-2 mb-3.5">
         <h3 className="text-base sm:text-lg font-extrabold text-gray-900 tracking-tight">
@@ -54,49 +54,52 @@ export function FeaturedPrograms({ programs = [] }: FeaturedProgramsProps) {
             <Link
               key={p.id}
               href={`/wakaf/${p.id}`}
-              className="bg-white border border-slate-200/90 hover:border-emerald-300 rounded-2xl p-3.5 sm:p-4 flex gap-3.5 shadow-2xs hover:shadow-xs transition-all group cursor-pointer"
+              className="bg-white rounded-2xl overflow-hidden flex items-center shadow-xs border border-gray-100 hover:shadow-md transition-all group cursor-pointer"
             >
-              {/* Thumbnail */}
-              <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+              {/* Full-bleed Left Banner Image (Figma: 139x139px) */}
+              <div className="relative w-[139px] h-[139px] shrink-0 overflow-hidden bg-slate-100">
                 <Image
                   src={p.bannerUrl && p.bannerUrl.trim() !== '' ? p.bannerUrl : '/assets/images/wakaf/wakaf-pembangunan-masjid-al-furqon.png'}
                   alt={p.judul}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  sizes="120px"
+                  sizes="139px"
                 />
-                <span className="absolute top-1.5 left-1.5 bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold px-2 py-0.5 rounded-md">
-                  {p.kategori || 'Wakaf'}
-                </span>
               </div>
 
-              {/* Info & Progress */}
-              <div className="min-w-0 flex-1 flex flex-col justify-between">
+              {/* Info & Progress Container (Figma: padding right 16px, spacing 12px) */}
+              <div className="flex-1 min-w-0 pl-3 pr-4 py-2.5 flex flex-col justify-between h-[139px]">
                 <div>
-                  <h4 className="text-xs sm:text-sm font-bold text-gray-900 leading-snug group-hover:text-[#439F46] transition-colors line-clamp-2 mb-1">
+                  {/* Category Pill Badge (Figma: bg #B7EFD1, text #3A6E57) */}
+                  <span className="inline-block bg-[#B7EFD1] text-[#3A6E57] text-[10px] font-medium px-2 py-0.5 rounded-[4px] mb-1">
+                    {p.kategori || 'Pendidikan'}
+                  </span>
+
+                  {/* Title (Figma: 14px Medium #1C2024, 2 lines) */}
+                  <h4 className="text-[13px] sm:text-[14px] font-medium text-[#1C2024] leading-[1.35] line-clamp-2 group-hover:text-[#439F46] transition-colors mb-0.5">
                     {p.judul}
                   </h4>
-                  <p className="text-[11px] text-gray-500 truncate flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-gray-400" />
-                    <span>{p.namaLembaga || 'Badan Pengelola Wakaf'}</span>
+
+                  {/* Institution Name (Figma: 10px Regular #6B7280) */}
+                  <p className="text-[10px] text-[#6B7280] truncate">
+                    {p.namaLembaga || 'Dompet Dhuafa'}
                   </p>
                 </div>
 
-                {/* Progress Bar & Sub-info */}
-                <div className="mt-2">
-                  <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden mb-1.5">
+                {/* Progress Bar & Sub-info (Figma: h-1 bg #E4E7EC, fill #0F3D1A / #188B46) */}
+                <div className="pt-1">
+                  <div className="w-full h-1 bg-[#E4E7EC] rounded-full overflow-hidden mb-1.5">
                     <div
-                      className="h-full bg-[#439F46] rounded-full"
+                      className="h-full bg-[#1A6B38] rounded-full"
                       style={{ width: `${Math.max(4, percent)}%` }}
                     />
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold">
-                    <span className="text-gray-900">
+                  <div className="flex items-center justify-between text-[10px] text-[#6B7280]">
+                    <span className="text-[#1C2024] font-normal">
                       Terkumpul {formatJuta(p.pokokDanaTerkumpul)}
                     </span>
-                    <span className="text-gray-400 font-medium flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
+                    <span className="font-normal text-[#6B7280]">
                       {p.durasiHari || 45} hari lagi
                     </span>
                   </div>
