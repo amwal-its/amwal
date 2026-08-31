@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Bell, ShieldCheck } from 'lucide-react';
+import { usePathname } from 'next/navigation';
+import { Bell } from 'lucide-react';
 
 interface BackofficeHeaderProps {
   breadcrumbTitle?: string;
@@ -10,18 +11,38 @@ interface BackofficeHeaderProps {
 }
 
 export function BackofficeHeader({
-  breadcrumbTitle = 'Super Admin › Manajemen Program Wakaf & Progres Fisik',
+  breadcrumbTitle,
   role = 'ADMIN',
   userName = 'Super Admin BWI',
 }: BackofficeHeaderProps) {
+  const pathname = usePathname();
   const isSuperAdmin = role === 'ADMIN';
+
+  const getBreadcrumb = () => {
+    if (breadcrumbTitle) return breadcrumbTitle;
+
+    if (!isSuperAdmin) {
+      return 'Nadzir Dashboard › Portofolio Wakaf YMI ITS';
+    }
+
+    if (pathname === '/admin') return 'Super Admin › Executive Overview & Monitoring';
+    if (pathname === '/admin/wakaf') return 'Super Admin › Manajemen Program Wakaf & Ledger';
+    if (pathname === '/admin/approvals') return 'Super Admin › Pusat Persetujuan & Verifikasi';
+    if (pathname === '/admin/nadzir-verifikasi') return 'Super Admin › Verifikasi Nadzir & Legalitas BWI';
+    if (pathname === '/admin/transparansi') return 'Super Admin › Log Transparansi Transaksi & Audit';
+    if (pathname === '/admin/dokumen') return 'Super Admin › Manajemen Dokumen & Arsip Resmi';
+    if (pathname === '/admin/berita') return 'Super Admin › Manajemen Berita & Penyaluran';
+    if (pathname === '/admin/pengaturan') return 'Super Admin › Pengaturan Rekening & Parameter Sistem';
+
+    return 'Super Admin › Tata Kelola Platform Amwal';
+  };
 
   return (
     <header className="bg-white border-b border-gray-200/90 px-6 py-4 flex items-center justify-between sticky top-0 z-20 font-jakarta">
       {/* Breadcrumb & Subtitle */}
       <div>
         <h1 className="text-sm font-bold text-gray-900 tracking-tight">
-          {breadcrumbTitle}
+          {getBreadcrumb()}
         </h1>
         <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
           <span>Platform Islamic Social Finance</span>
@@ -50,7 +71,7 @@ export function BackofficeHeader({
               {userName}
             </span>
             <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wider block">
-              {isSuperAdmin ? 'Admin Platform' : 'Nadzir Terverifikasi'}
+              {isSuperAdmin ? 'Super Admin BWI' : 'Nadzir Terverifikasi'}
             </span>
           </div>
 

@@ -22,11 +22,6 @@ export default async function BackofficeLayout({
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         <BackofficeHeader
-          breadcrumbTitle={
-            role === 'ADMIN'
-              ? 'Super Admin › Manajemen Program Wakaf & Progres Fisik'
-              : 'Nadzir Dashboard › Portofolio Wakaf YMI ITS'
-          }
           role={role}
           userName={userName}
         />
