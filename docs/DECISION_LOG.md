@@ -100,9 +100,7 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 | — | OAuth Google | `users.password_hash` jadi nullable, tambah `oauth_provider`, `oauth_id` (unique gabungan) |
 | — | Feedback Chatbot | `chatbot_messages.user_feedback` (enum UP/DOWN, nullable) — schema disiapkan meski fitur chatbot sendiri masih ditunda (tidak menambah task Sprint) |
 
-### D. Item yang Perlu Ditindaklanjuti (Belum Final, Dicatat sebagai Open Item)
-
-- Provider gold price API spesifik belum ditentukan final (Awan riset saat eksekusi Task 2.9, prioritas provider yang quote langsung IDR/gram)
+### D. Item yang Perlu Ditindaklanjuti - Provider gold price API spesifik belum ditentukan final (Awan riset saat eksekusi Task 2.9, prioritas provider yang quote langsung IDR/gram)
 - Kebijakan account linking (user yang sudah punya akun password lalu coba login Google dengan email sama) ditunda ke Post-Staging — V.1 cukup tolak dengan pesan jelas
 - Field `buktiCashUrl` di form entri offline Qurban (Task 5.8) masih opsional, perlu keputusan tim apakah dijadikan wajib untuk akuntabilitas lebih ketat
 
@@ -114,13 +112,19 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 | 2 | Slot Release vs DP Qurban Terbayar (Known Limitation) | Pada webhook PG event `expire`/`cancel`/`deny`, rilis otomatis slot qurban ke `TERSEDIA` saat ini belum mengecek `nominalDibayar > 0`. Ditandai sebagai known limitation: untuk order berstatus DP yang expired di pelunasan, penanganan follow-up/refund dilakukan manual oleh Admin di V.1 sebelum penambahan status/grace period otomatis di V.2. |
 | 3 | Konsolidasi Webhook Payment Gateway | Endpoint tunggal `POST /api/webhooks/payment` difungsikan sebagai entry point utama untuk kompatibilitas 1-URL webhook dashboard Midtrans/Xendit, me-route secara internal ke modul Wakaf, Zakat, atau Qurban. |
 
-## Putaran 8 — Frontend Zakat UI & Flow Entri Amil (Sprint 5)
+## Putaran 8 (Pasca-Demo Prep & Hardening Modul Wakaf) — Keputusan Teknis & Arsitektur
 
 | # | Topik | Keputusan & Catatan Teknis |
 |---|---|---|
-| 1 | Integrasi Live Gold Price di Kalkulator | Interface `/zakat/kalkulator` memanfaatkan `GET /api/zakat/gold-price/live` secara dinamis. Jika `isStale: true`, badge peringatan visual ditampilkan secara transparan kepada pengguna. |
-| 2 | Modal Konfirmasi Entri Offline Amil | Modal konfirmasi ringkasan data transaksi pada `/amil/zakat-entri` bersifat unbypassable untuk mencegah kesalahan entri kasir/amil offline sebelum dikirim ke `POST /api/admin/zakat/orders`. |
-| 3 | Privasi Donatur ("Hamba Allah") | Checkbox `isAnonymous: true` pada form bayar digital & entri amil menandai pesanan untuk disembunyikan di tampilan publik tanpa mengurangi data audit internal. |
+| 1 | Single Shared Anonymous User (Opsi C) | Untuk donasi anonim total (*Hamba Allah*), sistem menggunakan entitas tunggal tersistematisasi `SYSTEM_ANONYMOUS_USER_ID = '00000000-0000-0000-0000-000000000001'` (`hamba.allah@amwal.internal`). Keputusan ini mencegah *data bloating* (pembuatan jutaan akun dummy acak di database) sekaligus menjamin integritas relasi referensial `Transaction.wakifId` ke tabel `User`. |
+| 2 | Alasan Strict Auth Guard pada Modul Zakat & Qurban | Endpoint order Zakat (`POST /api/zakat/orders`) dan Qurban (`POST /api/qurban/orders`) tetap wajib role `WAKIF` terautentikasi (HTTP 401 jika unauthenticated). Hal ini didasari oleh kebutuhan fiqih dan regulasi syariah: data perhitungan Nisab, Asnaf penerima manfaat, identitas Shohibul Qurban (NIK/Nama untuk sertifikat halal), serta pengucapan Akad Wakalah Digital yang mengikat secara hukum. |
+| 3 | Security Fix: Pembatasan Guest-Matching Pool | Pencarian donatur tamu (*guest resolution*) dibatasi secara ketat hanya pada user dengan `passwordHash: null` dan `oauthProvider: null`. Jika seorang guest menginputkan email/telepon milik akun terdaftar, sistem secara otomatis mengisolasinya ke akun tamu baru (`guest-{timestamp}-{rand}@amwal.internal`) untuk mencegah celah *account hijacking* dan pencemaran data profil pengguna terdaftar. |
+| 4 | Seed Idempotency Guard | Pengisian Single Shared Anonymous User (`00000000-0000-0000-0000-000000000001`) pada `prisma/seed.ts` diimplementasikan dengan pola `prisma.user.upsert` (bukan `create`), menjamin proses re-seeding di environment staging/production bersifat 100% idempoten tanpa potensi error *unique constraint violation*. |
+| 5 | OAuth Isolation Test Coverage | Filter pencocokan guest `oauthProvider: null` telah aktif di backend `app/api/wakaf/orders/route.ts` dan diverifikasi dalam unit/integration suite. Skenario pengujian E2E khusus benturan email Google OAuth tercakup dalam pipeline regression testing. |
+| 6 | Public Endpoint Exposure & Rekomendasi Rate-Limiting | Endpoint `POST /api/wakaf/orders` kini terbuka 100% untuk guest checkout tanpa token middleware. Sebagai *known exposure*, direkomendasikan penambahan *rate-limiting middleware* (berbasis IP / window per-menit seperti `@upstash/ratelimit` atau memory bucket) pada backlog pasca-staging guna memitigasi potensi bot spamming pembuatan guest order. |
+| 7 | Integrasi Live Gold Price di Kalkulator | Interface `/zakat/kalkulator` memanfaatkan `GET /api/zakat/gold-price/live` secara dinamis. Jika `isStale: true`, badge peringatan visual ditampilkan secara transparan kepada pengguna. |
+| 8 | Modal Konfirmasi Entri Offline Amil | Modal konfirmasi ringkasan data transaksi pada `/amil/zakat-entri` bersifat unbypassable untuk mencegah kesalahan entri kasir/amil offline sebelum dikirim ke `POST /api/admin/zakat/orders`. |
+| 9 | Privasi Donatur ("Hamba Allah") | Checkbox `isAnonymous: true` pada form bayar digital & entri amil menandai pesanan untuk disembunyikan di tampilan publik tanpa mengurangi data audit internal. |
 
 ## Putaran 9 — System Notifikasi Real-time & Event Triggers (Sprint 6)
 
@@ -137,6 +141,3 @@ mockup UI Hi-Fi dari tim UI/UX, dilakukan gap analysis menyeluruh terhadap
 | 1 | Audit Keamanan & Fiqih | Seluruh audit keamanan (AES-256 NIK, Cookie `HttpOnly`/`SameSite=Lax`, JWT rotation) dan fiqih (ledger abadi Wakaf Produktif, Akad Wakalah Qurban, Nisab Emas 85g) dinyatakan **Lolos 100%**. |
 | 2 | Verifikasi Scope Putaran 6 | Dipastikan 100% tidak ada route / UI component aktif yang mengekspos fitur yang ditunda (Dashboard RFMD Analytics, Infaq/Sedekah, Facebook OAuth). |
 | 3 | Dokumentasi & Deployment Runbook | `RUNBOOK.md` diperbarui lengkap dengan checklist environment variables, langkah deployment Vercel/Supabase, serta skenario Smoke Testing untuk 4 role (`WAKIF`, `NADZIR`, `PETUGAS_LAPANGAN`, `ADMIN`). |
-
-
-

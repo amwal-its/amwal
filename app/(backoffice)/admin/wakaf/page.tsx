@@ -27,6 +27,23 @@ export default async function AdminWakafPage() {
           namaLembaga: true,
         },
       },
+      progressReports: {
+        select: {
+          id: true,
+          persentaseFisik: true,
+          deskripsi: true,
+          kuitansiUrls: true,
+          createdAt: true,
+          createdBy: {
+            select: {
+              name: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      },
       yieldEntries: {
         orderBy: {
           recordedAt: 'desc',
@@ -71,6 +88,14 @@ export default async function AdminWakafPage() {
       recordedAt: y.recordedAt.toISOString(),
       recordedByAdminId: y.recordedByAdminId,
       adminName: 'Super Admin',
+    })),
+    progressReports: p.progressReports.map((r) => ({
+      id: r.id,
+      persentaseFisik: r.persentaseFisik ? Number(r.persentaseFisik) : null,
+      deskripsi: r.deskripsi,
+      kuitansiUrls: Array.isArray(r.kuitansiUrls) ? (r.kuitansiUrls as string[]) : [],
+      createdAt: r.createdAt.toISOString(),
+      createdByName: r.createdBy?.name || 'Nadzir',
     })),
   }));
 

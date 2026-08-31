@@ -7,12 +7,12 @@ import {
   LayoutDashboard,
   Landmark,
   ShieldCheck,
-  Calculator,
-  HeartHandshake,
-  DollarSign,
+  Building2,
+  FileSpreadsheet,
   FileText,
+  Newspaper,
+  Settings,
   LogOut,
-  Sparkles,
 } from 'lucide-react';
 
 interface BackofficeSidebarProps {
@@ -20,56 +20,78 @@ interface BackofficeSidebarProps {
   userName?: string;
 }
 
+interface MenuItem {
+  title: string;
+  href: string;
+  icon: any;
+  isActive: boolean;
+  badge?: string;
+}
+
 export function BackofficeSidebar({ role = 'ADMIN', userName = 'Super Admin' }: BackofficeSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isAdmin = role === 'ADMIN';
 
-  const menuItems = [
-    {
-      title: 'Ringkasan Utama',
-      href: isAdmin ? '/admin/wakaf' : '/nadzir/dashboard',
-      icon: LayoutDashboard,
-      isActive: pathname === '/admin/wakaf' || pathname === '/nadzir/dashboard',
-    },
-    {
-      title: 'Program Wakaf & Ledger',
-      href: isAdmin ? '/admin/wakaf' : '/nadzir/dashboard',
-      icon: Landmark,
-      isActive: pathname.includes('/wakaf'),
-    },
-    {
-      title: 'Verifikasi Nadzir & Legalitas',
-      href: '#',
-      icon: ShieldCheck,
-      badge: isAdmin ? '2 Menunggu' : 'Terverifikasi BWI',
-      isActive: false,
-    },
-    {
-      title: 'Zakat & Asnaf Mustahiq',
-      href: '#',
-      icon: Calculator,
-      isActive: false,
-    },
-    {
-      title: 'Qurban & Distribusi',
-      href: '#',
-      icon: HeartHandshake,
-      isActive: false,
-    },
-    {
-      title: 'Rekonsiliasi Finansial',
-      href: '#',
-      icon: DollarSign,
-      isActive: false,
-    },
-    {
-      title: 'Audit Log & Transparansi',
-      href: '#',
-      icon: FileText,
-      isActive: false,
-    },
-  ];
+  const menuItems: MenuItem[] = isAdmin
+    ? [
+        {
+          title: 'Program Wakaf & Ledger',
+          href: '/admin/wakaf',
+          icon: Landmark,
+          isActive: pathname === '/admin/wakaf',
+        },
+        {
+          title: 'Pusat Persetujuan',
+          href: '/admin/approvals',
+          icon: ShieldCheck,
+          isActive: pathname === '/admin/approvals',
+        },
+        {
+          title: 'Verifikasi Nadzir BWI',
+          href: '/admin/nadzir-verifikasi',
+          icon: Building2,
+          isActive: pathname === '/admin/nadzir-verifikasi',
+        },
+        {
+          title: 'Log Transparansi',
+          href: '/admin/transparansi',
+          icon: FileSpreadsheet,
+          isActive: pathname === '/admin/transparansi',
+        },
+        {
+          title: 'Manajemen Dokumen',
+          href: '/admin/dokumen',
+          icon: FileText,
+          isActive: pathname === '/admin/dokumen',
+        },
+        {
+          title: 'Berita & Penyaluran',
+          href: '/admin/berita',
+          icon: Newspaper,
+          isActive: pathname === '/admin/berita',
+        },
+        {
+          title: 'Pengaturan Sistem',
+          href: '/admin/pengaturan',
+          icon: Settings,
+          isActive: pathname === '/admin/pengaturan',
+        },
+      ]
+    : [
+        {
+          title: 'Dashboard Nadzir',
+          href: '/nadzir/dashboard',
+          icon: LayoutDashboard,
+          isActive: pathname === '/nadzir/dashboard',
+        },
+        {
+          title: 'Program Wakaf',
+          href: '/nadzir/dashboard',
+          icon: Landmark,
+          isActive: pathname.includes('/nadzir'),
+        },
+      ];
 
   const handleLogout = async () => {
     try {
