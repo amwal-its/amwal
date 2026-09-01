@@ -14,6 +14,7 @@ import {
   Check,
   X,
   Loader2,
+  ExternalLink,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -117,6 +118,22 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
   // Modal Review Withdrawal
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<any | null>(null);
   const [withdrawalNotes, setWithdrawalNotes] = useState('');
+
+  // Verified Receipts State (Manual Boolean Inspection)
+  const [verifiedReceiptIds, setVerifiedReceiptIds] = useState<Set<string>>(new Set());
+
+  const toggleReceiptVerification = (reportId: string, urlIdx: number) => {
+    const key = `${reportId}-${urlIdx}`;
+    setVerifiedReceiptIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
 
   const formatRupiah = (val: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -565,12 +582,17 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
       {activeSubTab === 'receipts' && (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-card overflow-hidden">
           <div className="p-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-              <Receipt className="w-4 h-4 text-[#1B5E20]" />
-              Audit Dokumen Kuitansi Belanja Program Fisik
-            </h2>
-            <span className="text-xs text-gray-500 font-medium">
-              Verifikasi manual visual kuitansi yang dilaporkan Nadzir
+            <div>
+              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                <Receipt className="w-4 h-4 text-[#1B5E20]" />
+                Audit Dokumen Kuitansi Belanja Program Fisik
+              </h2>
+              <span className="text-xs text-gray-500 font-medium">
+                Verifikasi manual visual kuitansi belanja yang dilaporkan Nadzir (tanpa OCR)
+              </span>
+            </div>
+            <span className="text-xs font-bold px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg">
+              {data.pendingProgressReports.length} Laporan Progres
             </span>
           </div>
 
@@ -582,43 +604,94 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
           ) : (
             <div className="divide-y divide-gray-100">
               {data.pendingProgressReports.map((r) => (
-                <div key={r.id} className="p-5 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1.5 flex-1">
-                    <h3 className="text-sm font-bold text-gray-900">
-                      {r.waqfProgram.judul}
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      Pelapor: <strong>{r.createdBy.name}</strong> • Progres Fisik: <strong>{Number(r.persentaseFisik || 0)}%</strong>
-                    </p>
-                    <p className="text-xs text-gray-500 leading-relaxed">
-                      Catatan: {r.deskripsi || 'Laporan progres termin berkala.'}
-                    </p>
-                    <div className="flex items-center gap-2 pt-2">
-                      <span className="text-[11px] font-bold text-gray-700">Lampiran Kuitansi:</span>
-                      {Array.isArray(r.kuitansiUrls) && r.kuitansiUrls.length > 0 ? (
-                        r.kuitansiUrls.map((url: string, idx: number) => (
-                          <a
-                            key={idx}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-lg border border-emerald-200"
-                          >
-                            <Receipt className="w-3 h-3" />
-                            <span>Kuitansi #{idx + 1}</span>
-                          </a>
-                        ))
-                      ) : (
-                        <span className="text-xs text-gray-400 italic">Tidak ada URL kuitansi</span>
-                      )}
+                <div key={r.id} className="p-5 hover:bg-slate-50 transition-colors space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">
+                        {r.waqfProgram.judul}
+                      </h3>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        Pelapor: <strong>{r.createdBy.name}</strong> • Progres Fisik: <strong>{Number(r.persentaseFisik || 0)}%</strong>
+                      </p>
                     </div>
+                    <span className="text-xs text-gray-400 font-medium">
+                      {new Date(r.createdAt).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <Check className="w-3.5 h-3.5" />
-                      Tersimpan di Ledger
+                  <p className="text-xs text-gray-600 leading-relaxed bg-white p-3 rounded-xl border border-gray-100">
+                    <strong>Catatan Lapangan:</strong> {r.deskripsi || 'Laporan progres termin berkala.'}
+                  </p>
+
+                  {/* Visual Receipts Gallery */}
+                  <div>
+                    <span className="text-[11px] font-bold text-gray-700 block mb-2">
+                      Galeri Berkas Kuitansi Belanja ({Array.isArray(r.kuitansiUrls) ? r.kuitansiUrls.length : 0}):
                     </span>
+                    {Array.isArray(r.kuitansiUrls) && r.kuitansiUrls.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                        {r.kuitansiUrls.map((url: string, idx: number) => {
+                          const isVerified = verifiedReceiptIds.has(`${r.id}-${idx}`);
+                          return (
+                            <div
+                              key={idx}
+                              className={`p-3 rounded-xl border transition-all bg-white flex flex-col justify-between gap-2.5 ${
+                                isVerified
+                                  ? 'border-emerald-300 bg-emerald-50/40 shadow-xs'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                                  <Receipt className="w-3.5 h-3.5 text-emerald-700" />
+                                  Kuitansi #{idx + 1}
+                                </span>
+                                {isVerified ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                                    <Check className="w-3 h-3 stroke-[3]" />
+                                    Terverifikasi
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                    Belum Ditandai
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                                <a
+                                  href={url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 py-1.5 px-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-semibold rounded-lg text-[11px] text-center inline-flex items-center justify-center gap-1"
+                                >
+                                  <span>Buka Berkas</span>
+                                  <ExternalLink className="w-3 h-3 text-gray-400" />
+                                </a>
+
+                                <button
+                                  type="button"
+                                  onClick={() => toggleReceiptVerification(r.id, idx)}
+                                  className={`py-1.5 px-2.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                                    isVerified
+                                      ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                                      : 'bg-[#1B5E20] text-white hover:bg-[#154a19] shadow-2xs'
+                                  }`}
+                                >
+                                  {isVerified ? 'Batal' : 'Tandai Sah'}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic">Tidak ada lampiran kuitansi</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -715,9 +788,10 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
 
               <button
                 type="button"
-                disabled={isProcessing}
+                disabled={isProcessing || !nadzirNotes.trim()}
                 onClick={() => handleNadzirAction(selectedNadzir.id, 'REJECTED')}
-                className="px-4 h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer disabled:opacity-50"
+                className="px-4 h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                title={!nadzirNotes.trim() ? "Wajib isi catatan penolakan" : undefined}
               >
                 Tolak
               </button>
@@ -758,13 +832,13 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
 
               <div>
                 <label className="block text-xs font-bold text-gray-900 mb-1">
-                  Catatan Persetujuan Pencairan Dana
+                  Catatan Persetujuan Pencairan Dana <span className="text-rose-500 text-[10px] font-normal">(Wajib jika menolak)</span>
                 </label>
                 <textarea
                   rows={3}
                   value={withdrawalNotes}
                   onChange={(e) => setWithdrawalNotes(e.target.value)}
-                  placeholder="Instruksi pencairan atau referensi transfer BSI..."
+                  placeholder="Instruksi pencairan atau alasan penolakan..."
                   className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl text-xs text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1B5E20]/30 focus:border-[#1B5E20] resize-none"
                 />
               </div>
@@ -783,9 +857,10 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
 
               <button
                 type="button"
-                disabled={isProcessing}
+                disabled={isProcessing || !withdrawalNotes.trim()}
                 onClick={() => handleWithdrawalAction(selectedWithdrawal.id, 'REJECTED')}
-                className="px-4 h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer disabled:opacity-50"
+                className="px-4 h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                title={!withdrawalNotes.trim() ? "Wajib isi catatan penolakan" : undefined}
               >
                 Tolak
               </button>

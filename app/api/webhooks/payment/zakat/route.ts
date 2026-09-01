@@ -6,6 +6,7 @@ import { Prisma, ZakatOrderStatus, TransactionPaymentStatus } from '@/app/genera
 import { incrementFundPool } from '@/lib/fund-pool';
 import { verifyWebhookSignature } from '@/lib/webhook-signature';
 import { sendWhatsAppNotification } from '@/lib/whatsapp.service';
+import { zakatThankYouMessage } from '@/lib/notification-templates';
 
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || '';
 
@@ -140,20 +141,15 @@ export async function POST(req: NextRequest) {
         const phone = result.order.noTelepon;
         if (phone) {
           const nominalVal = Number(result.order.nominal || amount || 0);
-          const formattedNominal = new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-          }).format(nominalVal);
+          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://amwal.its.ac.id').replace(/\/+$/, '');
+          const certUrl = `${appUrl}/zakat/transaksi/${result.order.id}/sertifikat`;
 
-          const waMsg = `*Alhamdulillah, Pembayaran Zakat Terverifikasi!*\n\n` +
-            `Pembayaran zakat Anda telah berhasil diverifikasi oleh sistem Amwal HETI ITS.\n\n` +
-            `📄 *No. Kwitansi:* ${result.order.nomorKwitansi}\n` +
-            `🏷️ *Jenis Zakat:* ${result.order.jenisZakat}\n` +
-            `💰 *Nominal:* ${formattedNominal}\n` +
-            `🤲 *Status:* Terverifikasi Sah Masuk FundPool\n\n` +
-            `_Semoga Allah SWT membersihkan harta, mensucikan jiwa, dan melimpahkan keberkahan bagi keluarga Anda. Aamiin._\n\n` +
-            `—\n*Yayasan Manarul Ilmi ITS*`;
+          const waMsg = zakatThankYouMessage({
+            namaOrIsAnonymous: result.order.isAnonymous ? 'Hamba Allah' : (result.order.namaMuzakki || 'Muzakki'),
+            jenisZakat: result.order.jenisZakat,
+            nominal: nominalVal,
+            certificateUrl: certUrl,
+          });
 
           await sendWhatsAppNotification(phone, waMsg);
         }

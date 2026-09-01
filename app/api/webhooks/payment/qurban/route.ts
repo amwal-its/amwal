@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { sendWhatsAppNotification } from '@/lib/whatsapp.service';
+import { qurbanThankYouMessage } from '@/lib/notification-templates';
 
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || '';
 
@@ -95,20 +96,19 @@ export async function POST(req: NextRequest) {
       try {
         const phone = qurbanOrder.teleponPengqurban || qurbanOrder.wakif?.phone;
         if (phone) {
-          const nominalFormatted = new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-          }).format(Number(gross_amount || currentNominalDibayar));
+          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://amwal.its.ac.id').replace(/\/+$/, '');
+          const certUrl = `${appUrl}/qurban/transaksi/${qurbanOrder.id}/sertifikat`;
+          const sisaTagihanCalc = Number(qurbanOrder.totalHarga) - Number(currentNominalDibayar);
 
-          const waMsg = `*Alhamdulillah, Pembayaran Qurban Terverifikasi!*\n\n` +
-            `Pembayaran pesanan Qurban Anda telah terverifikasi oleh sistem Amwal HETI ITS.\n\n` +
-            `🆔 *ID Pesanan:* ${qurbanOrder.id}\n` +
-            `🐑 *Hewan:* Qurban ${qurbanOrder.jenisHewan}\n` +
-            `💰 *Nominal Dibayar:* ${nominalFormatted}\n` +
-            `📋 *Status:* ${updatedNewStatus === 'LUNAS' ? 'LUNAS 100%' : 'DP (Uang Muka Terbayar)'}\n\n` +
-            `_Semoga Allah SWT menerima ibadah qurban Anda dan menjadikannya berkah bagi umat. Aamiin._\n\n` +
-            `—\n*Yayasan Manarul Ilmi ITS*`;
+          const waMsg = qurbanThankYouMessage({
+            namaOrIsAnonymous: qurbanOrder.namaPengqurban || qurbanOrder.wakif?.name || 'Shohibul Qurban',
+            jenisHewan: qurbanOrder.jenisHewan,
+            tipeKepemilikan: qurbanOrder.tipeKepemilikan || 'Individu',
+            statusPembayaran: updatedNewStatus,
+            nominal: Number(gross_amount || currentNominalDibayar),
+            sisaTagihan: sisaTagihanCalc > 0 ? sisaTagihanCalc : 0,
+            certificateUrl: updatedNewStatus === 'LUNAS' ? certUrl : undefined,
+          });
 
           await sendWhatsAppNotification(phone, waMsg);
         }

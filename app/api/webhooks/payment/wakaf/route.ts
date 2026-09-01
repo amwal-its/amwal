@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { TransactionPaymentStatus, WaqfOrderStatus, Prisma } from '@/app/generated/prisma/client';
 import { sendWhatsAppNotification } from '@/lib/whatsapp.service';
+import { waqfThankYouMessage } from '@/lib/notification-templates';
 
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || '';
 
@@ -77,7 +78,12 @@ export async function POST(req: NextRequest) {
         ],
       },
       include: {
-        transaction: true,
+        transaction: {
+          include: {
+            certificate: true,
+          },
+        },
+        waqfProgram: true,
       },
     });
 
@@ -188,19 +194,17 @@ export async function POST(req: NextRequest) {
             ? Number(waqfOrder.nilaiTaksiranRupiah)
             : Number(body.gross_amount || body.amount || 0);
 
-          const formattedNominal = new Intl.NumberFormat('id-ID', {
-            style: 'currency',
-            currency: 'IDR',
-            minimumFractionDigits: 0,
-          }).format(nominalVal);
+          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://amwal.its.ac.id').replace(/\/+$/, '');
+          const certUrl =
+            waqfOrder.transaction?.certificate?.pdfUrl ||
+            `${appUrl}/wakaf/transaksi/${updatedData.id}/sertifikat`;
 
-          const waMsg = `*Alhamdulillah, Pembayaran Wakaf Terverifikasi!*\n\n` +
-            `Terima kasih atas kebaikan dan kepedulian Anda dalam berwakaf melalui Amwal HETI ITS.\n\n` +
-            `📄 *No. Kwitansi:* ${updatedData.nomorKwitansi}\n` +
-            `💰 *Nominal:* ${formattedNominal}\n` +
-            `🤲 *Status:* Sah & Terverifikasi LUNAS\n\n` +
-            `_Semoga Allah SWT melipatgandakan pahala jariyah Anda dan menjadi amal yang abadi. Aamiin._\n\n` +
-            `—\n*Yayasan Manarul Ilmi ITS*`;
+          const waMsg = waqfThankYouMessage({
+            namaOrIsAnonymous: waqfOrder.isAnonymous ? 'Hamba Allah' : (waqfOrder.namaWakif || 'Donatur'),
+            judulProgram: waqfOrder.waqfProgram?.judul || 'Program Wakaf',
+            nominal: nominalVal,
+            certificateUrl: certUrl,
+          });
 
           await sendWhatsAppNotification(phone, waMsg);
         }
