@@ -44,6 +44,10 @@ export interface OverviewMetrics {
   totalProgramLive: number;
   totalProgramAll: number;
   totalDonaturUnik: number;
+  totalRegisteredUsers?: number;
+  totalGuestUsers?: number;
+  certificatesWithBwiCount?: number;
+  totalCertificatesCount?: number;
   totalTransactionsCount: number;
   pendingApprovals: {
     nadzir: number;
@@ -222,7 +226,7 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
           </div>
         </motion.div>
 
-        {/* Card 3: Donatur & Muzakki Unik */}
+        {/* Card 3: Donatur & Muzakki Terdaftar */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -238,15 +242,15 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
             </div>
           </div>
           <div className="text-2xl font-black text-gray-900 tracking-tight">
-            {data.totalDonaturUnik} <span className="text-sm font-semibold text-gray-400">Akun Terdaftar</span>
+            {data.totalRegisteredUsers ?? data.totalDonaturUnik} <span className="text-sm font-semibold text-gray-400">Akun Terdaftar</span>
           </div>
           <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>Individu & Institusi</span>
-            <span className="text-purple-700 font-semibold">Tervalidasi BSI</span>
+            <span>{data.totalGuestUsers ?? 0} Tamu (Guest)</span>
+            <span className="text-purple-700 font-semibold">{data.totalDonaturUnik} Donatur Lunas</span>
           </div>
         </motion.div>
 
-        {/* Card 4: Status Kepatuhan Regulasi */}
+        {/* Card 4: Sertifikat Ter-registrasi BWI */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,17 +259,21 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Kepatuhan Regulasi BWI
+              Sertifikat Ter-registrasi BWI
             </span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
               <ShieldCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="text-2xl font-black text-[#1B5E20] tracking-tight flex items-center gap-1.5">
-            Grade A <span className="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">Terakreditasi</span>
+            {data.certificatesWithBwiCount ?? 0} <span className="text-sm font-semibold text-gray-400">/ {data.totalCertificatesCount ?? 0} Sertifikat</span>
           </div>
           <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>Standar Syariah & AIW</span>
+            <span>
+              {(data.totalCertificatesCount ?? 0) > 0
+                ? `${Math.round(((data.certificatesWithBwiCount ?? 0) / (data.totalCertificatesCount ?? 1)) * 100)}% Terdaftar BWI`
+                : 'Nomor Registrasi BWI'}
+            </span>
             <Link href="/admin/nadzir-verifikasi" className="text-amber-800 font-bold hover:underline inline-flex items-center gap-0.5">
               <span>Audit</span>
               <ArrowRight className="w-3 h-3" />

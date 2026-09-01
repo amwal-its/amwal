@@ -66,6 +66,22 @@ export function BackofficeProgramManagementView({
   const [activeLedgerProgram, setActiveLedgerProgram] = useState<BackofficeProgramItem | null>(null);
   const [activeProgressProgram, setActiveProgressProgram] = useState<BackofficeProgramItem | null>(null);
 
+  // Verified Receipts State for Manual Inspection
+  const [verifiedReceiptKeys, setVerifiedReceiptKeys] = useState<Set<string>>(new Set());
+
+  const toggleReceiptVerification = (reportId: string, urlIdx: number) => {
+    const key = `${reportId}-${urlIdx}`;
+    setVerifiedReceiptKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
   // BWI Registration States
   const [showBwiModal, setShowBwiModal] = useState<boolean>(false);
   const [certIdentifier, setCertIdentifier] = useState<string>('');
@@ -608,28 +624,64 @@ export function BackofficeProgramManagementView({
                       {report.deskripsi || 'Laporan progres tahapan berkala.'}
                     </p>
 
-                    {/* Visual Receipts List */}
+                    {/* Visual Receipts Gallery with Manual Verification */}
                     <div className="pt-2 border-t border-gray-200">
-                      <span className="text-[11px] font-bold text-gray-700 block mb-1.5">
+                      <span className="text-[11px] font-bold text-gray-700 block mb-2">
                         Lampiran Kuitansi Belanja ({report.kuitansiUrls.length}):
                       </span>
                       {report.kuitansiUrls.length === 0 ? (
                         <span className="text-gray-400 italic text-[11px]">Tidak ada lampiran berkas</span>
                       ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {report.kuitansiUrls.map((url, idx) => (
-                            <a
-                              key={idx}
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-800 border border-gray-200 hover:border-emerald-300 rounded-xl text-[11px] font-semibold transition-all shadow-2xs"
-                            >
-                              <FileCheck className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Kuitansi #{idx + 1}</span>
-                              <ExternalLink className="w-3 h-3 text-gray-400" />
-                            </a>
-                          ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {report.kuitansiUrls.map((url, idx) => {
+                            const isVerified = verifiedReceiptKeys.has(`${report.id}-${idx}`);
+                            return (
+                              <div
+                                key={idx}
+                                className={`p-2.5 rounded-xl border bg-white flex items-center justify-between gap-2 transition-all ${
+                                  isVerified
+                                    ? 'border-emerald-300 bg-emerald-50/50 shadow-2xs'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <FileCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                                  <div className="min-w-0">
+                                    <span className="text-xs font-bold text-gray-800 block truncate">
+                                      Kuitansi #{idx + 1}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 block">
+                                      {isVerified ? '✅ Terverifikasi' : '⏳ Belum diperiksa'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <a
+                                    href={url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs transition-colors"
+                                    title="Lihat Berkas"
+                                  >
+                                    <ExternalLink className="w-3.5 h-3.5" />
+                                  </a>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => toggleReceiptVerification(report.id, idx)}
+                                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                                      isVerified
+                                        ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+                                        : 'bg-[#1B5E20] text-white hover:bg-[#154a19] shadow-2xs'
+                                    }`}
+                                  >
+                                    {isVerified ? 'Batal' : 'Tandai Sah'}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

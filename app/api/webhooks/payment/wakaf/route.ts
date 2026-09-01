@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
 import { TransactionPaymentStatus, WaqfOrderStatus, Prisma } from '@/app/generated/prisma/client';
+import { sendWhatsAppNotification } from '@/lib/whatsapp.service';
+import { waqfThankYouMessage } from '@/lib/notification-templates';
 
-const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || 'secret_webhook_key_123';
+const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || '';
 
 function verifyWebhookSignature(req: NextRequest, body: any): boolean {
   // 1. Header verification (X-Callback-Token, X-Signature, Authorization)
@@ -76,7 +78,12 @@ export async function POST(req: NextRequest) {
         ],
       },
       include: {
-        transaction: true,
+        transaction: {
+          include: {
+            certificate: true,
+          },
+        },
+        waqfProgram: true,
       },
     });
 
@@ -176,6 +183,34 @@ export async function POST(req: NextRequest) {
 
         return updatedOrder;
       });
+
+      // 7. Non-blocking WhatsApp Notification Trigger (Protected from DB failure)
+      try {
+        const phone = waqfOrder.noTelepon;
+        if (phone) {
+          const nominalVal = waqfOrder.nominal
+            ? Number(waqfOrder.nominal)
+            : waqfOrder.nilaiTaksiranRupiah
+            ? Number(waqfOrder.nilaiTaksiranRupiah)
+            : Number(body.gross_amount || body.amount || 0);
+
+          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://amwal.its.ac.id').replace(/\/+$/, '');
+          const certUrl =
+            waqfOrder.transaction?.certificate?.pdfUrl ||
+            `${appUrl}/wakaf/transaksi/${updatedData.id}/sertifikat`;
+
+          const waMsg = waqfThankYouMessage({
+            namaOrIsAnonymous: waqfOrder.isAnonymous ? 'Hamba Allah' : (waqfOrder.namaWakif || 'Donatur'),
+            judulProgram: waqfOrder.waqfProgram?.judul || 'Program Wakaf',
+            nominal: nominalVal,
+            certificateUrl: certUrl,
+          });
+
+          await sendWhatsAppNotification(phone, waMsg);
+        }
+      } catch (waErr) {
+        console.warn('[Webhook Wakaf] WhatsApp notification non-blocking failure:', waErr);
+      }
 
       return NextResponse.json(
         {
