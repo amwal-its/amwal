@@ -12,8 +12,19 @@ export async function incrementFundPool(
   amount: Prisma.Decimal | number
 ) {
   const kode = fundPoolKodeByZakat(jenisZakat);
-  return tx.fundPool.update({
+  const nama = kode === 'ZAKAT_FITRAH' ? 'Pool Zakat Fitrah' : 'Pool Zakat Maal';
+  const decimalAmount = amount instanceof Prisma.Decimal ? amount : new Prisma.Decimal(amount);
+
+  return tx.fundPool.upsert({
     where: { kode },
-    data: { balance: { increment: amount } },
+    create: {
+      kode,
+      nama,
+      balance: decimalAmount,
+      totalDistributed: new Prisma.Decimal(0),
+    },
+    update: {
+      balance: { increment: decimalAmount },
+    },
   });
 }

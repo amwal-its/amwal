@@ -1,153 +1,231 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
-import { z } from 'zod';
 import { Prisma, ZakatOrderStatus, TransactionPaymentStatus } from '@/app/generated/prisma/client';
 import { incrementFundPool } from '@/lib/fund-pool';
-import { verifyWebhookSignature } from '@/lib/webhook-signature';
+import { verifyWebhookSignature as verifyHmacSignature } from '@/lib/webhook-signature';
 import { sendWhatsAppNotification } from '@/lib/whatsapp.service';
 import { zakatThankYouMessage } from '@/lib/notification-templates';
 
 const SERVER_KEY = process.env.MIDTRANS_SERVER_KEY || process.env.PAYMENT_WEBHOOK_SECRET || '';
 
-const webhookSchema = z
-  .object({
-    orderId: z.string().optional(),
-    transactionId: z.string().optional(),
-    status: z.enum(['SUCCESS', 'FAILED', 'EXPIRED']).optional(),
-    amount: z.number().positive().optional(),
-    paymentGatewayRef: z.string().optional(),
-  })
-  .passthrough();
+function verifyWebhookSignature(req: NextRequest, body: any, rawBody: string): boolean {
+  // 1. Header direct token verification
+  const headerToken =
+    req.headers.get('x-callback-token') ||
+    req.headers.get('x-signature') ||
+    req.headers.get('authorization');
 
-/**
- * POST /api/webhooks/payment/zakat — notifikasi Payment Gateway (Midtrans/Xendit).
- * - WAJIB verifikasi signature HMAC / Midtrans SHA-512 (403 jika invalid).
- * - Idempotent: payload duplikat / order sudah TERVERIFIKASI → 200 tanpa ubah apa-apa.
- * - Atomic $transaction: Transaction → SUCCESS, ZakatOrder → TERVERIFIKASI, FundPool saldo + amount.
- * - Non-blocking WhatsApp Notification.
- */
-export async function POST(req: NextRequest) {
-  const rawBody = await req.text();
-  const signatureHeader = req.headers.get('x-webhook-signature') || req.headers.get('x-signature');
-
-  let body: any;
-  try {
-    body = JSON.parse(rawBody);
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  if (headerToken && SERVER_KEY) {
+    const tokenValue = headerToken.replace(/^Bearer\s+/i, '').trim();
+    if (tokenValue === SERVER_KEY) {
+      return true;
+    }
   }
 
-  // 1. Signature Verification (HMAC or Midtrans SHA512)
-  let isSignatureValid = false;
-  if (body.signature_key && body.order_id && body.status_code && body.gross_amount && SERVER_KEY) {
+  // 2. Real Midtrans SHA-512 signature verification:
+  // Format: SHA512(order_id + status_code + gross_amount + ServerKey)
+  const signatureKey =
+    req.headers.get('x-signature-key') ||
+    req.headers.get('x-signature') ||
+    body?.signature_key;
+
+  if (signatureKey && body?.order_id && body?.status_code && body?.gross_amount && SERVER_KEY) {
     const rawString = `${body.order_id}${body.status_code}${body.gross_amount}${SERVER_KEY}`;
     const calculatedSignature = crypto.createHash('sha512').update(rawString).digest('hex');
-    isSignatureValid = (body.signature_key === calculatedSignature);
-  } else if (signatureHeader) {
-    isSignatureValid = verifyWebhookSignature(rawBody, signatureHeader);
-  } else {
-    // If called via unified dispatcher, dispatcher already validated signature
-    isSignatureValid = true;
+    if (signatureKey === calculatedSignature || signatureKey === SERVER_KEY) {
+      return true;
+    }
   }
 
-  if (!isSignatureValid) {
-    return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 403 });
+  // 3. Body signature field fallback
+  if (body?.signature && SERVER_KEY && body.signature === SERVER_KEY) {
+    return true;
   }
 
-  // 2. Normalize Midtrans fields to standard Zakat Order schema
-  const orderId = body.orderId || body.order_id || body.nomorKwitansi;
-  const transactionId = body.transactionId || body.transaction_id;
-  const rawStatus = String(body.transaction_status || body.status || '').toLowerCase();
-  
-  let normalizedStatus: 'SUCCESS' | 'FAILED' | 'EXPIRED' = 'SUCCESS';
-  if (['settlement', 'capture', 'success', 'lunas'].includes(rawStatus) || body.status_code === '200' || body.status_code === 200) {
-    normalizedStatus = 'SUCCESS';
-  } else if (['deny', 'cancel', 'failure', 'gagal'].includes(rawStatus)) {
-    normalizedStatus = 'FAILED';
-  } else if (['expire', 'expired'].includes(rawStatus)) {
-    normalizedStatus = 'EXPIRED';
+  // 4. HMAC legacy fallback
+  const hmacSig = req.headers.get('x-webhook-signature');
+  if (hmacSig && verifyHmacSignature(rawBody, hmacSig)) {
+    return true;
   }
 
-  const amount = body.gross_amount ? Number(body.gross_amount) : body.amount ? Number(body.amount) : undefined;
-  const paymentGatewayRef = body.paymentGatewayRef || body.transaction_id;
-
-  if (!orderId && !transactionId) {
-    return NextResponse.json({ error: 'orderId or transactionId is required' }, { status: 400 });
+  // 5. If no Server Key configured (development/test mode fallback)
+  if (!SERVER_KEY) {
+    console.warn('[Webhook Zakat] MIDTRANS_SERVER_KEY not configured. Allowing in DEV mode.');
+    return true;
   }
 
+  return false;
+}
+
+/**
+ * POST /api/webhooks/payment/zakat — Midtrans & Multi-gateway Webhook for Zakat
+ * - Verifies real SHA-512 / HMAC signature (403 if invalid)
+ * - Atomic $transaction: Transaction -> LUNAS, ZakatOrder -> TERVERIFIKASI, FundPool + amount
+ * - Idempotent: Repeated notifications do not double credit
+ * - Best-effort, non-blocking WhatsApp notification
+ */
+export async function POST(req: NextRequest) {
   try {
-    // Idempotensi: status pembayaran non-sukses dari PG tidak mengubah state
-    if (normalizedStatus !== 'SUCCESS') {
-      return NextResponse.json({ message: 'Status pembayaran bukan SUCCESS, diabaikan' }, { status: 200 });
+    const rawBody = await req.text();
+    let body: any = {};
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // Cari order: via nomorKwitansi (orderId), id, atau transactionId
-      let order = orderId
-        ? await tx.zakatOrder.findFirst({
-            where: {
-              OR: [{ id: orderId }, { nomorKwitansi: orderId }],
+    // 1. Signature Check
+    const isValid = verifyWebhookSignature(req, body, rawBody);
+    if (!isValid) {
+      return NextResponse.json({ error: 'Forbidden: Invalid webhook signature' }, { status: 403 });
+    }
+
+    // 2. Extract Identifier (orderId / transactionId / nomorKwitansi)
+    const rawOrderId =
+      body.order_id ||
+      body.orderId ||
+      body.transaction_id ||
+      body.transactionId ||
+      body.id ||
+      body.zakatOrderId;
+
+    if (!rawOrderId) {
+      return NextResponse.json(
+        { error: 'Invalid payload: order_id / transactionId is required' },
+        { status: 400 }
+      );
+    }
+
+    const orderIdStr = String(rawOrderId).trim();
+
+    // 3. Search ZakatOrder or Transaction in DB
+    const zakatOrder = await prisma.zakatOrder.findFirst({
+      where: {
+        OR: [
+          { id: orderIdStr },
+          { nomorKwitansi: orderIdStr },
+          { transactionId: orderIdStr },
+          {
+            transaction: {
+              OR: [{ id: orderIdStr }, { paymentGatewayRef: orderIdStr }],
             },
-          })
-        : null;
-
-      if (!order && transactionId) {
-        order = await tx.zakatOrder.findFirst({
-          where: {
-            OR: [{ transactionId }, { id: transactionId }],
           },
-        });
-      }
-
-      if (!order) {
-        throw new Error('ORDER_NOT_FOUND');
-      }
-
-      // Idempotensi: sudah terverifikasi → jangan increment ganda
-      if (order.status === ZakatOrderStatus.TERVERIFIKASI) {
-        return { order, alreadyProcessed: true, transaction: null };
-      }
-
-      const txId = order.transactionId || transactionId;
-      if (!txId) {
-        throw new Error('ORDER_HAS_NO_TRANSACTION');
-      }
-
-      const updateAmount = amount !== undefined ? new Prisma.Decimal(amount) : order.nominal;
-
-      const transaction = await tx.transaction.update({
-        where: { id: txId },
-        data: {
-          statusPembayaran: TransactionPaymentStatus.LUNAS,
-          ...(paymentGatewayRef ? { paymentGatewayRef } : {}),
+        ],
+      },
+      include: {
+        transaction: {
+          include: {
+            certificate: true,
+          },
         },
-      });
-
-      const updatedOrder = await tx.zakatOrder.update({
-        where: { id: order.id },
-        data: { status: ZakatOrderStatus.TERVERIFIKASI },
-      });
-
-      // Saldo FundPool sesuai jenis zakat (ZAKAT_MAAL / ZAKAT_FITRAH)
-      await incrementFundPool(tx, order.jenisZakat, updateAmount ?? transaction.amount);
-
-      return { order: updatedOrder, transaction, alreadyProcessed: false };
+        muzakki: true,
+      },
     });
 
-    // 3. Non-blocking WhatsApp Notification Trigger
-    if (!result.alreadyProcessed && result.order) {
+    if (!zakatOrder) {
+      return NextResponse.json(
+        { error: `ZakatOrder not found for identifier: ${orderIdStr}` },
+        { status: 404 }
+      );
+    }
+
+    const transaction = zakatOrder.transaction;
+
+    // 4. Idempotency Check
+    if (zakatOrder.status === ZakatOrderStatus.TERVERIFIKASI) {
+      return NextResponse.json(
+        {
+          message: 'Order already verified (Idempotent)',
+          data: {
+            orderId: zakatOrder.id,
+            nomorKwitansi: zakatOrder.nomorKwitansi,
+            status: zakatOrder.status,
+          },
+        },
+        { status: 200 }
+      );
+    }
+
+    // 5. Determine Payment Outcome
+    const rawStatus = (
+      body.transaction_status ||
+      body.transactionStatus ||
+      body.payment_status ||
+      body.status ||
+      ''
+    ).toLowerCase();
+
+    const isSuccess =
+      rawStatus === 'settlement' ||
+      rawStatus === 'capture' ||
+      rawStatus === 'success' ||
+      rawStatus === 'settled' ||
+      rawStatus === 'lunas' ||
+      body.status_code === '200' ||
+      body.status_code === 200;
+
+    const isFailed =
+      rawStatus === 'deny' ||
+      rawStatus === 'cancel' ||
+      rawStatus === 'expire' ||
+      rawStatus === 'failure' ||
+      rawStatus === 'gagal';
+
+    // 6. Process Outcome Atomically
+    if (isSuccess) {
+      const updateAmount =
+        body.gross_amount !== undefined
+          ? new Prisma.Decimal(body.gross_amount)
+          : body.amount !== undefined
+          ? new Prisma.Decimal(body.amount)
+          : zakatOrder.nominal ?? (transaction ? transaction.amount : new Prisma.Decimal(0));
+
+      const updatedData = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        if (transaction) {
+          await tx.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              statusPembayaran: TransactionPaymentStatus.LUNAS,
+              paymentGatewayRef:
+                body.transaction_id ||
+                body.paymentGatewayRef ||
+                transaction.paymentGatewayRef,
+            },
+          });
+        }
+
+        const updatedOrder = await tx.zakatOrder.update({
+          where: { id: zakatOrder.id },
+          data: { status: ZakatOrderStatus.TERVERIFIKASI },
+        });
+
+        // Increment FundPool atomically for the zakat type (Maal or Fitrah)
+        await incrementFundPool(tx, zakatOrder.jenisZakat, updateAmount);
+
+        return updatedOrder;
+      });
+
+      // 7. Non-blocking WhatsApp Notification (Best-effort)
       try {
-        const phone = result.order.noTelepon;
+        const phone = zakatOrder.noTelepon || zakatOrder.muzakki?.phone;
         if (phone) {
-          const nominalVal = Number(result.order.nominal || amount || 0);
-          const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://amwal.its.ac.id').replace(/\/+$/, '');
-          const certUrl = `${appUrl}/zakat/transaksi/${result.order.id}/sertifikat`;
+          const appUrl = (
+            process.env.NEXT_PUBLIC_APP_URL || 'https://amwal.its.ac.id'
+          ).replace(/\/+$/, '');
+
+          const certUrl =
+            zakatOrder.transaction?.certificate?.pdfUrl ||
+            `${appUrl}/zakat/transaksi/${updatedData.id}/sertifikat`;
 
           const waMsg = zakatThankYouMessage({
-            namaOrIsAnonymous: result.order.isAnonymous ? 'Hamba Allah' : (result.order.namaMuzakki || 'Muzakki'),
-            jenisZakat: result.order.jenisZakat,
-            nominal: nominalVal,
+            namaOrIsAnonymous: zakatOrder.isAnonymous
+              ? 'Hamba Allah'
+              : zakatOrder.namaMuzakki || zakatOrder.muzakki?.name || 'Muzakki',
+            jenisZakat: zakatOrder.jenisZakat,
+            nominal: Number(updateAmount),
+            beratBerasKg: zakatOrder.beratBerasKg ? Number(zakatOrder.beratBerasKg) : undefined,
+            nomorKwitansi: updatedData.nomorKwitansi,
             certificateUrl: certUrl,
           });
 
@@ -156,25 +234,57 @@ export async function POST(req: NextRequest) {
       } catch (waErr) {
         console.warn('[Webhook Zakat] WhatsApp notification non-blocking failure:', waErr);
       }
+
+      return NextResponse.json(
+        {
+          message: 'Payment settled and ZakatOrder verified successfully',
+          data: {
+            orderId: updatedData.id,
+            nomorKwitansi: updatedData.nomorKwitansi,
+            status: updatedData.status,
+          },
+        },
+        { status: 200 }
+      );
+    } else if (isFailed) {
+      await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        if (transaction) {
+          await tx.transaction.update({
+            where: { id: transaction.id },
+            data: {
+              statusPembayaran: TransactionPaymentStatus.GAGAL,
+            },
+          });
+        }
+
+        await tx.zakatOrder.update({
+          where: { id: zakatOrder.id },
+          data: {
+            status: ZakatOrderStatus.DITOLAK,
+          },
+        });
+      });
+
+      return NextResponse.json(
+        {
+          message: 'Payment failed and ZakatOrder marked DITOLAK',
+          data: {
+            orderId: zakatOrder.id,
+            status: ZakatOrderStatus.DITOLAK,
+          },
+        },
+        { status: 200 }
+      );
     }
 
+    // Default: Return acknowledgment for pending / other webhook statuses
     return NextResponse.json(
-      {
-        message: result.alreadyProcessed
-          ? 'Order sudah diproses sebelumnya (idempotent)'
-          : 'Pembayaran zakat terverifikasi',
-        data: { orderId: result.order.id, nomorKwitansi: result.order.nomorKwitansi },
-      },
+      { message: `Zakat notification received (Status: ${rawStatus || 'PENDING'})`, status: rawStatus },
       { status: 200 }
     );
   } catch (error) {
-    if (error instanceof Error && error.message === 'ORDER_NOT_FOUND') {
-      return NextResponse.json({ error: 'Zakat order tidak ditemukan' }, { status: 404 });
-    }
-    if (error instanceof Error && error.message === 'ORDER_HAS_NO_TRANSACTION') {
-      return NextResponse.json({ error: 'Order tidak memiliki transaksi payment gateway' }, { status: 422 });
-    }
-    console.error('Webhook zakat payment error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error in POST /api/webhooks/payment/zakat:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal Server Error';
+    return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
   }
 }
