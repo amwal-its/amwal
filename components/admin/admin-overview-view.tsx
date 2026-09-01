@@ -27,6 +27,7 @@ import {
   Info,
   Send,
   X,
+  Repeat,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -43,6 +44,7 @@ import {
 import { motion } from 'motion/react';
 import { DrmSimulationBanner } from '@/components/admin/drm-simulation-banner';
 import {
+  mockRfmdKpis,
   mockDonorSegments,
   mockCohortMatrix,
   mockChurnPredictions,
@@ -681,7 +683,114 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
       {/* ===================================================================== */}
       {/* DRM ANALYTICS SECTION: Box A–D — DATA SIMULASI (Wajib Ada Banner)   */}
       {/* ===================================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        {/* 4 Mini KPI Metric Cards (RFM-D Summary) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Keaktifan Donatur */}
+          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                    <Clock className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                    {mockRfmdKpis[0].title}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  {mockRfmdKpis[0].change}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[0].value}</span>
+                <span className="text-xs font-semibold text-slate-500">{mockRfmdKpis[0].unit}</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+              {mockRfmdKpis[0].desc}
+            </p>
+          </div>
+
+          {/* Card 2: Frekuensi Donasi */}
+          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                    <Repeat className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                    {mockRfmdKpis[1].title}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  {mockRfmdKpis[1].change}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[1].value}</span>
+                <span className="text-xs font-semibold text-slate-500">{mockRfmdKpis[1].unit}</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+              {mockRfmdKpis[1].desc}
+            </p>
+          </div>
+
+          {/* Card 3: Rata-rata Nominal */}
+          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                    <Wallet className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                    {mockRfmdKpis[2].title}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  {mockRfmdKpis[2].change}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[2].value}</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+              {mockRfmdKpis[2].desc}
+            </p>
+          </div>
+
+          {/* Card 4: Variasi Program */}
+          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                    <Layers className="w-3.5 h-3.5" />
+                  </div>
+                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                    {mockRfmdKpis[3].title}
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  {mockRfmdKpis[3].change}
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1 mt-2">
+                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[3].value}</span>
+                <span className="text-xs font-semibold text-slate-500">{mockRfmdKpis[3].unit}</span>
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+              {mockRfmdKpis[3].desc}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {/* BOX A: RFMD Donor Segmentation Donut Chart */}
         <div className="bg-white rounded-xl border border-slate-200 shadow-card flex flex-col overflow-hidden">
@@ -698,6 +807,13 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                   Pembagian 12.080 donatur berdasarkan tingkat keaktifan &amp; loyalitas
                 </p>
               </div>
+              <Link
+                href="/admin/segmentasi"
+                className="text-xs font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <span>Lihat Tabel Donatur</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mt-4">
@@ -790,6 +906,13 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                   Berapa persen donatur baru yang masih terus berdonasi di bulan berikutnya
                 </p>
               </div>
+              <Link
+                href="/admin/kesetiaan"
+                className="text-xs font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 cursor-pointer shrink-0"
+              >
+                <span>Detail Kesetiaan</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
 
             {/* Helper note */}
@@ -1032,6 +1155,7 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Action Alert Modal */}

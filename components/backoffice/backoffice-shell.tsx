@@ -5,6 +5,7 @@ import { BackofficeSidebar } from './backoffice-sidebar';
 import { BackofficeHeader } from './backoffice-header';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePathname } from 'next/navigation';
+import { ToastProvider } from '@/components/ui/toast';
 
 interface BackofficeShellProps {
   role: string;
@@ -17,7 +18,8 @@ export function BackofficeShell({ role, userName, children }: BackofficeShellPro
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen w-full bg-[#F8F9FA] font-jakarta antialiased">
+    <ToastProvider>
+      <div className="flex min-h-screen w-full bg-[#F8F9FA] font-jakarta antialiased">
       {/* Sidebar Navigation */}
       <BackofficeSidebar
         role={role}
@@ -49,5 +51,6 @@ export function BackofficeShell({ role, userName, children }: BackofficeShellPro
         </AnimatePresence>
       </div>
     </div>
+    </ToastProvider>
   );
 }

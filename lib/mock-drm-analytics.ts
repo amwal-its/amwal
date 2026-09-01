@@ -7,6 +7,40 @@
  */
 
 // ============================================================
+// RFMD 4 Mini KPI Cards (Overview Section)
+// ============================================================
+export const mockRfmdKpis = [
+  {
+    title: 'Keaktifan Donatur',
+    value: '68',
+    unit: 'hari sekali',
+    change: '-12 hari (Lebih Cepat)',
+    desc: 'Rata-rata waktu donatur kembali berdonasi sejak transaksi terakhir',
+  },
+  {
+    title: 'Frekuensi Donasi',
+    value: '4.2',
+    unit: 'kali transaksi',
+    change: '+0.8x Naik',
+    desc: 'Rata-rata jumlah donasi yang dilakukan setiap donatur',
+  },
+  {
+    title: 'Rata-rata Nominal',
+    value: 'Rp 842.000',
+    unit: '',
+    change: '+15% Naik',
+    desc: 'Besar donasi rata-rata per sekali transaksi (Waqf & Infaq)',
+  },
+  {
+    title: 'Variasi Program',
+    value: '2.3',
+    unit: 'Jenis Program',
+    change: '+0.4 Jenis Program',
+    desc: 'Rata-rata ragam jenis donasi yang diikuti (Waqf, Infaq, Sedekah)',
+  },
+];
+
+// ============================================================
 // Box A: RFMD Donut Chart — Donor Segment Distribution
 // ============================================================
 export const mockDonorSegments = [
@@ -61,6 +95,7 @@ export const mockCohortMatrix = [
   {
     month: "Jan '25",
     count: 1240,
+    ltv: 'Rp 3.420.000',
     m0: 100,
     m1: 68,
     m2: 54,
@@ -71,6 +106,7 @@ export const mockCohortMatrix = [
   {
     month: "Feb '25",
     count: 1450,
+    ltv: 'Rp 3.850.000',
     m0: 100,
     m1: 72,
     m2: 58,
@@ -81,6 +117,7 @@ export const mockCohortMatrix = [
   {
     month: "Mar '25",
     count: 1680,
+    ltv: 'Rp 4.100.000',
     m0: 100,
     m1: 75,
     m2: 62,
@@ -91,6 +128,7 @@ export const mockCohortMatrix = [
   {
     month: "Apr '25",
     count: 1920,
+    ltv: 'Rp 3.950.000',
     m0: 100,
     m1: 71,
     m2: 59,
@@ -101,6 +139,7 @@ export const mockCohortMatrix = [
   {
     month: "May '25",
     count: 2150,
+    ltv: 'Rp 4.250.000',
     m0: 100,
     m1: 76,
     m2: null,
@@ -111,6 +150,7 @@ export const mockCohortMatrix = [
   {
     month: "Jun '25",
     count: 2480,
+    ltv: 'Rp 4.600.000',
     m0: 100,
     m1: null,
     m2: null,
@@ -178,3 +218,136 @@ export const mockChurnPredictions = {
     },
   ],
 };
+
+// ============================================================
+// Mock Donors List for Full Donor Segmentation Table (/admin/segmentasi)
+// ============================================================
+export interface MockDonor {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  segment: 'Champion' | 'Loyal' | 'New' | 'At-Risk' | 'Lapsed' | 'Situational';
+  incomeRange: string;
+  recency: string;
+  recencyDays: number;
+  frequency: number;
+  monetary: string;
+  monetaryVal: number;
+  diversity: number;
+  akads: string[];
+  lastAkad: string;
+  rfmdScore: string;
+  status: string;
+}
+
+export const mockDonorsList: MockDonor[] = [
+  {
+    id: 'DNR-8401',
+    name: 'H. Bambang Soewito',
+    email: 'bambang.s@gmail.com',
+    phone: '+62 812-9840-1122',
+    segment: 'Champion',
+    incomeRange: '> Rp 50 Jt/bln',
+    recency: '8 hari lalu',
+    recencyDays: 8,
+    frequency: 18,
+    monetary: 'Rp 48.500.000',
+    monetaryVal: 48500000,
+    diversity: 4,
+    akads: ['Waqf Uang', 'Waqf Pembangunan', 'Infaq Subuh', 'Zakat Maal'],
+    lastAkad: 'Waqf Pembangunan Klinik Al-Azhar',
+    rfmdScore: 'R: 5 | F: 5 | M: 5 | D: 4',
+    status: 'Sangat Aktif',
+  },
+  {
+    id: 'DNR-8402',
+    name: 'Hj. Siti Rahmah, S.E.',
+    email: 'siti.rahmah@yahoo.co.id',
+    phone: '+62 811-2345-6789',
+    segment: 'Loyal',
+    incomeRange: 'Rp 25-50 Jt/bln',
+    recency: '15 hari lalu',
+    recencyDays: 15,
+    frequency: 12,
+    monetary: 'Rp 14.200.000',
+    monetaryVal: 14200000,
+    diversity: 3,
+    akads: ['Waqf Uang', 'Infaq Operasional Ambulans', 'Sedekah Subuh'],
+    lastAkad: 'Infaq Operasional Ambulans Gratis',
+    rfmdScore: 'R: 4 | F: 4 | M: 4 | D: 3',
+    status: 'Aktif Rutin',
+  },
+  {
+    id: 'DNR-8403',
+    name: 'Ahmad Subandi',
+    email: 'ahmad.subandi@gmail.com',
+    phone: '+62 856-7788-9900',
+    segment: 'New',
+    incomeRange: 'Rp 10-20 Jt/bln',
+    recency: '4 hari lalu',
+    recencyDays: 4,
+    frequency: 1,
+    monetary: 'Rp 1.500.000',
+    monetaryVal: 1500000,
+    diversity: 1,
+    akads: ['Waqf Sumur Air Bersih Sukabumi'],
+    lastAkad: 'Sumur Waqf Sukabumi',
+    rfmdScore: 'R: 5 | F: 1 | M: 2 | D: 1',
+    status: 'Onboarding 30 Hari',
+  },
+  {
+    id: 'DNR-8404',
+    name: 'Drs. Irwan Wijaya',
+    email: 'irwan.w@corporate.co.id',
+    phone: '+62 813-1122-3344',
+    segment: 'At-Risk',
+    incomeRange: 'Rp 15-30 Jt/bln',
+    recency: '72 hari lalu',
+    recencyDays: 72,
+    frequency: 7,
+    monetary: 'Rp 8.900.000',
+    monetaryVal: 8900000,
+    diversity: 2,
+    akads: ['Waqf Uang', 'Infaq Masjid'],
+    lastAkad: 'Waqf Uang Masjid Al-Kautsar',
+    rfmdScore: 'R: 2 | F: 3 | M: 3 | D: 2',
+    status: 'Butuh Retargeting',
+  },
+  {
+    id: 'DNR-8405',
+    name: 'Dr. Hj. Nurhayati',
+    email: 'nurhayati.dr@gmail.com',
+    phone: '+62 818-0909-1212',
+    segment: 'Lapsed',
+    incomeRange: 'Rp 10-25 Jt/bln',
+    recency: '194 hari lalu',
+    recencyDays: 194,
+    frequency: 3,
+    monetary: 'Rp 3.200.000',
+    monetaryVal: 3200000,
+    diversity: 1,
+    akads: ['Infaq Bencana'],
+    lastAkad: 'Infaq Bencana Alam Cianjur',
+    rfmdScore: 'R: 1 | F: 2 | M: 2 | D: 1',
+    status: 'Inaktif > 6 Bulan',
+  },
+  {
+    id: 'DNR-8406',
+    name: 'Muhamad Rizky, S.T.',
+    email: 'm.rizky@tech.id',
+    phone: '+62 878-3344-5566',
+    segment: 'Situational',
+    incomeRange: 'Rp 10-25 Jt/bln',
+    recency: '45 hari lalu',
+    recencyDays: 45,
+    frequency: 2,
+    monetary: 'Rp 2.000.000',
+    monetaryVal: 2000000,
+    diversity: 2,
+    akads: ['Zakat Maal', 'Sedekah Ramadhan'],
+    lastAkad: 'Zakat Maal Akhir Tahun',
+    rfmdScore: 'R: 3 | F: 1 | M: 2 | D: 2',
+    status: 'Sensitif Event',
+  },
+];

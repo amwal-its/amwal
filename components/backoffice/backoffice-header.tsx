@@ -124,7 +124,7 @@ export function BackofficeHeader({
 
       {/* Right: Role Switcher Pill + Notifications + Profile Avatar */}
       <div className="flex items-center gap-3 shrink-0 mr-1">
-        {/* Dropdown 1: Quick Role Switcher Dropdown */}
+        {/* Dropdown 1: Role Switcher (Pill Style) */}
         <div className="relative shrink-0" ref={roleSwitcherRef}>
           <button
             type="button"
@@ -133,10 +133,22 @@ export function BackofficeHeader({
               setShowNotifications(false);
               setShowProfileMenu(false);
             }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border border-emerald-200/80 bg-emerald-50 text-emerald-800 transition cursor-pointer hover:shadow-xs shrink-0"
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold border transition cursor-pointer hover:shadow-xs shrink-0 ${
+              pathname.startsWith('/nazhir')
+                ? 'border-teal-200/80 bg-teal-50 text-teal-800'
+                : pathname.startsWith('/amil')
+                ? 'border-amber-200/80 bg-amber-50 text-amber-900'
+                : 'border-emerald-200/80 bg-emerald-50 text-emerald-800'
+            }`}
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-            <span>Super Admin (Badan Pengawas)</span>
+            <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+            <span>
+              {pathname.startsWith('/nazhir')
+                ? 'Nazhir Wakaf (Pengelola)'
+                : pathname.startsWith('/amil')
+                ? 'Amil ZISWAF (Pengelola)'
+                : 'Super Admin (Badan Pengawas)'}
+            </span>
             <ChevronDown className="w-3 h-3 opacity-70 shrink-0" />
           </button>
 
@@ -152,11 +164,18 @@ export function BackofficeHeader({
               </div>
 
               <div className="p-1 space-y-1">
-                {/* Role 1: Super Admin (Active) */}
+                {/* Role 1: Super Admin */}
                 <button
                   type="button"
-                  onClick={() => setShowRoleSwitcher(false)}
-                  className="w-full text-left p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer bg-emerald-50 text-emerald-950 font-bold"
+                  onClick={() => {
+                    setShowRoleSwitcher(false);
+                    router.push('/admin');
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer ${
+                    !pathname.startsWith('/nazhir') && !pathname.startsWith('/amil')
+                      ? 'bg-emerald-50 text-emerald-950 font-bold'
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold border bg-emerald-100 text-emerald-800 border-emerald-300 shrink-0">
@@ -169,14 +188,23 @@ export function BackofficeHeader({
                       </div>
                     </div>
                   </div>
-                  <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                  {!pathname.startsWith('/nazhir') && !pathname.startsWith('/amil') && (
+                    <Check className="w-4 h-4 text-emerald-700 shrink-0" />
+                  )}
                 </button>
 
                 {/* Role 2: Nazhir Wakaf */}
                 <button
                   type="button"
-                  onClick={() => setShowRoleSwitcher(false)}
-                  className="w-full text-left p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer hover:bg-slate-50 text-slate-700"
+                  onClick={() => {
+                    setShowRoleSwitcher(false);
+                    router.push('/nazhir');
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer ${
+                    pathname.startsWith('/nazhir')
+                      ? 'bg-teal-50 text-teal-950 font-bold'
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold border bg-teal-100 text-teal-800 border-teal-300 shrink-0">
@@ -189,13 +217,23 @@ export function BackofficeHeader({
                       </div>
                     </div>
                   </div>
+                  {pathname.startsWith('/nazhir') && (
+                    <Check className="w-4 h-4 text-teal-700 shrink-0" />
+                  )}
                 </button>
 
                 {/* Role 3: Amil ZISWAF */}
                 <button
                   type="button"
-                  onClick={() => setShowRoleSwitcher(false)}
-                  className="w-full text-left p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer hover:bg-slate-50 text-slate-700"
+                  onClick={() => {
+                    setShowRoleSwitcher(false);
+                    router.push('/amil');
+                  }}
+                  className={`w-full text-left p-2.5 rounded-xl transition flex items-center justify-between cursor-pointer ${
+                    pathname.startsWith('/amil')
+                      ? 'bg-amber-50 text-amber-950 font-bold'
+                      : 'hover:bg-slate-50 text-slate-700'
+                  }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-extrabold border bg-amber-100 text-amber-900 border-amber-300 shrink-0">
@@ -208,6 +246,9 @@ export function BackofficeHeader({
                       </div>
                     </div>
                   </div>
+                  {pathname.startsWith('/amil') && (
+                    <Check className="w-4 h-4 text-amber-700 shrink-0" />
+                  )}
                 </button>
               </div>
             </div>
