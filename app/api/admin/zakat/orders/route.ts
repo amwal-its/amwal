@@ -38,6 +38,115 @@ function generateNomorKwitansi(seq: number): string {
 }
 
 /**
+ * GET /api/admin/zakat/orders — List zakat orders with filtering, search, and summary stats
+ */
+export async function GET(req: NextRequest) {
+  try {
+    const userRole = req.headers.get('x-user-role');
+    if (!userRole) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!ALLOWED_ROLES.includes(userRole)) {
+      return NextResponse.json({ error: 'Akses ditolak. Peran ADMIN atau PETUGAS_LAPANGAN diperlukan.' }, { status: 403 });
+    }
+
+    const { searchParams } = req.nextUrl;
+    const search = searchParams.get('search')?.trim() || '';
+    const jenisZakat = searchParams.get('jenisZakat')?.trim();
+    const status = searchParams.get('status')?.trim();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+    const skip = (page - 1) * limit;
+
+    const whereClause: Prisma.ZakatOrderWhereInput = {};
+
+    if (search) {
+      whereClause.OR = [
+        { namaMuzakki: { contains: search, mode: 'insensitive' } },
+        { nomorKwitansi: { contains: search, mode: 'insensitive' } },
+        { noTelepon: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    if (jenisZakat && Object.values(ZakatType).includes(jenisZakat as ZakatType)) {
+      whereClause.jenisZakat = jenisZakat as ZakatType;
+    }
+
+    if (status && Object.values(ZakatOrderStatus).includes(status as ZakatOrderStatus)) {
+      whereClause.status = status as ZakatOrderStatus;
+    }
+
+    const [orders, totalCount, statsVerified, pendingCount, rejectedCount] = await Promise.all([
+      prisma.zakatOrder.findMany({
+        where: whereClause,
+        include: {
+          muzakki: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+            },
+          },
+          enteredByAmil: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          transaction: {
+            select: {
+              id: true,
+              statusPembayaran: true,
+              paymentMethod: true,
+              amount: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.zakatOrder.count({ where: whereClause }),
+      prisma.zakatOrder.aggregate({
+        where: { status: ZakatOrderStatus.TERVERIFIKASI },
+        _sum: {
+          nominal: true,
+          beratBerasKg: true,
+        },
+        _count: true,
+      }),
+      prisma.zakatOrder.count({ where: { status: ZakatOrderStatus.MENUNGGU_VERIFIKASI } }),
+      prisma.zakatOrder.count({ where: { status: ZakatOrderStatus.DITOLAK } }),
+    ]);
+
+    return NextResponse.json({
+      message: 'Berhasil mengambil daftar order zakat',
+      data: orders,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+      summary: {
+        totalVerifiedAmount: Number(statsVerified._sum.nominal || 0),
+        totalVerifiedBerasKg: Number(statsVerified._sum.beratBerasKg || 0),
+        verifiedCount: statsVerified._count || 0,
+        pendingCount,
+        rejectedCount,
+      },
+    });
+  } catch (error) {
+    console.error('List zakat orders error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+/**
  * POST /api/admin/zakat/orders — entri zakat offline (ADMIN/PETUGAS_LAPANGAN).
  * UANG → nominal. BERAS → berat kg + konversi harga (dari ZakatFitrahConfig).
  * Langsung berstatus TERVERIFIKASI dan saldo FundPool ter-increment atomically.
