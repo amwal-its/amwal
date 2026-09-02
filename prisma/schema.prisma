@@ -814,3 +814,12 @@ model Notification {
 
   @@map("notifications")
 }
+
+model Wilayah {
+  kode String @id @db.VarChar(13)
+  nama String @db.VarChar(100)
+
+  @@index([nama])
+  @@map("wilayah")
+}
+

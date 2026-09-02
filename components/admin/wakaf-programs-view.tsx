@@ -16,7 +16,6 @@ import {
   Building2,
   CreditCard,
   Calendar,
-  ArrowUpRight,
   ArrowLeft,
   Receipt,
   DollarSign,
@@ -31,6 +30,10 @@ import {
   ShieldCheck,
   Search,
   CheckCircle2,
+  AlertCircle,
+  TrendingUp,
+  Coins,
+  Loader2,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 
@@ -46,6 +49,44 @@ export interface ReceiptItem {
   notes?: string;
 }
 
+export interface TerminItem {
+  id: string;
+  programId: string;
+  terminKe: string;
+  nominal: number;
+  targetRekening: string;
+  status: string;
+  rawStatus?: string;
+  adminNotes?: string;
+  tanggalPengajuan: string;
+  dokumen: string;
+  requestedBy?: string;
+  approvedBy?: string | null;
+}
+
+export interface YieldItem {
+  id: string;
+  programId: string;
+  nominal: number;
+  sourceDescription: string;
+  recordedAt: string;
+}
+
+export interface WakifItem {
+  id: string;
+  orderId: string;
+  programId: string;
+  name: string;
+  phone: string;
+  nominal: number;
+  tanggal: string;
+  akad: string;
+  nomorKwitansi?: string;
+  sertifikatNo: string;
+  nomorRegistrasiBwi?: string | null;
+  statusSertifikat: string;
+}
+
 export interface WaqfProgramItem {
   id: string;
   name: string;
@@ -53,8 +94,11 @@ export interface WaqfProgramItem {
   kategori: string;
   targetAmount: number;
   collectedAmount: number;
+  availableYield?: number;
+  distributedYield?: number;
   description: string;
   status: 'Aktif' | 'Menunggu Persetujuan Super Admin' | 'Butuh Revisi' | 'Ditolak' | 'Selesai' | 'Draft';
+  rawStatus?: string;
   bannerUrl: string;
   supportingDoc?: string;
   durationStart?: string;
@@ -68,188 +112,53 @@ export interface WaqfProgramItem {
   city: string;
   locationDetail?: string;
   jenisWakaf: 'Wakaf Uang' | 'Wakaf Melalui Uang';
+  rawJenisWakaf?: string;
   menerimaWakafBarang: 'Ya' | 'Tidak';
   progressFisik: number;
   receipts: ReceiptItem[];
+  terminList?: TerminItem[];
+  yieldList?: YieldItem[];
+  wakifList?: WakifItem[];
   submitterName?: string;
   submitterRole?: string;
 }
 
-const INITIAL_PROGRAMS: WaqfProgramItem[] = [
-  {
-    id: 'PROG-WK-001',
-    name: 'Waqf Pembangunan Klinik Air Bersih & RS Gratis Al-Azhar',
-    akad: 'Wakaf Uang',
-    kategori: 'Kesehatan & Sanitasi',
-    targetAmount: 2500000000,
-    collectedAmount: 1750000000,
-    description:
-      'Pembangunan fasilitas klinik air bersih, sanitasi modern, dan poliklinik dhuafa terpadu berkapasitas 50 tempat tidur untuk masyarakat prasejahtera di Jawa Barat.',
-    status: 'Aktif',
-    bannerUrl:
-      'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80',
-    supportingDoc: 'Surat_Ikrar_Wakaf_Tanah_dan_RAB_Klinik.pdf',
-    durationStart: '01 Jan 2026',
-    durationEnd: '31 Des 2026',
-    duration: '01 Jan 2026 - 31 Des 2026',
-    bankName: 'Bank Syariah Indonesia (BSI)',
-    bankAccountNumber: '711-889-2234',
-    bankAccountHolder: 'Yayasan Waqf Al-Kautsar Nusantara',
-    bankAccount: 'Bank Syariah Indonesia (BSI)',
-    province: 'Jawa Barat',
-    city: 'Kabupaten Sukabumi',
-    locationDetail: 'Jl. Raya Pelabuhan Ratu Km 12, Kec. Cikembar',
-    jenisWakaf: 'Wakaf Uang',
-    menerimaWakafBarang: 'Ya',
-    progressFisik: 65,
-    submitterName: 'Ustadz Ridwan Malik (Nazhir)',
-    submitterRole: 'nazhir',
-    receipts: [
-      {
-        id: 'RCP-001',
-        title: 'Pengadaan Pipa Galvanis 3 Inch & Pompa Submersible 3 HP',
-        vendor: 'PT Mandiri Teknik Utama Jaya',
-        amount: 18500000,
-        date: '10 Agt 2026',
-        fileName: 'Kuitansi_Pipa_02.png',
-        status: 'Terverifikasi Super Admin',
-        ocrDetected: true,
-        notes: 'Kesesuaian fisik dan harga pasar telah diverifikasi Super Admin.',
-      },
-      {
-        id: 'RCP-002',
-        title: 'Pengadaan Semen Tiga Roda 60 Sak & Pasir Cor',
-        vendor: 'TB Berkah Bangunan Sukabumi',
-        amount: 5550000,
-        date: '01 Agt 2026',
-        fileName: 'Kuitansi_Material_Semen.jpg',
-        status: 'Terverifikasi Super Admin',
-        ocrDetected: true,
-        notes: 'Audit lapangan cocok dengan progres konstruksi pengecoran lantai 2.',
-      },
-      {
-        id: 'RCP-003',
-        title: 'Pembelian Tangki Filter Air Karbon Aktif 2000L',
-        vendor: 'CV Water Filtration Nusantara',
-        amount: 12800000,
-        date: '22 Agt 2026',
-        fileName: 'Nota_WaterFilter_2000L.pdf',
-        status: 'Menunggu Verifikasi Super Admin',
-        ocrDetected: true,
-      },
-    ],
-  },
-  {
-    id: 'PROG-WK-002',
-    name: 'Waqf Renovasi Gedung Sekolah Tahfidz & Asrama Yatim',
-    akad: 'Wakaf Melalui Uang',
-    kategori: 'Pendidikan & Ibadah',
-    targetAmount: 850000000,
-    collectedAmount: 620000000,
-    description:
-      'Revitalisasi gedung asrama 3 lantai bagi 120 santri tahfidz penghafal Al-Qur’an yatim dhuafa dengan standar kenyamanan dan ketahanan gempa.',
-    status: 'Aktif',
-    bannerUrl:
-      'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200&auto=format&fit=crop&q=80',
-    supportingDoc: 'Proposal_Renovasi_Asrama_Yatim_2026.pdf',
-    durationStart: '15 Feb 2026',
-    durationEnd: '30 Okt 2026',
-    duration: '15 Feb 2026 - 30 Okt 2026',
-    bankName: 'Bank Muamalat Indonesia',
-    bankAccountNumber: '340-001-9981',
-    bankAccountHolder: 'Yayasan Waqf Al-Kautsar Nusantara',
-    bankAccount: 'Bank Muamalat Indonesia',
-    province: 'DKI Jakarta',
-    city: 'Jakarta Selatan',
-    locationDetail: 'Jl. Tebet Barat Dalam Raya No. 45',
-    jenisWakaf: 'Wakaf Melalui Uang',
-    menerimaWakafBarang: 'Tidak',
-    progressFisik: 40,
-    submitterName: 'Ustadz Ridwan Malik (Nazhir)',
-    submitterRole: 'nazhir',
-    receipts: [
-      {
-        id: 'RCP-004',
-        title: 'Baja Ringan & Genteng Metal Asrama Lantai 3',
-        vendor: 'PT Graha Truss Nusantara',
-        amount: 42000000,
-        date: '14 Agt 2026',
-        fileName: 'Faktur_Baja_Ringan_08.pdf',
-        status: 'Terverifikasi Super Admin',
-        ocrDetected: true,
-      },
-    ],
-  },
-  {
-    id: 'PROG-WK-003',
-    name: 'Wakaf Produktif Kebun Hidroponik Modern Santri Dhuafa',
-    akad: 'Wakaf Uang',
-    kategori: 'Pemberdayaan Ekonomi',
-    targetAmount: 500000000,
-    collectedAmount: 210000000,
-    description:
-      'Pengadaan greenhouse instalasi hidroponik NFT 500m2 untuk kemandirian ekonomi pesantren dan beasiswa pangan bergizi santri.',
-    status: 'Menunggu Persetujuan Super Admin',
-    bannerUrl:
-      'https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=1200&auto=format&fit=crop&q=80',
-    supportingDoc: 'Masterplan_Hidroponik_Greenhouse_2026.pdf',
-    durationStart: '01 Sep 2026',
-    durationEnd: '31 Des 2026',
-    duration: '01 Sep 2026 - 31 Des 2026',
-    bankName: 'Bank Syariah Indonesia (BSI)',
-    bankAccountNumber: '711-889-2234',
-    bankAccountHolder: 'Yayasan Waqf Al-Kautsar Nusantara',
-    province: 'Jawa Barat',
-    city: 'Kabupaten Bogor',
-    locationDetail: 'Kecamatan Cisarua Puncak',
-    jenisWakaf: 'Wakaf Uang',
-    menerimaWakafBarang: 'Ya',
-    progressFisik: 0,
-    submitterName: 'Ustadz Ridwan Malik (Nazhir)',
-    submitterRole: 'nazhir',
-    receipts: [],
-  },
-  {
-    id: 'PROG-WK-004',
-    name: 'Wakaf Pengadaan Mobil Ambulans Jenazah & Medis Dhuafa',
-    akad: 'Wakaf Melalui Uang',
-    kategori: 'Kesehatan & Sanitasi',
-    targetAmount: 350000000,
-    collectedAmount: 180000000,
-    description:
-      'Pengadaan 1 unit armada ambulans medis dilengkapi tabung oksigen dan sirine untuk layanan antar jemput pasien dhuafa 24 jam bebas biaya.',
-    status: 'Menunggu Persetujuan Super Admin',
-    bannerUrl:
-      'https://images.unsplash.com/photo-1587745416684-47953f16f02f?w=1200&auto=format&fit=crop&q=80',
-    supportingDoc: 'Penawaran_Karoseri_Ambulans_2026.pdf',
-    durationStart: '10 Agt 2026',
-    durationEnd: '30 Nov 2026',
-    duration: '10 Agt 2026 - 30 Nov 2026',
-    bankName: 'Bank Muamalat Indonesia',
-    bankAccountNumber: '340-001-9981',
-    bankAccountHolder: 'Yayasan Waqf Al-Kautsar Nusantara',
-    province: 'DKI Jakarta',
-    city: 'Jakarta Timur',
-    locationDetail: 'Jl. Pemuda No. 12, Rawamangun',
-    jenisWakaf: 'Wakaf Melalui Uang',
-    menerimaWakafBarang: 'Tidak',
-    progressFisik: 0,
-    submitterName: 'Lembaga Wakaf Al-Azhar Peduli Ummat',
-    submitterRole: 'nazhir',
-    receipts: [],
-  },
-];
+interface WakafProgramsViewProps {
+  initialPrograms?: WaqfProgramItem[];
+  nadzirProfiles?: Array<{
+    id: string;
+    namaLembaga: string | null;
+    namaBank: string | null;
+    nomorRekeningBank: string | null;
+  }>;
+}
 
-export function WakafProgramsView() {
+export function WakafProgramsView({
+  initialPrograms = [],
+  nadzirProfiles = [],
+}: WakafProgramsViewProps) {
   const { showToast } = useToast();
   const searchParams = useSearchParams();
 
-  const [programs, setPrograms] = useState<WaqfProgramItem[]>(INITIAL_PROGRAMS);
+  const [programs, setPrograms] = useState<WaqfProgramItem[]>(initialPrograms);
   const [activeView, setActiveView] = useState<'main' | 'detail'>('main');
-  const [selectedProgId, setSelectedProgId] = useState<string>('PROG-WK-001');
+  const [selectedProgId, setSelectedProgId] = useState<string>(
+    initialPrograms[0]?.id || ''
+  );
   const [workbenchTab, setWorkbenchTab] = useState<'receipts' | 'termin' | 'wakif' | 'bwi'>('receipts');
   const [searchProgramQuery, setSearchProgramQuery] = useState('');
   const [filterAkad, setFilterAkad] = useState<string>('SEMUA');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Sync if initialPrograms update
+  useEffect(() => {
+    if (initialPrograms && initialPrograms.length > 0) {
+      setPrograms(initialPrograms);
+      if (!selectedProgId || !initialPrograms.find((p) => p.id === selectedProgId)) {
+        setSelectedProgId(initialPrograms[0].id);
+      }
+    }
+  }, [initialPrograms]);
 
   // Handle URL query parameters for direct tab navigation
   useEffect(() => {
@@ -263,98 +172,6 @@ export function WakafProgramsView() {
     }
   }, [searchParams]);
 
-  // Termin list
-  const [terminList] = useState([
-    {
-      id: 'TRM-01',
-      programId: 'PROG-WK-001',
-      terminKe: 'Termin I (Uang Muka & Pengadaan Awal)',
-      nominal: 500000000,
-      targetRekening: 'BSI Escrow - 711-889-2234',
-      status: 'Selesai Dicairkan',
-      tanggalPengajuan: '15 Jan 2026',
-      dokumen: 'SPK_Pembangunan_Klinik_Tahap1.pdf',
-    },
-    {
-      id: 'TRM-02',
-      programId: 'PROG-WK-001',
-      terminKe: 'Termin II (Pengerjaan Struktur & Sanitasi)',
-      nominal: 600000000,
-      targetRekening: 'BSI Escrow - 711-889-2234',
-      status: 'Selesai Dicairkan',
-      tanggalPengajuan: '20 Mei 2026',
-      dokumen: 'BAP_Progres_Fisik_50_Persen.pdf',
-    },
-    {
-      id: 'TRM-03',
-      programId: 'PROG-WK-001',
-      terminKe: 'Termin III (Finishing & Instalasi Air)',
-      nominal: 650000000,
-      targetRekening: 'BSI Escrow - 711-889-2234',
-      status: 'Menunggu Verifikasi DPS',
-      tanggalPengajuan: '10 Agt 2026',
-      dokumen: 'BAP_Progres_Fisik_65_Persen.pdf',
-    },
-    {
-      id: 'TRM-04',
-      programId: 'PROG-WK-002',
-      terminKe: 'Termin I (Bahan Bangunan & Tukang)',
-      nominal: 350000000,
-      targetRekening: 'Muamalat - 340-001-9981',
-      status: 'Selesai Dicairkan',
-      tanggalPengajuan: '01 Mar 2026',
-      dokumen: 'SPK_Renovasi_Asrama.pdf',
-    },
-  ]);
-
-  // Wakif list
-  const [wakifList] = useState([
-    {
-      id: 'WKF-001',
-      programId: 'PROG-WK-001',
-      name: 'H. Muhammad Arifin',
-      phone: '+62 812-9876-5432',
-      nominal: 50000000,
-      tanggal: '12 Jan 2026',
-      akad: 'Wakaf Uang',
-      sertifikatNo: 'AIW/BWI-JB/2026/0018',
-      statusSertifikat: 'Terbit & Terverifikasi BWI',
-    },
-    {
-      id: 'WKF-002',
-      programId: 'PROG-WK-001',
-      name: 'Hj. Siti Aminah, S.E.',
-      phone: '+62 811-2233-4455',
-      nominal: 25000000,
-      tanggal: '18 Feb 2026',
-      akad: 'Wakaf Uang',
-      sertifikatNo: 'AIW/BWI-JB/2026/0042',
-      statusSertifikat: 'Terbit & Terverifikasi BWI',
-    },
-    {
-      id: 'WKF-003',
-      programId: 'PROG-WK-001',
-      name: 'Ir. Hendra Kusuma',
-      phone: '+62 813-1002-8877',
-      nominal: 10000000,
-      tanggal: '05 Mar 2026',
-      akad: 'Wakaf Uang',
-      sertifikatNo: 'AIW/BWI-JB/2026/0089',
-      statusSertifikat: 'Terbit & Terverifikasi BWI',
-    },
-    {
-      id: 'WKF-004',
-      programId: 'PROG-WK-002',
-      name: 'Keluarga Besar Alm. H. Abdullah',
-      phone: '+62 856-7788-9900',
-      nominal: 75000000,
-      tanggal: '20 Feb 2026',
-      akad: 'Wakaf Melalui Uang',
-      sertifikatNo: 'AIW/BWI-DKI/2026/0112',
-      statusSertifikat: 'Terbit & Terverifikasi BWI',
-    },
-  ]);
-
   // Modal / Form state for Add / Edit Program
   const [showModal, setShowModal] = useState(false);
   const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
@@ -364,31 +181,107 @@ export function WakafProgramsView() {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawNote, setWithdrawNote] = useState('');
 
+  // State for Rejecting Withdrawal Modal
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedWithdrawalId, setSelectedWithdrawalId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  // State for Yield Entry Modal (Wakaf Produktif)
+  const [showYieldModal, setShowYieldModal] = useState(false);
+  const [yieldAmount, setYieldAmount] = useState('');
+  const [yieldDescription, setYieldDescription] = useState('');
+
   // State for Adding Receipt
   const [newReceiptTitle, setNewReceiptTitle] = useState('');
+  const [newReceiptVendor, setNewReceiptVendor] = useState('');
   const [newReceiptAmount, setNewReceiptAmount] = useState('');
-  const [newReceiptFile, setNewReceiptFile] = useState<string>('Nota_Belanja_Baru.jpg');
+  const [newReceiptFile, setNewReceiptFile] = useState<string>('Kuitansi_Belanja.jpg');
   const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
 
   // File Input Refs
   const bannerFileInputRef = useRef<HTMLInputElement>(null);
   const receiptFileInputRef = useRef<HTMLInputElement>(null);
 
+  // Master Data Wilayah (Provinsi -> Kab/Kota Cascade)
+  const [provincesList, setProvincesList] = useState<{ kode: string; nama: string }[]>([]);
+  const [citiesList, setCitiesList] = useState<{ kode: string; nama: string }[]>([]);
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
+
+  // Physical Progress Save State
+  const [isSavingProgress, setIsSavingProgress] = useState(false);
+  const [savedProgressMap, setSavedProgressMap] = useState<Record<string, number>>({});
+
   // Form Data
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    bannerUrl: 'https://picsum.photos/seed/program/800/400',
+    bannerUrl: '/assets/images/wakaf/wakaf-air-bersih-desa-nurul-amanah.png',
     targetAmount: '',
     duration: '60 Hari',
-    bankAccount: 'BSI - 7182938475 a.n. Amwal Waqf',
-    province: 'Jawa Barat',
-    city: 'Kab. Sukabumi',
-    locationDetail: '',
+    bankAccount: 'BSI - 711-889-2234 a.n. YMI ITS',
+    province: 'Jawa Timur',
+    city: 'Kabupaten Bojonegoro',
+    locationDetail: 'Kampus Sukolilo ITS Surabaya',
     jenisWakaf: 'Wakaf Uang' as 'Wakaf Uang' | 'Wakaf Melalui Uang',
-    kategori: 'Sekolah',
+    kategori: 'Infrastruktur & Sosial',
     menerimaWakafBarang: 'Ya' as 'Ya' | 'Tidak',
+    nadzirProfileId: nadzirProfiles[0]?.id || '',
   });
+
+  // Fetch 38 Provinces on Mount
+  useEffect(() => {
+    const fetchProvinces = async () => {
+      try {
+        const res = await fetch('/api/wilayah?level=provinsi');
+        if (res.ok) {
+          const json = await res.json();
+          const list: { kode: string; nama: string }[] = json.data || [];
+          setProvincesList(list);
+
+          // Initial load cities for Jawa Timur (kode: 35) or first province
+          const jtimur = list.find((p) => p.nama.toLowerCase().includes('jawa timur')) || list[0];
+          if (jtimur) {
+            const citiesRes = await fetch(`/api/wilayah?provinsiKode=${jtimur.kode}`);
+            if (citiesRes.ok) {
+              const citiesJson = await citiesRes.json();
+              setCitiesList(citiesJson.data || []);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch provinces:', err);
+      }
+    };
+    fetchProvinces();
+  }, []);
+
+  const handleProvinceChange = async (provinsiNama: string) => {
+    setFormData((prev) => ({ ...prev, province: provinsiNama, city: '' }));
+    const selectedProv = provincesList.find(
+      (p) => p.nama.toLowerCase() === provinsiNama.toLowerCase()
+    );
+
+    if (selectedProv) {
+      setIsLoadingCities(true);
+      try {
+        const res = await fetch(`/api/wilayah?provinsiKode=${selectedProv.kode}`);
+        if (res.ok) {
+          const json = await res.json();
+          const newCities: { kode: string; nama: string }[] = json.data || [];
+          setCitiesList(newCities);
+          if (newCities.length > 0) {
+            setFormData((prev) => ({ ...prev, city: newCities[0].nama }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch cities:', err);
+      } finally {
+        setIsLoadingCities(false);
+      }
+    } else {
+      setCitiesList([]);
+    }
+  };
 
   const handleBannerFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -426,189 +319,572 @@ export function WakafProgramsView() {
 
   const handleOpenAddModal = () => {
     setEditingProgramId(null);
+    const defaultProv = provincesList.find((p) => p.nama.toLowerCase().includes('jawa timur')) || provincesList[0];
+    const provName = defaultProv?.nama || 'Jawa Timur';
+
     setFormData({
       name: '',
       description: '',
-      bannerUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80',
+      bannerUrl: '/assets/images/wakaf/wakaf-air-bersih-desa-nurul-amanah.png',
       targetAmount: '',
       duration: '60 Hari',
-      bankAccount: 'BSI - 7182938475 a.n. Amwal Waqf',
-      province: 'Jawa Barat',
-      city: 'Kab. Sukabumi',
-      locationDetail: '',
+      bankAccount: 'BSI - 711-889-2234 a.n. YMI ITS',
+      province: provName,
+      city: citiesList[0]?.nama || 'Kabupaten Bojonegoro',
+      locationDetail: 'Kampus Sukolilo ITS Surabaya',
       jenisWakaf: 'Wakaf Uang',
-      kategori: 'Sekolah',
+      kategori: 'Infrastruktur & Sosial',
       menerimaWakafBarang: 'Ya',
+      nadzirProfileId: nadzirProfiles[0]?.id || '',
     });
+
+    if (defaultProv) {
+      fetch(`/api/wilayah?provinsiKode=${defaultProv.kode}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.data && json.data.length > 0) {
+            setCitiesList(json.data);
+            setFormData((prev) => ({ ...prev, city: json.data[0].nama }));
+          }
+        })
+        .catch(console.error);
+    }
     setShowModal(true);
   };
 
   const handleOpenEditModal = (prog: WaqfProgramItem) => {
     setEditingProgramId(prog.id);
+    const progProv = prog.province || 'Jawa Timur';
     setFormData({
       name: prog.name || '',
       description: prog.description || '',
-      bannerUrl: prog.bannerUrl || 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80',
+      bannerUrl: prog.bannerUrl || '/assets/images/wakaf/wakaf-air-bersih-desa-nurul-amanah.png',
       targetAmount: (prog.targetAmount || 0).toString(),
       duration: prog.duration || '60 Hari',
-      bankAccount: prog.bankAccount || prog.bankName || 'BSI - 7182938475 a.n. Amwal Waqf',
-      province: prog.province || 'Jawa Barat',
-      city: prog.city || 'Kab. Sukabumi',
+      bankAccount: prog.bankAccount || prog.bankName || 'BSI - 711-889-2234 a.n. YMI ITS',
+      province: progProv,
+      city: prog.city || 'Kabupaten Bojonegoro',
       locationDetail: prog.locationDetail || '',
       jenisWakaf: prog.jenisWakaf || 'Wakaf Uang',
-      kategori: prog.kategori || 'Sekolah',
+      kategori: prog.kategori || 'Infrastruktur & Sosial',
       menerimaWakafBarang: prog.menerimaWakafBarang || 'Ya',
+      nadzirProfileId: nadzirProfiles[0]?.id || '',
     });
+
+    const matchedProv = provincesList.find(
+      (p) => p.nama.toLowerCase() === progProv.toLowerCase()
+    );
+    if (matchedProv) {
+      fetch(`/api/wilayah?provinsiKode=${matchedProv.kode}`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (json.data) setCitiesList(json.data);
+        })
+        .catch(console.error);
+    }
     setShowModal(true);
   };
 
   const handleBadgeClick = (badge: string) => {
-    if (!formData.name) {
-      setFormData((prev) => ({
+    setFormData((prev) => {
+      const isNameEmptyOrDefault = !prev.name.trim() || prev.name.startsWith('Program Wakaf ');
+      return {
         ...prev,
-        name: `Program Waqf ${badge}`,
+        name: isNameEmptyOrDefault ? `Program Wakaf ${badge}` : prev.name,
         kategori: badge,
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        kategori: badge,
-        description: prev.description
-          ? `${prev.description} (Kategori: ${badge})`
-          : `Program berfokus pada pengembangan ${badge.toLowerCase()}.`,
-      }));
-    }
+        description: `Program penghimpunan dana wakaf yang difokuskan pada sektor ${badge} untuk kemaslahatan umat.`,
+      };
+    });
   };
 
-  const handleSaveProgram = (e: React.FormEvent) => {
+  // 1. CREATE / EDIT PROGRAM (FULLSTACK)
+  const handleSaveProgram = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
-    if (editingProgramId) {
-      setPrograms((prev) =>
-        prev.map((p) =>
-          p.id === editingProgramId
-            ? {
-                ...p,
-                name: formData.name,
-                description: formData.description,
-                bannerUrl: formData.bannerUrl,
-                targetAmount: parseFloat(formData.targetAmount) || 0,
-                duration: formData.duration,
-                bankAccount: formData.bankAccount,
-                province: formData.province,
-                city: formData.city,
-                locationDetail: formData.locationDetail,
-                jenisWakaf: formData.jenisWakaf,
-                kategori: formData.kategori,
-                menerimaWakafBarang: formData.menerimaWakafBarang,
-                akad: formData.jenisWakaf,
-              }
-            : p
-        )
-      );
-      showToast({
-        title: 'Program Berhasil Diperbarui',
-        description: `Data program "${formData.name}" berhasil disimpan.`,
-        type: 'success',
-      });
-    } else {
-      const newId = `PROG-WK-${Date.now().toString().slice(-3)}`;
-      const newProg: WaqfProgramItem = {
-        id: newId,
-        name: formData.name,
-        akad: formData.jenisWakaf,
-        kategori: formData.kategori,
-        targetAmount: parseFloat(formData.targetAmount) || 0,
-        collectedAmount: 0,
-        description: formData.description,
-        bannerUrl: formData.bannerUrl,
-        duration: formData.duration,
-        bankAccount: formData.bankAccount,
-        province: formData.province,
-        city: formData.city,
-        locationDetail: formData.locationDetail,
-        jenisWakaf: formData.jenisWakaf,
-        menerimaWakafBarang: formData.menerimaWakafBarang,
-        progressFisik: 0,
-        status: 'Aktif',
-        receipts: [],
-      };
-      setPrograms((prev) => [newProg, ...prev]);
-      setSelectedProgId(newId);
-      showToast({
-        title: 'Program Berhasil Diterbitkan',
-        description: `Program "${formData.name}" siap menerima donasi wakaf.`,
-        type: 'success',
-      });
-    }
+    setIsLoading(true);
+    try {
+      const isWakafUang = formData.jenisWakaf === 'Wakaf Uang';
+      const targetDanaNum = parseFloat(formData.targetAmount) || 0;
+      const durasiNum = parseInt(formData.duration.replace(/\D/g, ''), 10) || 60;
 
-    setShowModal(false);
+      if (editingProgramId) {
+        // PATCH existing program
+        const res = await fetch(`/api/admin/wakaf/programs/${editingProgramId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            judul: formData.name,
+            kategori: formData.kategori,
+            deskripsi: formData.description,
+            targetDana: targetDanaNum,
+            durasiHari: durasiNum,
+            bannerUrl: formData.bannerUrl,
+            jenisWakaf: isWakafUang ? 'PRODUKTIF_KEKAL' : 'HABIS_PAKAI',
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Gagal memperbarui program');
+        }
+
+        setPrograms((prev) =>
+          prev.map((p) =>
+            p.id === editingProgramId
+              ? {
+                  ...p,
+                  name: formData.name,
+                  description: formData.description,
+                  bannerUrl: formData.bannerUrl,
+                  targetAmount: targetDanaNum,
+                  duration: `${durasiNum} Hari`,
+                  jenisWakaf: formData.jenisWakaf,
+                  kategori: formData.kategori,
+                  akad: formData.jenisWakaf,
+                }
+              : p
+          )
+        );
+
+        showToast({
+          title: 'Program Berhasil Diperbarui',
+          description: `Data program "${formData.name}" berhasil disimpan ke database.`,
+          type: 'success',
+        });
+      } else {
+        // POST new program
+        const res = await fetch('/api/admin/wakaf/programs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            judul: formData.name,
+            kategori: formData.kategori,
+            deskripsi: formData.description,
+            targetDana: targetDanaNum,
+            durasiHari: durasiNum,
+            bannerUrl: formData.bannerUrl,
+            jenisWakaf: isWakafUang ? 'PRODUKTIF_KEKAL' : 'HABIS_PAKAI',
+            status: 'LIVE',
+            nadzirProfileId: formData.nadzirProfileId || undefined,
+          }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || 'Gagal menerbitkan program');
+        }
+
+        const data = await res.json();
+        const createdProg = data.data;
+
+        const newProgItem: WaqfProgramItem = {
+          id: createdProg.id,
+          name: createdProg.judul,
+          akad: formData.jenisWakaf,
+          kategori: createdProg.kategori || formData.kategori,
+          targetAmount: Number(createdProg.targetDana),
+          collectedAmount: 0,
+          availableYield: 0,
+          distributedYield: 0,
+          description: createdProg.deskripsi || formData.description,
+          bannerUrl: createdProg.bannerUrl || formData.bannerUrl,
+          duration: `${durasiNum} Hari`,
+          bankAccount: formData.bankAccount,
+          province: formData.province,
+          city: formData.city,
+          locationDetail: formData.locationDetail,
+          jenisWakaf: formData.jenisWakaf,
+          rawJenisWakaf: isWakafUang ? 'PRODUKTIF_KEKAL' : 'HABIS_PAKAI',
+          menerimaWakafBarang: formData.menerimaWakafBarang,
+          progressFisik: 0,
+          status: 'Aktif',
+          receipts: [],
+          terminList: [],
+          yieldList: [],
+          wakifList: [],
+        };
+
+        setPrograms((prev) => [newProgItem, ...prev]);
+        setSelectedProgId(newProgItem.id);
+
+        showToast({
+          title: 'Program Berhasil Diterbitkan',
+          description: `Program "${formData.name}" siap menerima donasi wakaf (Tersimpan di DB & Ledger Pokok Aktif).`,
+          type: 'success',
+        });
+      }
+
+      setShowModal(false);
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Menyimpan Program',
+        description: error.message || 'Terjadi kesalahan sistem',
+        type: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleDeleteProgram = (id: string, name: string) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus program "${name}"?`)) {
+  // 2. DELETE PROGRAM (FULLSTACK)
+  const handleDeleteProgram = async (id: string, name: string) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus program "${name}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/wakaf/programs/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal menghapus program');
+      }
+
       setPrograms((prev) => prev.filter((p) => p.id !== id));
+      if (selectedProgId === id) {
+        setSelectedProgId(programs.find((p) => p.id !== id)?.id || '');
+      }
+
       showToast({
         title: 'Program Dihapus',
-        description: `Program "${name}" telah dihapus dari sistem.`,
+        description: `Program "${name}" telah dihapus permanen dari sistem.`,
         type: 'info',
+      });
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Menghapus',
+        description: error.message || 'Program tidak dapat dihapus',
+        type: 'error',
       });
     }
   };
 
-  const handleUpdateProgressFisik = (progId: string, newProgress: number) => {
+  // 3. SLIDER PROGRESS LOCAL CHANGE
+  const handleSliderChange = (progId: string, newProgress: number) => {
     setPrograms((prev) =>
       prev.map((p) => (p.id === progId ? { ...p, progressFisik: newProgress } : p))
     );
   };
 
-  const handleAddReceipt = (e: React.FormEvent) => {
+  // 3b. SAVE PHYSICAL PROGRESS SLIDER (FULLSTACK)
+  const handleSaveProgressFisik = async (progId: string) => {
+    const prog = programs.find((p) => p.id === progId);
+    if (!prog) return;
+
+    const newProgress = prog.progressFisik;
+    setIsSavingProgress(true);
+
+    try {
+      const res = await fetch(`/api/admin/wakaf/programs/${progId}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          progressFisik: newProgress,
+          deskripsi: `Pembaruan progres fisik pembangunan lapangan menjadi ${newProgress}%.`,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal menyimpan progres fisik');
+      }
+
+      setSavedProgressMap((prev) => ({ ...prev, [progId]: newProgress }));
+
+      showToast({
+        title: 'Progres Fisik Tersimpan',
+        description: `Progres fisik berhasil diperbarui menjadi ${newProgress}%.`,
+        type: 'success',
+      });
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Simpan Progres',
+        description: error.message || 'Gagal memperbarui progres fisik di server',
+        type: 'error',
+      });
+    } finally {
+      setIsSavingProgress(false);
+    }
+  };
+
+  // 4. ADD RECEIPT (FULLSTACK)
+  const handleAddReceipt = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReceiptTitle.trim() || !newReceiptAmount) return;
 
-    const newRcp: ReceiptItem = {
-      id: `RCP-${Date.now().toString().slice(-3)}`,
-      title: newReceiptTitle,
-      amount: parseFloat(newReceiptAmount) || 0,
-      fileName: newReceiptFile || 'Kuitansi_Belanja.png',
-      date: new Date().toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      }),
-      status: 'Terverifikasi Super Admin',
-      ocrDetected: true,
-    };
+    const amountNum = parseFloat(newReceiptAmount) || 0;
 
-    setPrograms((prev) =>
-      prev.map((p) =>
-        p.id === selectedProgId ? { ...p, receipts: [newRcp, ...p.receipts] } : p
-      )
-    );
+    try {
+      const res = await fetch(`/api/admin/wakaf/programs/${selectedProgId}/receipts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newReceiptTitle,
+          vendor: newReceiptVendor || 'Mitra Pengadaan Lapangan',
+          amount: amountNum,
+          fileName: newReceiptFile || 'Kuitansi_Belanja.jpg',
+          ocrDetected: true,
+          notes: 'Diverifikasi langsung oleh Super Admin Amwal.',
+        }),
+      });
 
-    showToast({
-      title: 'Kuitansi Berhasil Ditambahkan',
-      description: `Nota "${newReceiptTitle}" sebesar Rp ${parseFloat(newReceiptAmount).toLocaleString('id-ID')} telah dicatat.`,
-      type: 'success',
-    });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal menambahkan kuitansi');
+      }
 
-    setNewReceiptTitle('');
-    setNewReceiptAmount('');
-    setReceiptPreviewUrl(null);
+      const data = await res.json();
+      const newRcp: ReceiptItem = data.data;
+
+      setPrograms((prev) =>
+        prev.map((p) =>
+          p.id === selectedProgId ? { ...p, receipts: [newRcp, ...p.receipts] } : p
+        )
+      );
+
+      showToast({
+        title: 'Kuitansi Berhasil Dicatat & Diverifikasi',
+        description: `Nota "${newReceiptTitle}" sebesar Rp ${amountNum.toLocaleString('id-ID')} telah tersimpan permanen di database.`,
+        type: 'success',
+      });
+
+      setNewReceiptTitle('');
+      setNewReceiptVendor('');
+      setNewReceiptAmount('');
+      setReceiptPreviewUrl(null);
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Menambah Kuitansi',
+        description: error.message || 'Terjadi kesalahan sistem',
+        type: 'error',
+      });
+    }
   };
 
-  const handleWithdrawFunds = (e: React.FormEvent) => {
+  // 5. SUBMIT DISBURSEMENT REQUEST (FULLSTACK)
+  const handleWithdrawFunds = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!withdrawAmount) return;
-    setShowWithdrawModal(false);
-    showToast({
-      title: 'Pengajuan Penarikan Dana Terkirim',
-      description: `Pengajuan Rp ${parseInt(withdrawAmount, 10).toLocaleString('id-ID')} telah dikirim ke Tim Audit Nadzir & DPS.`,
-      type: 'success',
-    });
-    setWithdrawAmount('');
-    setWithdrawNote('');
+
+    const amountNum = parseFloat(withdrawAmount) || 0;
+
+    try {
+      const res = await fetch('/api/admin/withdrawal-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          waqfProgramId: selectedProgram.id,
+          amount: amountNum,
+          peruntukan: withdrawNote || 'Pencairan Termin Lapangan',
+          rekeningTujuan: selectedProgram.bankAccount || selectedProgram.bankName || 'BSI Escrow YMI',
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal mengajukan penarikan dana');
+      }
+
+      const data = await res.json();
+      const newRequest = data.data;
+
+      const newTerminItem: TerminItem = {
+        id: newRequest.id,
+        programId: selectedProgram.id,
+        terminKe: newRequest.peruntukan,
+        nominal: Number(newRequest.amount),
+        targetRekening: newRequest.rekeningTujuan,
+        status: 'Menunggu Verifikasi DPS',
+        rawStatus: 'PENDING',
+        adminNotes: '',
+        tanggalPengajuan: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+        dokumen: 'SPK_Pencairan_Baru.pdf',
+        requestedBy: 'Super Admin',
+      };
+
+      setPrograms((prev) =>
+        prev.map((p) =>
+          p.id === selectedProgram.id
+            ? { ...p, terminList: [newTerminItem, ...(p.terminList || [])] }
+            : p
+        )
+      );
+
+      setShowWithdrawModal(false);
+      showToast({
+        title: 'Pengajuan Penarikan Dana Terkirim',
+        description: `Pengajuan Rp ${amountNum.toLocaleString('id-ID')} telah tercatat di sistem pengawasan termin escrow.`,
+        type: 'success',
+      });
+
+      setWithdrawAmount('');
+      setWithdrawNote('');
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Mengajukan Penarikan',
+        description: error.message || 'Terjadi kesalahan sistem',
+        type: 'error',
+      });
+    }
+  };
+
+  // 6. APPROVE WITHDRAWAL REQUEST (FULLSTACK)
+  const handleApproveWithdrawal = async (withdrawalId: string) => {
+    try {
+      const res = await fetch(`/api/admin/withdrawal-requests/${withdrawalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'APPROVED',
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal menyetujui penarikan');
+      }
+
+      setPrograms((prev) =>
+        prev.map((p) => ({
+          ...p,
+          terminList: (p.terminList || []).map((t) =>
+            t.id === withdrawalId ? { ...t, status: 'Selesai Dicairkan', rawStatus: 'APPROVED' } : t
+          ),
+        }))
+      );
+
+      showToast({
+        title: 'Pencairan Dana Disetujui',
+        description: 'Pengajuan penarikan dana berhasil disetujui & mutasi kas escrow telah diperbarui.',
+        type: 'success',
+      });
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Menyetujui',
+        description: error.message || 'Terjadi kesalahan sistem',
+        type: 'error',
+      });
+    }
+  };
+
+  // 7. REJECT WITHDRAWAL REQUEST (FULLSTACK)
+  const handleRejectWithdrawalConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedWithdrawalId || !rejectReason.trim()) {
+      showToast({
+        title: 'Alasan Penolakan Wajib Diisi',
+        description: 'Mohon tuliskan alasan audit penolakan termin.',
+        type: 'warning',
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/withdrawal-requests/${selectedWithdrawalId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: 'REJECTED',
+          adminNotes: rejectReason.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal menolak penarikan');
+      }
+
+      setPrograms((prev) =>
+        prev.map((p) => ({
+          ...p,
+          terminList: (p.terminList || []).map((t) =>
+            t.id === selectedWithdrawalId
+              ? { ...t, status: 'Ditolak', rawStatus: 'REJECTED', adminNotes: rejectReason.trim() }
+              : t
+          ),
+        }))
+      );
+
+      setRejectModalOpen(false);
+      setSelectedWithdrawalId(null);
+      setRejectReason('');
+
+      showToast({
+        title: 'Pengajuan Penarikan Ditolak',
+        description: 'Status pengajuan termin telah diperbarui menjadi REJECTED.',
+        type: 'info',
+      });
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Menolak',
+        description: error.message || 'Terjadi kesalahan sistem',
+        type: 'error',
+      });
+    }
+  };
+
+  // 8. RECORD WAQF YIELD ENTRY (FULLSTACK)
+  const handleRecordYield = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!yieldAmount || !yieldDescription.trim()) return;
+
+    const amountNum = parseFloat(yieldAmount) || 0;
+
+    try {
+      const res = await fetch(`/api/admin/wakaf/programs/${selectedProgram.id}/yield-entries`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: amountNum,
+          sourceDescription: yieldDescription.trim(),
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Gagal mencatat bagi hasil wakaf');
+      }
+
+      const data = await res.json();
+      const newEntry = data.data;
+
+      const newYieldItem: YieldItem = {
+        id: newEntry.id,
+        programId: selectedProgram.id,
+        nominal: Number(newEntry.amount),
+        sourceDescription: newEntry.sourceDescription,
+        recordedAt: new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }),
+      };
+
+      setPrograms((prev) =>
+        prev.map((p) =>
+          p.id === selectedProgram.id
+            ? {
+                ...p,
+                availableYield: (p.availableYield || 0) + amountNum,
+                yieldList: [newYieldItem, ...(p.yieldList || [])],
+              }
+            : p
+        )
+      );
+
+      setShowYieldModal(false);
+      setYieldAmount('');
+      setYieldDescription('');
+
+      showToast({
+        title: 'Bagi Hasil Berhasil Dicatat',
+        description: `Surplus hasil investasi sebesar Rp ${amountNum.toLocaleString('id-ID')} telah masuk ke totalHasilAvailable.`,
+        type: 'success',
+      });
+    } catch (error: any) {
+      showToast({
+        title: 'Gagal Mencatat Bagi Hasil',
+        description: error.message || 'Terjadi kesalahan sistem',
+        type: 'error',
+      });
+    }
   };
 
   const filteredPrograms = programs.filter((p) => {
@@ -621,6 +897,10 @@ export function WakafProgramsView() {
   });
 
   const selectedProgram = programs.find((p) => p.id === selectedProgId) || programs[0];
+
+  const currentTerminList = selectedProgram?.terminList || [];
+  const currentYieldList = selectedProgram?.yieldList || [];
+  const currentWakifList = selectedProgram?.wakifList || [];
 
   return (
     <div className="space-y-6 px-4 sm:px-6 py-6 max-w-7xl mx-auto font-jakarta">
@@ -676,7 +956,7 @@ export function WakafProgramsView() {
 
               <div className="p-3.5 bg-amber-50 rounded-xl border border-amber-100 flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-bold text-amber-800 uppercase block">Terkumpul Nyata</span>
+                  <span className="text-[11px] font-bold text-amber-800 uppercase block">Terkumpul Nyata (Ledger Pokok)</span>
                   <span className="text-lg font-extrabold text-amber-950 font-mono">
                     Rp {programs.reduce((acc, p) => acc + p.collectedAmount, 0).toLocaleString('id-ID')}
                   </span>
@@ -718,135 +998,150 @@ export function WakafProgramsView() {
                   className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 bg-slate-50 focus:bg-white focus:outline-hidden cursor-pointer"
                 >
                   <option value="SEMUA">Semua Akad Wakaf</option>
-                  <option value="Wakaf Uang">Wakaf Uang</option>
-                  <option value="Wakaf Melalui Uang">Wakaf Melalui Uang</option>
+                  <option value="Wakaf Uang">Wakaf Uang (Produktif)</option>
+                  <option value="Wakaf Melalui Uang">Wakaf Melalui Uang (Habis Pakai)</option>
                 </select>
               </div>
             </div>
 
             {/* List of Programs Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredPrograms.map((prog) => {
-                const isSelected = prog.id === selectedProgId;
-                const pct =
-                  prog.targetAmount > 0
-                    ? Math.min(100, Math.round((prog.collectedAmount / prog.targetAmount) * 100))
-                    : 0;
+            {filteredPrograms.length === 0 ? (
+              <div className="p-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <Layers className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-bold text-slate-700">Belum ada program wakaf yang cocok dengan kriteria pencarian.</p>
+                <p className="text-[11px] text-slate-500 mt-1">Klik tombol &ldquo;Terbitkan Program Baru&rdquo; untuk menambahkan program wakaf pertama.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPrograms.map((prog) => {
+                  const isSelected = prog.id === selectedProgId;
+                  const pct =
+                    prog.targetAmount > 0
+                      ? Math.min(100, Math.round((prog.collectedAmount / prog.targetAmount) * 100))
+                      : 0;
 
-                return (
-                  <div
-                    key={prog.id}
-                    onClick={() => setSelectedProgId(prog.id)}
-                    className={`bg-white border rounded-2xl overflow-hidden p-4 transition flex flex-col justify-between shadow-2xs hover:shadow-md cursor-pointer ${
-                      isSelected
-                        ? 'border-[#1B5E20] ring-2 ring-[#1B5E20]/20'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div>
-                      {/* Banner Image Display */}
-                      <div className="relative h-36 w-full rounded-xl overflow-hidden mb-3 bg-slate-100 border border-slate-200">
-                        <Image
-                          src={prog.bannerUrl}
-                          alt={prog.name}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                        <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-xs">
-                          {prog.jenisWakaf}
+                  return (
+                    <div
+                      key={prog.id}
+                      onClick={() => setSelectedProgId(prog.id)}
+                      className={`bg-white border rounded-2xl overflow-hidden p-4 transition flex flex-col justify-between shadow-2xs hover:shadow-md cursor-pointer ${
+                        isSelected
+                          ? 'border-[#1B5E20] ring-2 ring-[#1B5E20]/20'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div>
+                        {/* Banner Image Display */}
+                        <div className="relative h-36 w-full rounded-xl overflow-hidden mb-3 bg-slate-100 border border-slate-200">
+                          <Image
+                            src={prog.bannerUrl}
+                            alt={prog.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                          <div className="absolute top-2 left-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-900/80 text-white backdrop-blur-xs">
+                            {prog.jenisWakaf}
+                          </div>
+                          <div className="absolute bottom-2 right-2 px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-800/95 text-white backdrop-blur-xs flex items-center gap-1 shadow-2xs">
+                            <Sliders className="w-3 h-3 text-emerald-200" />
+                            <span>Fisik: {prog.progressFisik}%</span>
+                          </div>
                         </div>
-                        <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-800/90 text-white backdrop-blur-xs">
-                          Fisik: {prog.progressFisik}%
+
+                        <h4 className="text-xs font-bold text-slate-900 line-clamp-2 mb-1.5 leading-snug">
+                          {prog.name}
+                        </h4>
+
+                        {/* Info Highlights */}
+                        <div className="space-y-1.5 text-[11px] text-slate-600 mb-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Target Dana:</span>
+                            <strong className="text-slate-900">Rp {prog.targetAmount.toLocaleString('id-ID')}</strong>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500 flex items-center gap-1">
+                              <Coins className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <span>Terkumpul:</span>
+                            </span>
+                            <span className="font-semibold text-emerald-800 flex items-center gap-1">
+                              <span>Rp {prog.collectedAmount.toLocaleString('id-ID')}</span>
+                              <span className="font-mono text-[10px] font-bold bg-emerald-100 text-emerald-900 px-1.5 py-0.5 rounded">
+                                Dana: {pct}%
+                              </span>
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Durasi:</span>
+                            <span className="text-slate-700">
+                              {prog.durationStart && prog.durationEnd
+                                ? `${prog.durationStart} - ${prog.durationEnd}`
+                                : prog.duration}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Lokasi:</span>
+                            <span className="text-slate-700 truncate max-w-[140px]">{prog.city}, {prog.province}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-slate-500">Rekening:</span>
+                            <span className="font-mono text-[10px] text-slate-700">{prog.bankAccount || prog.bankName}</span>
+                          </div>
                         </div>
                       </div>
 
-                      <h4 className="text-xs font-bold text-slate-900 line-clamp-2 mb-1.5 leading-snug">
-                        {prog.name}
-                      </h4>
+                      {/* Footer */}
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px]">
+                        <span
+                          className="text-slate-500 flex items-center gap-1 truncate max-w-[130px]"
+                          title={prog.supportingDoc || 'Dokumen_Legalitas.pdf'}
+                        >
+                          <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span className="truncate">{prog.supportingDoc || 'Dokumen_Legalitas.pdf'}</span>
+                        </span>
 
-                      {/* Info Highlights */}
-                      <div className="space-y-1.5 text-[11px] text-slate-600 mb-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Target Dana:</span>
-                          <strong className="text-slate-900">Rp {prog.targetAmount.toLocaleString('id-ID')}</strong>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Terkumpul:</span>
-                          <span className="font-semibold text-emerald-800">
-                            Rp {prog.collectedAmount.toLocaleString('id-ID')} ({pct}%)
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Durasi:</span>
-                          <span className="text-slate-700">
-                            {prog.durationStart && prog.durationEnd
-                              ? `${prog.durationStart} - ${prog.durationEnd}`
-                              : prog.duration}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Lokasi:</span>
-                          <span className="text-slate-700 truncate max-w-[140px]">{prog.city}, {prog.province}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-500">Rekening:</span>
-                          <span className="font-mono text-[10px] text-slate-700">{prog.bankAccount || prog.bankName}</span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedProgId(prog.id);
+                              setActiveView('detail');
+                            }}
+                            className="px-3 py-1.5 bg-[#1B5E20] hover:bg-[#144716] text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
+                          >
+                            <Sliders className="w-3.5 h-3.5" />
+                            <span>Kelola Progres</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditModal(prog);
+                            }}
+                            title="Edit Program"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteProgram(prog.id, prog.name);
+                            }}
+                            title="Hapus Program"
+                            className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </div>
                     </div>
-
-                    {/* Footer */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-[11px]">
-                      <span
-                        className="text-slate-500 flex items-center gap-1 truncate max-w-[130px]"
-                        title={prog.supportingDoc || 'Dokumen_Legalitas.pdf'}
-                      >
-                        <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{prog.supportingDoc || 'Dokumen_Legalitas.pdf'}</span>
-                      </span>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedProgId(prog.id);
-                            setActiveView('detail');
-                          }}
-                          className="px-3 py-1.5 bg-[#1B5E20] hover:bg-[#144716] text-white rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs"
-                        >
-                          <Sliders className="w-3.5 h-3.5" />
-                          <span>Kelola Progres</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenEditModal(prog);
-                          }}
-                          title="Edit Program"
-                          className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteProgram(prog.id, prog.name);
-                          }}
-                          title="Hapus Program"
-                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 transition cursor-pointer"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </>
       )}
@@ -896,7 +1191,18 @@ export function WakafProgramsView() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                {(selectedProgram.rawJenisWakaf === 'PRODUKTIF_KEKAL' || selectedProgram.jenisWakaf === 'Wakaf Uang') && (
+                  <button
+                    type="button"
+                    onClick={() => setShowYieldModal(true)}
+                    className="px-3.5 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  >
+                    <TrendingUp className="w-4 h-4 text-emerald-300" />
+                    <span>Catat Bagi Hasil Wakaf</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => setShowWithdrawModal(true)}
@@ -909,46 +1215,77 @@ export function WakafProgramsView() {
             </div>
 
             {/* Slider Progres Fisik Pembangunan Proyek (0% - 100%) */}
-            <div className="p-5 bg-gradient-to-r from-emerald-50/80 via-teal-50/50 to-slate-50 border border-emerald-200/80 rounded-2xl space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-[#1B5E20]" />
-                  <span className="text-xs font-bold text-slate-900">
-                    Slider Progres Fisik Pembangunan Proyek (0% - 100%)
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xl font-extrabold text-[#1B5E20] font-mono">
-                    {selectedProgram.progressFisik}%
-                  </span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-800 text-white font-bold">
-                    {selectedProgram.progressFisik >= 80
-                      ? 'Tahap Akhir'
-                      : selectedProgram.progressFisik >= 50
-                      ? 'Konstruksi Berjalan'
-                      : 'Fondasi & Awal'}
-                  </span>
-                </div>
-              </div>
+            {(() => {
+              const lastSaved = savedProgressMap[selectedProgram.id] ?? selectedProgram.progressFisik;
+              const isDirty = selectedProgram.progressFisik !== lastSaved;
 
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                value={selectedProgram.progressFisik}
-                onChange={(e) =>
-                  handleUpdateProgressFisik(selectedProgram.id, parseInt(e.target.value, 10) || 0)
-                }
-                className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1B5E20]"
-              />
+              return (
+                <div className="p-5 bg-gradient-to-r from-emerald-50/80 via-teal-50/50 to-slate-50 border border-emerald-200/80 rounded-2xl space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Sliders className="w-4 h-4 text-[#1B5E20]" />
+                      <span className="text-xs font-bold text-slate-900">
+                        Slider Progres Fisik Pembangunan Proyek (0% - 100%)
+                      </span>
+                    </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
-                <span>0% (Tahap Pengadaan/Perizinan)</span>
-                <span>50% (Pengerjaan Struktur)</span>
-                <span>100% (Serah Terima / Rampung)</span>
-              </div>
-            </div>
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xl font-extrabold text-[#1B5E20] font-mono">
+                        {selectedProgram.progressFisik}%
+                      </span>
+                      <span className="text-[11px] px-2.5 py-1 rounded-md bg-emerald-800 text-white font-bold">
+                        {selectedProgram.progressFisik >= 80
+                          ? 'Tahap Akhir'
+                          : selectedProgram.progressFisik >= 50
+                          ? 'Konstruksi Berjalan'
+                          : 'Fondasi & Awal'}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSaveProgressFisik(selectedProgram.id)}
+                        disabled={!isDirty || isSavingProgress}
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-xs ${
+                          isDirty && !isSavingProgress
+                            ? 'bg-[#1B5E20] hover:bg-[#144716] text-white ring-2 ring-emerald-500/40 cursor-pointer animate-pulse'
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        {isSavingProgress ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-800" />
+                            <span>Menyimpan...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>{isDirty ? 'Simpan Progres Fisik' : 'Progres Tersimpan'}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={selectedProgram.progressFisik}
+                    onChange={(e) =>
+                      handleSliderChange(selectedProgram.id, parseInt(e.target.value, 10) || 0)
+                    }
+                    className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#1B5E20]"
+                  />
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 font-semibold">
+                    <span>0% (Tahap Pengadaan/Perizinan)</span>
+                    <span>50% (Pengerjaan Struktur)</span>
+                    <span>100% (Serah Terima / Rampung)</span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Sub-Tab Navigation Bar in Program Detail */}
             <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
@@ -976,8 +1313,7 @@ export function WakafProgramsView() {
               >
                 <Landmark className="w-3.5 h-3.5" />
                 <span>
-                  Pencairan Termin &amp; Kas Escrow (
-                  {terminList.filter((t) => t.programId === selectedProgram.id).length})
+                  Pencairan Termin &amp; Kas Escrow ({currentTerminList.length})
                 </span>
               </button>
 
@@ -992,8 +1328,7 @@ export function WakafProgramsView() {
               >
                 <Send className="w-3.5 h-3.5" />
                 <span>
-                  Daftar Wakif &amp; Kabar WA (
-                  {wakifList.filter((w) => w.programId === selectedProgram.id).length})
+                  Daftar Wakif &amp; Kabar WA ({currentWakifList.length})
                 </span>
               </button>
 
@@ -1034,49 +1369,65 @@ export function WakafProgramsView() {
                     className="hidden"
                   />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="sm:col-span-2">
                       <label className="font-semibold text-slate-700 block mb-1">
-                        Nama Nota / Pengeluaran Belanja
+                        Nama Nota / Pengeluaran Belanja *
                       </label>
                       <input
                         type="text"
                         placeholder="Contoh: Pengadaan Material Semen & Pasir Cor"
                         value={newReceiptTitle}
                         onChange={(e) => setNewReceiptTitle(e.target.value)}
+                        required
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-700 focus:outline-hidden text-slate-900 bg-white"
                       />
                     </div>
                     <div>
-                      <label className="font-semibold text-slate-700 block mb-1">Nominal (Rp)</label>
+                      <label className="font-semibold text-slate-700 block mb-1">Nominal (Rp) *</label>
                       <input
                         type="number"
                         placeholder="5550000"
                         value={newReceiptAmount}
                         onChange={(e) => setNewReceiptAmount(e.target.value)}
+                        required
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-700 focus:outline-hidden text-slate-900 bg-white"
                       />
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-200">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => receiptFileInputRef.current?.click()}
-                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
-                      >
-                        <Upload className="w-3.5 h-3.5 text-emerald-700" />
-                        <span>Pilih File Kuitansi</span>
-                      </button>
-                      <span className="text-[11px] truncate max-w-[180px] font-mono text-slate-600 font-semibold">
-                        {newReceiptFile}
-                      </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="font-semibold text-slate-700 block mb-1">Nama Vendor / Toko</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: TB Berkah Bangunan Mandiri"
+                        value={newReceiptVendor}
+                        onChange={(e) => setNewReceiptVendor(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-700 focus:outline-hidden text-slate-900 bg-white"
+                      />
                     </div>
+                    <div className="flex items-end">
+                      <div className="flex items-center gap-2 w-full">
+                        <button
+                          type="button"
+                          onClick={() => receiptFileInputRef.current?.click()}
+                          className="px-3 py-2 rounded-lg bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Pilih File Kuitansi</span>
+                        </button>
+                        <span className="text-[11px] truncate font-mono text-slate-600 font-semibold grow">
+                          {newReceiptFile}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
 
+                  <div className="flex justify-end pt-1 border-t border-slate-200">
                     <button
                       type="submit"
-                      className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#144716] text-white font-bold text-xs transition cursor-pointer shrink-0 shadow-xs"
+                      className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#144716] text-white font-bold text-xs transition cursor-pointer shadow-xs"
                     >
                       Tambah Kuitansi
                     </button>
@@ -1121,7 +1472,7 @@ export function WakafProgramsView() {
 
                   {selectedProgram.receipts.length === 0 ? (
                     <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-xs">
-                      Belum ada kuitansi yang diunggah untuk program ini. Gunakan formulir di atas untuk mengunggah kuitansi.
+                      Belum ada kuitansi yang diunggah untuk program ini. Gunakan formulir di atas untuk mengunggah kuitansi belanja digital.
                     </div>
                   ) : (
                     <div className="overflow-x-auto border border-slate-200 rounded-xl">
@@ -1129,6 +1480,7 @@ export function WakafProgramsView() {
                         <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
                           <tr>
                             <th className="py-3 px-4">Judul Pengeluaran / Nota</th>
+                            <th className="py-3 px-4">Vendor</th>
                             <th className="py-3 px-4">Tanggal Nota</th>
                             <th className="py-3 px-4">Nominal (Rp)</th>
                             <th className="py-3 px-4">Berkas Lampiran</th>
@@ -1140,6 +1492,9 @@ export function WakafProgramsView() {
                             <tr key={rcp.id} className="hover:bg-slate-50/70 transition">
                               <td className="py-3 px-4 font-bold text-slate-900">
                                 {rcp.title}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 text-[11px]">
+                                {rcp.vendor || '-'}
                               </td>
                               <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
                                 {rcp.date}
@@ -1155,7 +1510,7 @@ export function WakafProgramsView() {
                               </td>
                               <td className="py-3 px-4 text-center">
                                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold border bg-emerald-100 text-emerald-800 border-emerald-200">
-                                  {rcp.status || 'Terverifikasi DPS'}
+                                  {rcp.status || 'Terverifikasi Super Admin'}
                                 </span>
                               </td>
                             </tr>
@@ -1174,7 +1529,7 @@ export function WakafProgramsView() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
                     <span className="text-[10px] font-bold text-slate-500 uppercase block">
-                      Total Wakaf Terhimpun
+                      Pokok Dana Terkumpul
                     </span>
                     <span className="text-sm font-extrabold text-slate-900 font-mono block mt-1">
                       Rp {selectedProgram.collectedAmount.toLocaleString('id-ID')}
@@ -1189,22 +1544,26 @@ export function WakafProgramsView() {
                       Dana Telah Dicairkan
                     </span>
                     <span className="text-sm font-extrabold text-emerald-950 font-mono block mt-1">
-                      Rp 1.100.000.000
+                      Rp{' '}
+                      {currentTerminList
+                        .filter((t) => t.rawStatus === 'APPROVED' || t.status.includes('Selesai'))
+                        .reduce((acc, t) => acc + t.nominal, 0)
+                        .toLocaleString('id-ID')}
                     </span>
                     <span className="text-[10px] text-emerald-700 font-semibold mt-0.5 block">
-                      2 Termin Selesai Terverifikasi
+                      {currentTerminList.filter((t) => t.rawStatus === 'APPROVED' || t.status.includes('Selesai')).length} Termin Selesai
                     </span>
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
                     <span className="text-[10px] font-bold text-blue-800 uppercase block">
-                      Sisa Saldo di Escrow BSI
+                      Hasil Investasi Tersedia
                     </span>
                     <span className="text-sm font-extrabold text-blue-950 font-mono block mt-1">
-                      Rp 650.000.000
+                      Rp {(selectedProgram.availableYield || 0).toLocaleString('id-ID')}
                     </span>
                     <span className="text-[10px] text-blue-700 font-semibold mt-0.5 block">
-                      Siap dicairkan sesuai termin progres
+                      Tersalurkan: Rp {(selectedProgram.distributedYield || 0).toLocaleString('id-ID')}
                     </span>
                   </div>
 
@@ -1219,19 +1578,51 @@ export function WakafProgramsView() {
                         .toLocaleString('id-ID')}
                     </span>
                     <span className="text-[10px] text-amber-700 font-semibold mt-0.5 block">
-                      Tervalidasi Dewan Pengawas Syariah
+                      Tervalidasi Super Admin
                     </span>
                   </div>
                 </div>
+
+                {/* Bagi Hasil Wakaf Produktif Section if applicable */}
+                {currentYieldList.length > 0 && (
+                  <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-200 space-y-3">
+                    <h4 className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                      <TrendingUp className="w-4 h-4 text-emerald-700" />
+                      Riwayat Pencatatan Bagi Hasil Wakaf Produktif (WaqfYieldEntry)
+                    </h4>
+                    <div className="overflow-x-auto border border-emerald-200 bg-white rounded-lg">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-emerald-50/70 text-emerald-900 font-semibold border-b border-emerald-200">
+                          <tr>
+                            <th className="py-2.5 px-3">Sumber Pendapatan / Usaha</th>
+                            <th className="py-2.5 px-3">Tanggal Catat</th>
+                            <th className="py-2.5 px-3 text-right">Nominal Hasil (Rp)</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-emerald-100 text-slate-700">
+                          {currentYieldList.map((ye) => (
+                            <tr key={ye.id}>
+                              <td className="py-2 px-3 font-semibold text-slate-900">{ye.sourceDescription}</td>
+                              <td className="py-2 px-3 text-slate-500">{ye.recordedAt}</td>
+                              <td className="py-2 px-3 text-right font-bold text-emerald-900 font-mono">
+                                + Rp {ye.nominal.toLocaleString('id-ID')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                       <Landmark className="w-4 h-4 text-[#1B5E20]" />
-                      Riwayat Pengajuan &amp; Termin Pencairan Dana Proyek
+                      Riwayat Pengajuan &amp; Termin Pencairan Dana Proyek ({currentTerminList.length} Pengajuan)
                     </h4>
                     <p className="text-[11px] text-slate-500">
-                      Pencairan dana dilakukan bertahap sesuai Surat Perjanjian Kerja (SPK) &amp; Berita Acara Progres Fisik.
+                      Pencairan dana dilakukan bertahap sesuai SPK &amp; Berita Acara Progres Fisik dengan pengawasan DPS &amp; Super Admin.
                     </p>
                   </div>
 
@@ -1245,70 +1636,97 @@ export function WakafProgramsView() {
                   </button>
                 </div>
 
-                <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                      <tr>
-                        <th className="py-3 px-4">Tahap / Termin</th>
-                        <th className="py-3 px-4">Nominal Pencairan</th>
-                        <th className="py-3 px-4">Rekening Tujuan</th>
-                        <th className="py-3 px-4">Dokumen SPK/BAP</th>
-                        <th className="py-3 px-4">Tgl Pengajuan</th>
-                        <th className="py-3 px-4 text-center">Status Audit &amp; Pencairan</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {terminList
-                        .filter((t) => t.programId === selectedProgram.id)
-                        .map((t) => (
-                          <tr key={t.id} className="hover:bg-slate-50/70 transition">
-                            <td className="py-3 px-4 font-bold text-slate-900">
-                              {t.terminKe}
-                              <span className="block text-[10px] text-slate-400 font-mono font-normal">
-                                ID: {t.id}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 font-extrabold text-slate-900 font-mono">
-                              Rp {t.nominal.toLocaleString('id-ID')}
-                            </td>
-                            <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
-                              {t.targetRekening}
-                            </td>
-                            <td className="py-3 px-4 text-blue-700 font-mono text-[11px]">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  showToast({
-                                    title: 'Pratinjau Dokumen BAP',
-                                    description: `Membuka berkas ${t.dokumen}...`,
-                                    type: 'info',
-                                  })
-                                }
-                                className="hover:underline flex items-center gap-1 cursor-pointer"
-                              >
-                                <FileText className="w-3 h-3 text-blue-600" />
-                                <span>{t.dokumen}</span>
-                              </button>
-                            </td>
-                            <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
-                              {t.tanggalPengajuan}
-                            </td>
-                            <td className="py-3 px-4 text-center">
-                              <span
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold border inline-block ${
-                                  t.status.includes('Selesai')
-                                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                                    : 'bg-amber-100 text-amber-800 border-amber-200'
-                                }`}
-                              >
-                                {t.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
+                {currentTerminList.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-xs">
+                    Belum ada pengajuan termin pencairan dana untuk program ini.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-4">Tahap / Termin</th>
+                          <th className="py-3 px-4">Nominal Pencairan</th>
+                          <th className="py-3 px-4">Rekening Tujuan</th>
+                          <th className="py-3 px-4">Tgl Pengajuan</th>
+                          <th className="py-3 px-4 text-center">Status</th>
+                          <th className="py-3 px-4 text-center">Aksi Verifikasi Super Admin</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {currentTerminList.map((t) => {
+                          const isPending = t.rawStatus === 'PENDING' || t.status.includes('Menunggu');
+
+                          return (
+                            <tr key={t.id} className="hover:bg-slate-50/70 transition">
+                              <td className="py-3 px-4 font-bold text-slate-900">
+                                {t.terminKe}
+                                <span className="block text-[10px] text-slate-400 font-mono font-normal">
+                                  ID: {t.id}
+                                </span>
+                                {t.adminNotes && (
+                                  <span className="block text-[10px] text-rose-600 italic mt-0.5">
+                                    Catatan: {t.adminNotes}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-3 px-4 font-extrabold text-slate-900 font-mono">
+                                Rp {t.nominal.toLocaleString('id-ID')}
+                              </td>
+                              <td className="py-3 px-4 text-slate-600 font-mono text-[11px]">
+                                {t.targetRekening}
+                              </td>
+                              <td className="py-3 px-4 text-slate-500 text-[11px] whitespace-nowrap">
+                                {t.tanggalPengajuan}
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <span
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold border inline-block ${
+                                    t.status.includes('Selesai') || t.rawStatus === 'APPROVED'
+                                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                                      : t.status.includes('Ditolak') || t.rawStatus === 'REJECTED'
+                                      ? 'bg-rose-100 text-rose-800 border-rose-200'
+                                      : 'bg-amber-100 text-amber-800 border-amber-200'
+                                  }`}
+                                >
+                                  {t.status}
+                                </span>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                {isPending ? (
+                                  <div className="flex items-center justify-center gap-1.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleApproveWithdrawal(t.id)}
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 transition shadow-2xs cursor-pointer"
+                                    >
+                                      <Check className="w-3 h-3" />
+                                      <span>Setujui</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedWithdrawalId(t.id);
+                                        setRejectReason('');
+                                        setRejectModalOpen(true);
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-[11px] flex items-center gap-1 transition cursor-pointer"
+                                    >
+                                      <X className="w-3 h-3" />
+                                      <span>Tolak</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] text-slate-400 font-medium">Telah Diproses</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1319,7 +1737,7 @@ export function WakafProgramsView() {
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                       <Send className="w-4 h-4 text-[#1B5E20]" />
-                      Daftar Wakif &amp; Layanan Silaturahmi Progres Pembangunan
+                      Daftar Wakif &amp; Layanan Silaturahmi Progres Pembangunan ({currentWakifList.length} Donatur)
                     </h4>
                     <p className="text-[11px] text-slate-500">
                       Kirim update laporan progres pembangunan {selectedProgram.progressFisik}% langsung ke WhatsApp Wakif dan cetak Akta Ikrar Wakaf (AIW).
@@ -1331,9 +1749,7 @@ export function WakafProgramsView() {
                     onClick={() => {
                       showToast({
                         title: 'Siarkan Progres ke Semua Wakif',
-                        description: `Notifikasi WhatsApp update progres fisik ${selectedProgram.progressFisik}% telah dijadwalkan ke ${
-                          wakifList.filter((w) => w.programId === selectedProgram.id).length
-                        } wakif.`,
+                        description: `Notifikasi WhatsApp update progres fisik ${selectedProgram.progressFisik}% telah dijadwalkan ke ${currentWakifList.length} wakif terdaftar.`,
                         type: 'success',
                       });
                     }}
@@ -1344,22 +1760,25 @@ export function WakafProgramsView() {
                   </button>
                 </div>
 
-                <div className="overflow-x-auto border border-slate-200 rounded-xl">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
-                      <tr>
-                        <th className="py-3 px-4">Nama Wakif / Donatur</th>
-                        <th className="py-3 px-4">Nominal Wakaf</th>
-                        <th className="py-3 px-4">Akad Wakaf</th>
-                        <th className="py-3 px-4">No. Sertifikat AIW</th>
-                        <th className="py-3 px-4">Status Sertifikat</th>
-                        <th className="py-3 px-4 text-center">Aksi Silaturahmi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-slate-700">
-                      {wakifList
-                        .filter((w) => w.programId === selectedProgram.id)
-                        .map((w) => (
+                {currentWakifList.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-xs">
+                    Belum ada transaksi wakaf terverifikasi untuk program ini.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-4">Nama Wakif / Donatur</th>
+                          <th className="py-3 px-4">Nominal Wakaf</th>
+                          <th className="py-3 px-4">Akad Wakaf</th>
+                          <th className="py-3 px-4">No. Kwitansi / AIW</th>
+                          <th className="py-3 px-4">Status Sertifikat</th>
+                          <th className="py-3 px-4 text-center">Aksi Silaturahmi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700">
+                        {currentWakifList.map((w) => (
                           <tr key={w.id} className="hover:bg-slate-50/70 transition">
                             <td className="py-3 px-4">
                               <span className="font-bold text-slate-900 block">{w.name}</span>
@@ -1377,6 +1796,11 @@ export function WakafProgramsView() {
                             </td>
                             <td className="py-3 px-4 font-mono text-[11px] text-slate-600">
                               {w.sertifikatNo}
+                              {w.nomorKwitansi && (
+                                <span className="block text-[10px] text-slate-400">
+                                  Kwitansi: {w.nomorKwitansi}
+                                </span>
+                              )}
                             </td>
                             <td className="py-3 px-4">
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -1404,7 +1828,7 @@ export function WakafProgramsView() {
                                   onClick={() =>
                                     showToast({
                                       title: 'Akta Ikrar Wakaf (AIW)',
-                                      description: `Mengunduh sertifikat resmi ${w.sertifikatNo} a.n. ${w.name}...`,
+                                      description: `Membuka sertifikat resmi ${w.sertifikatNo} a.n. ${w.name}...`,
                                       type: 'info',
                                     })
                                   }
@@ -1417,9 +1841,10 @@ export function WakafProgramsView() {
                             </td>
                           </tr>
                         ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1457,7 +1882,7 @@ export function WakafProgramsView() {
                   <div className="p-3 bg-white rounded-xl border border-slate-200">
                     <span className="text-[10px] text-slate-500 font-bold block">Status Nazhir Terdaftar</span>
                     <span className="font-bold text-slate-900 block mt-0.5">
-                      Yayasan Waqf Al-Kautsar Nusantara
+                      {selectedProgram.bankAccountHolder || 'Yayasan Manarul Ilmi ITS (YMI ITS)'}
                     </span>
                     <span className="text-[10px] font-mono text-emerald-700">
                       No. Registrasi: BWI.3.1.0028/2024
@@ -1475,7 +1900,7 @@ export function WakafProgramsView() {
                       Pemeriksaan Dewan Pengawas Syariah
                     </span>
                     <span className="font-bold text-emerald-800 block mt-0.5">Opini Syariah Terpenuhi (WTP)</span>
-                    <span className="text-[10px] text-slate-500">DPS: Dr. H. Anwar Sadat, M.Ag.</span>
+                    <span className="text-[10px] text-slate-500">DPS: Dewan Pengawas Syariah YMI ITS</span>
                   </div>
                 </div>
 
@@ -1500,9 +1925,7 @@ export function WakafProgramsView() {
                     </li>
                     <li>
                       Sertifikat Akta Ikrar Wakaf (AIW) terbit:{' '}
-                      <strong>
-                        {wakifList.filter((w) => w.programId === selectedProgram.id).length} Lembar Resmi
-                      </strong>
+                      <strong>{currentWakifList.length} Lembar Resmi</strong>
                     </li>
                   </ul>
                 </div>
@@ -1512,7 +1935,7 @@ export function WakafProgramsView() {
         </div>
       )}
 
-      {/* MODAL FORM PEMBUATAN PROGRAM BARU */}
+      {/* MODAL FORM PEMBUATAN / EDIT PROGRAM BARU */}
       {showModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col my-auto overflow-hidden animate-in fade-in zoom-in-95">
@@ -1520,9 +1943,9 @@ export function WakafProgramsView() {
               <div>
                 <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                   <Layers className="w-5 h-5 text-emerald-800" />
-                  {editingProgramId ? 'Edit Program Donasi' : 'Form Pembuatan Program Baru'}
+                  {editingProgramId ? 'Edit Program Wakaf' : 'Form Pembuatan Program Baru'}
                 </h3>
-                <p className="text-xs text-slate-500">Lengkapi data program untuk diterbitkan di Amwal Platform</p>
+                <p className="text-xs text-slate-500">Lengkapi data program untuk diterbitkan di Amwal Platform &amp; PostgreSQL DB</p>
               </div>
               <button
                 type="button"
@@ -1541,7 +1964,7 @@ export function WakafProgramsView() {
                   <span>Rekomendasi Kata Kunci Instan:</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {['Sekolah', 'Masjid', 'Sosial', 'Kesehatan', 'Air Bersih', 'Pemberdayaan'].map((badge) => (
+                  {['Infrastruktur & Sosial', 'Pendidikan & Dakwah', 'Kesehatan', 'Air Bersih', 'Agrobisnis', 'Masjid'].map((badge) => (
                     <button
                       key={badge}
                       type="button"
@@ -1560,7 +1983,7 @@ export function WakafProgramsView() {
                 <input
                   type="text"
                   required
-                  placeholder="Contoh: Pembangunan Gedung Sekolah Yatim"
+                  placeholder="Contoh: Wakaf Pembangunan Gedung Asrama Tahfidz"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold"
@@ -1578,6 +2001,26 @@ export function WakafProgramsView() {
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900"
                 />
               </div>
+
+              {/* Nadzir Profile Selector */}
+              {nadzirProfiles.length > 0 && (
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1 flex items-center gap-1">
+                    <Building2 className="w-3.5 h-3.5 text-emerald-700" /> Lembaga Nadzir Pengelola
+                  </label>
+                  <select
+                    value={formData.nadzirProfileId}
+                    onChange={(e) => setFormData({ ...formData, nadzirProfileId: e.target.value })}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold bg-white"
+                  >
+                    {nadzirProfiles.map((np) => (
+                      <option key={np.id} value={np.id}>
+                        {np.namaLembaga || 'Yayasan Manarul Ilmi ITS (YMI ITS)'} ({np.namaBank || 'BSI'} - {np.nomorRekeningBank || 'Rekening Operasional'})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Unggah Banner dengan Tombol Pilih File & Live Preview Gambar */}
               <div className="p-3.5 bg-slate-50/90 rounded-xl border border-slate-200 space-y-3">
@@ -1615,7 +2058,7 @@ export function WakafProgramsView() {
                         </p>
                       </div>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        PNG, JPG, WEBP, GIF (Maks. 5MB)
+                        PNG, JPG, WEBP (Maks. 5MB)
                       </span>
                     </div>
 
@@ -1632,7 +2075,7 @@ export function WakafProgramsView() {
                   </div>
 
                   {/* Banner Preview */}
-                  <div className="bg-white p-2.5 rounded-xl border border-slate-200 space-y-2 h-full flex flex-col justify-between">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-2 h-full flex flex-col justify-between">
                     <div className="flex items-center justify-between text-[11px]">
                       <span className="font-bold text-slate-800 flex items-center gap-1">
                         <Eye className="w-3.5 h-3.5 text-emerald-700" /> Preview Gambar Banner
@@ -1649,13 +2092,11 @@ export function WakafProgramsView() {
                     </div>
 
                     {formData.bannerUrl ? (
-                      <div className="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100 h-28 sm:h-32 group">
-                        <Image
+                      <div className="aspect-[16/9] w-full max-h-52 rounded-xl overflow-hidden border border-slate-200 bg-slate-50 relative group">
+                        <img
                           src={formData.bannerUrl}
                           alt="Preview Banner Program"
-                          fill
-                          className="object-cover"
-                          unoptimized
+                          className="w-full h-full object-cover"
                         />
                         <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
                           <button
@@ -1666,12 +2107,12 @@ export function WakafProgramsView() {
                             <RefreshCw className="w-3 h-3 text-emerald-800" /> Ganti Gambar
                           </button>
                         </div>
-                        <span className="absolute bottom-1.5 right-1.5 bg-emerald-900/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full backdrop-blur-2xs">
+                        <span className="absolute bottom-2 left-2 bg-slate-900/75 text-white text-[11px] px-2.5 py-1 rounded">
                           Preview Gambar Siap Terbit
                         </span>
                       </div>
                     ) : (
-                      <div className="rounded-lg border-2 border-dashed border-slate-200 bg-slate-50 h-28 sm:h-32 flex flex-col items-center justify-center text-slate-400 gap-1 text-[11px]">
+                      <div className="aspect-[16/9] w-full max-h-52 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center text-slate-400 gap-1 text-[11px]">
                         <Eye className="w-6 h-6 text-slate-300" />
                         <span>Belum Ada File Gambar Dipilih</span>
                       </div>
@@ -1713,7 +2154,7 @@ export function WakafProgramsView() {
                   </label>
                   <input
                     type="text"
-                    placeholder="Contoh: BSI - 7182938475 a.n. Amwal"
+                    placeholder="Contoh: BSI - 711-889-2234 a.n. YMI"
                     value={formData.bankAccount}
                     onChange={(e) => setFormData({ ...formData, bankAccount: e.target.value })}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900"
@@ -1731,14 +2172,15 @@ export function WakafProgramsView() {
                     <label className="font-semibold text-slate-700 block mb-1">Provinsi</label>
                     <select
                       value={formData.province}
-                      onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                      onChange={(e) => handleProvinceChange(e.target.value)}
                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold bg-white"
                     >
-                      <option value="Jawa Barat">Jawa Barat</option>
-                      <option value="DKI Jakarta">DKI Jakarta</option>
-                      <option value="Jawa Tengah">Jawa Tengah</option>
-                      <option value="Jawa Timur">Jawa Timur</option>
-                      <option value="Banten">Banten</option>
+                      <option value="">-- Pilih Provinsi --</option>
+                      {provincesList.map((p) => (
+                        <option key={p.kode} value={p.nama}>
+                          {p.nama}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -1747,21 +2189,23 @@ export function WakafProgramsView() {
                     <select
                       value={formData.city}
                       onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold bg-white"
+                      disabled={!formData.province || isLoadingCities}
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold bg-white disabled:opacity-60"
                     >
-                      <option value="Kab. Sukabumi">Kab. Sukabumi</option>
-                      <option value="Jakarta Selatan">Jakarta Selatan</option>
-                      <option value="Kota Bandung">Kota Bandung</option>
-                      <option value="Kab. Gunungkidul">Kab. Gunungkidul</option>
-                      <option value="Kota Surabaya">Kota Surabaya</option>
+                      <option value="">{isLoadingCities ? 'Memuat Kab/Kota...' : '-- Pilih Kabupaten / Kota --'}</option>
+                      {citiesList.map((c) => (
+                        <option key={c.kode} value={c.nama}>
+                          {c.nama}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="font-semibold text-slate-700 block mb-1">Detail Alamat / Kec.</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Detail Alamat / Lokasi</label>
                     <input
                       type="text"
-                      placeholder="Kec. Cisaat, Desa Maju"
+                      placeholder="Kampus Sukolilo ITS Surabaya"
                       value={formData.locationDetail}
                       onChange={(e) => setFormData({ ...formData, locationDetail: e.target.value })}
                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 bg-white"
@@ -1771,7 +2215,7 @@ export function WakafProgramsView() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="font-semibold text-slate-700 block mb-1">Jenis Wakaf</label>
+                    <label className="font-semibold text-slate-700 block mb-1">Akad / Jenis Wakaf</label>
                     <select
                       value={formData.jenisWakaf}
                       onChange={(e) =>
@@ -1782,8 +2226,8 @@ export function WakafProgramsView() {
                       }
                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold bg-white"
                     >
-                      <option value="Wakaf Uang">Wakaf Uang</option>
-                      <option value="Wakaf Melalui Uang">Wakaf Melalui Uang</option>
+                      <option value="Wakaf Uang">Wakaf Uang (Produktif Kekal)</option>
+                      <option value="Wakaf Melalui Uang">Wakaf Melalui Uang (Habis Pakai)</option>
                     </select>
                   </div>
 
@@ -1794,44 +2238,15 @@ export function WakafProgramsView() {
                       onChange={(e) => setFormData({ ...formData, kategori: e.target.value })}
                       className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-800 focus:outline-hidden text-slate-900 font-semibold bg-white"
                     >
-                      <option value="Sekolah">Sekolah / Pendidikan</option>
-                      <option value="Masjid">Masjid / Keagamaan</option>
-                      <option value="Sosial">Sosial / Kemanusiaan</option>
-                      <option value="Kesehatan">Kesehatan / RS</option>
-                      <option value="Air Bersih">Air Bersih &amp; Sanitasi</option>
+                      <option value="Infrastruktur & Sosial">Infrastruktur &amp; Sosial</option>
+                      <option value="Pendidikan & Dakwah">Pendidikan &amp; Dakwah</option>
+                      <option value="Kesehatan">Kesehatan</option>
+                      <option value="Air Bersih">Air Bersih</option>
+                      <option value="Agrobisnis">Agrobisnis</option>
+                      <option value="Masjid">Masjid</option>
+                      <option value="Wakaf Produktif & Agrobisnis">Wakaf Produktif &amp; Agrobisnis</option>
                     </select>
                   </div>
-                </div>
-              </div>
-
-              {/* Radio: Menerima Wakaf Barang */}
-              <div className="p-3 bg-slate-50/90 rounded-xl border border-slate-200">
-                <label className="font-bold text-slate-800 block mb-1 text-xs">
-                  Menerima Wakaf Barang / Material?
-                </label>
-                <div className="flex flex-wrap items-center gap-6 pt-1">
-                  <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-900 text-xs">
-                    <input
-                      type="radio"
-                      name="menerimaWakafBarang"
-                      value="Ya"
-                      checked={formData.menerimaWakafBarang === 'Ya'}
-                      onChange={() => setFormData({ ...formData, menerimaWakafBarang: 'Ya' })}
-                      className="text-emerald-800 focus:ring-emerald-600"
-                    />
-                    <span>Ya (Menerima material semen, tanah, alat, dll.)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-900 text-xs">
-                    <input
-                      type="radio"
-                      name="menerimaWakafBarang"
-                      value="Tidak"
-                      checked={formData.menerimaWakafBarang === 'Tidak'}
-                      onChange={() => setFormData({ ...formData, menerimaWakafBarang: 'Tidak' })}
-                      className="text-emerald-800 focus:ring-emerald-600"
-                    />
-                    <span>Tidak (Hanya Dana Tunai)</span>
-                  </label>
                 </div>
               </div>
 
@@ -1839,16 +2254,18 @@ export function WakafProgramsView() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
+                  disabled={isLoading}
                   className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-100 transition cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                  disabled={isLoading}
+                  className="px-4 py-2 rounded-xl bg-emerald-900 hover:bg-emerald-800 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50"
                 >
                   <Check className="w-4 h-4" />
-                  <span>Terbitkan Program</span>
+                  <span>{isLoading ? 'Menyimpan...' : editingProgramId ? 'Simpan Perubahan' : 'Terbitkan Program'}</span>
                 </button>
               </div>
             </form>
@@ -1863,7 +2280,7 @@ export function WakafProgramsView() {
             <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0">
               <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
                 <DollarSign className="w-5 h-5 text-amber-600" />
-                Pengajuan Penarikan Dana
+                Pengajuan Penarikan Dana Termin
               </h3>
               <button
                 type="button"
@@ -1880,7 +2297,7 @@ export function WakafProgramsView() {
                 <span className="font-bold text-slate-900 block">{selectedProgram.name}</span>
                 <span className="text-slate-500 block mt-1">Rekening Tujuan:</span>
                 <span className="font-mono font-bold text-emerald-800 block">
-                  {selectedProgram.bankAccount || selectedProgram.bankName}
+                  {selectedProgram.bankAccount || selectedProgram.bankName || 'BSI Escrow YMI'}
                 </span>
               </div>
 
@@ -1897,11 +2314,11 @@ export function WakafProgramsView() {
               </div>
 
               <div>
-                <label className="font-bold text-slate-800 block mb-1">Catatan Alokasi Penggunaan *</label>
+                <label className="font-bold text-slate-800 block mb-1">Tahap / Peruntukan Alokasi *</label>
                 <textarea
                   rows={2}
                   required
-                  placeholder="Penjelasan peruntukan pencairan (misal: Pembayaran tahap 2 pondasi)..."
+                  placeholder="Penjelasan peruntukan pencairan (misal: Termin II - Pengadaan Pipa & Pengecoran Lantai)..."
                   value={withdrawNote}
                   onChange={(e) => setWithdrawNote(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-amber-500 focus:outline-hidden text-slate-900"
@@ -1922,6 +2339,130 @@ export function WakafProgramsView() {
                 >
                   <Check className="w-4 h-4" />
                   <span>Kirim Pengajuan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: TOLAK PENARIKAN DANA DENGAN ALASAN */}
+      {rejectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col my-auto overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0">
+              <h3 className="font-bold text-base text-rose-800 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-rose-600" />
+                Tolak Pengajuan Penarikan Dana
+              </h3>
+              <button
+                type="button"
+                onClick={() => setRejectModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRejectWithdrawalConfirm} className="p-4 sm:p-5 space-y-3 text-xs overflow-y-auto grow">
+              <div className="p-3 bg-rose-50 rounded-xl border border-rose-200 text-rose-900 text-[11px]">
+                Sesuai audit syariah, pengajuan penarikan dana yang ditolak <strong>wajib mencantumkan alasan penolakan</strong> secara transparan.
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Alasan Penolakan *</label>
+                <textarea
+                  rows={3}
+                  required
+                  placeholder="Contoh: Dokumen BAP progres fisik belum diverifikasi Dewan Pengawas Syariah / Kuitansi belanja belum sesuai..."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:outline-hidden text-slate-900"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setRejectModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Konfirmasi Penolakan</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CATAT BAGI HASIL WAKAF PRODUKTIF */}
+      {showYieldModal && selectedProgram && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col my-auto overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between p-4 sm:p-5 pb-3 border-b border-slate-100 shrink-0">
+              <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-emerald-800" />
+                Pencatatan Bagi Hasil Wakaf Produktif
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowYieldModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRecordYield} className="p-4 sm:p-5 space-y-3 text-xs overflow-y-auto grow">
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-[11px]">
+                Dana hasil usaha/investasi akan dicatat ke <strong>WaqfYieldEntry</strong> dan meng-increment <strong>totalHasilAvailable</strong> pada WaqfPrincipalLedger (pokok dana tetap utuh).
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Nominal Surplus Hasil (Rp) *</label>
+                <input
+                  type="number"
+                  required
+                  placeholder="Contoh: 7500000"
+                  value={yieldAmount}
+                  onChange={(e) => setYieldAmount(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-700 focus:outline-hidden text-slate-900 font-extrabold text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Sumber Pendapatan / Penjelasan Usaha *</label>
+                <textarea
+                  rows={2}
+                  required
+                  placeholder="Contoh: Hasil panen pisang cavendish siklus I atau deviden sewa lahan produktif..."
+                  value={yieldDescription}
+                  onChange={(e) => setYieldDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-700 focus:outline-hidden text-slate-900"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setShowYieldModal(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 font-bold hover:bg-slate-100 transition cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 rounded-xl bg-[#1B5E20] hover:bg-[#144716] text-white font-extrabold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Simpan ke Ledger Hasil</span>
                 </button>
               </div>
             </form>
