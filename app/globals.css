@@ -269,3 +269,9 @@ body {
   color: var(--color-text-primary);
   background: var(--color-bg-default);
 }
+
+/* Ensure Next.js dev indicator stays at bottom-right and does not overlap sidebar avatar */
+nextjs-portal {
+  right: 16px !important;
+  left: auto !important;
+}

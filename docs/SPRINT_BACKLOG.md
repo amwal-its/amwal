@@ -911,9 +911,9 @@ handler konsolidasi yang sudah ada dari FIX 4 Sprint 3-4)
 - **Setelah** status jadi `LUNAS`: panggil `sendWhatsAppNotification()` (fungsi baru, lihat Task 9.2) secara **best-effort** — bungkus try-catch terpisah, kegagalan WA **tidak boleh** menggagalkan proses inti (update ledger tetap jalan meski WA gagal kirim)
 
 **Acceptance Criteria (DoD):**
-- [ ] Transaksi sungguhan dari Sandbox Simulator Midtrans (bukan mock internal) berhasil diproses end-to-end untuk ketiga modul
-- [ ] Signature invalid → 403, tidak ada perubahan data
-- [ ] Kegagalan `sendWhatsAppNotification()` (simulasikan service down) TIDAK menyebabkan update ledger gagal/rollback
+- [x] Transaksi sungguhan dari Sandbox Simulator Midtrans (bukan mock internal) berhasil diproses end-to-end untuk ketiga modul
+- [x] Signature invalid → 403, tidak ada perubahan data
+- [x] Kegagalan `sendWhatsAppNotification()` (simulasikan service down) TIDAK menyebabkan update ledger gagal/rollback
 
 ---
 
@@ -936,9 +936,9 @@ handler konsolidasi yang sudah ada dari FIX 4 Sprint 3-4)
 - Panel Admin: tampilkan QR code (base64 dari service) untuk discan, status koneksi (`connected`/`disconnected`/`qr_pending`)
 
 **Acceptance Criteria (DoD):**
-- [ ] Service berjalan independen dari `amwalheti`, tetap hidup meski `amwalheti` di-redeploy
-- [ ] QR muncul di panel Admin, scan berhasil → status berubah `connected`
-- [ ] `sendWhatsAppNotification()` gagal (service mati) → tidak melempar error ke pemanggilnya, cukup log + return `false`
+- [x] Service berjalan independen dari `amwalheti`, tetap hidup meski `amwalheti` di-redeploy
+- [x] QR muncul di panel Admin, scan berhasil → status berubah `connected`
+- [x] `sendWhatsAppNotification()` gagal (service mati) → tidak melempar error ke pemanggilnya, cukup log + return `false`
 
 ---
 
@@ -951,8 +951,8 @@ handler konsolidasi yang sudah ada dari FIX 4 Sprint 3-4)
 - Sediakan fungsi ini sebagai **export reusable** dari `lib/notification-templates.ts` supaya Awan/Naufal tinggal pakai pola sama untuk Zakat/Qurban di Task 9.6/9.8, bukan menulis ulang dari nol
 
 **Acceptance Criteria (DoD):**
-- [ ] Pesan terkirim (via service Baileys) berisi nama/anonim sesuai `isAnonymous`, nominal benar, link sertifikat valid
-- [ ] Fungsi template terpisah dari logic pengiriman, mudah dipakai modul lain
+- [x] Pesan terkirim (via service Baileys) berisi nama/anonim sesuai `isAnonymous`, nominal benar, link sertifikat valid
+- [x] Fungsi template terpisah dari logic pengiriman, mudah dipakai modul lain
 
 ---
 
@@ -965,8 +965,8 @@ handler konsolidasi yang sudah ada dari FIX 4 Sprint 3-4)
 - Perbaiki 3 quick-fix dari audit di atas (RBAC guard, label KPI, definisi "Donatur Terdaftar") — meski ditemukan di halaman `admin/page.tsx` overview, kerjakan sekalian karena satu file yang sama
 
 **Acceptance Criteria (DoD):**
-- [ ] Semua 3 quick-fix di atas closed
-- [ ] Approve/reject withdrawal & yield entry berfungsi penuh dari UI (bukan cuma via API test)
+- [x] Semua 3 quick-fix di atas closed
+- [x] Approve/reject withdrawal & yield entry berfungsi penuh dari UI (bukan cuma via API test)
 
 ---
 

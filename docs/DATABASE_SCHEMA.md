@@ -544,7 +544,11 @@ Table fund_pools {
   created_at timestamp [not null, default: `now()`]
   updated_at timestamp [not null]
 
-  Note: 'Ledger pembukuan agregat murni, BUKAN penampungan dana nyata — prinsip non-custodial tetap berlaku, dana tetap mengalir langsung via disbursementDestination di setiap Transaction.'
+  Note: '''
+  FundPool adalah ledger pembukuan agregasi saldo murni untuk pooling ZISWAF fleksibel (ZAKAT_MAAL, ZAKAT_FITRAH, INFAQ_UMUM, DSB).
+  BUKAN penampungan/custody dana nyata — prinsip non-custodial tetap berlaku 100%, di mana dana fisik tetap mengalir langsung ke rekening bank syariah resmi YMI ITS melalui disbursementDestination pada setiap Transaction.
+  FundPool mempermudah kalkulasi alokasi 8 Asnaf mustahik dan audit transparansi penyaluran zakat.
+  '''
 }
 
 // ------------------------------------------------------------

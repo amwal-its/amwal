@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect');
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +53,18 @@ export function LoginForm() {
         return;
       }
 
-      router.push('/dashboard');
+      // Determine redirect target
+      if (callbackUrl) {
+        router.push(callbackUrl);
+      } else if (data.user?.role === 'ADMIN') {
+        router.push('/admin');
+      } else if (data.user?.role === 'NADZIR') {
+        router.push('/admin/wakaf');
+      } else if (data.user?.role === 'PETUGAS_LAPANGAN') {
+        router.push('/amil');
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (err) {
       console.error('Login error:', err);
@@ -216,4 +229,3 @@ export function LoginForm() {
     </div>
   );
 }
-

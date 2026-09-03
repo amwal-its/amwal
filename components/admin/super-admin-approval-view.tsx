@@ -145,6 +145,11 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
   };
 
   const handleNadzirAction = async (nadzirId: string, status: 'VERIFIED' | 'REJECTED') => {
+    if (status === 'REJECTED' && !nadzirNotes.trim()) {
+      setFeedbackMessage({ type: 'error', text: 'Catatan alasan penolakan wajib diisi.' });
+      return;
+    }
+
     setIsProcessing(true);
     setFeedbackMessage(null);
 
@@ -178,6 +183,11 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
   };
 
   const handleWithdrawalAction = async (withdrawalId: string, status: 'APPROVED' | 'REJECTED') => {
+    if (status === 'REJECTED' && !withdrawalNotes.trim()) {
+      setFeedbackMessage({ type: 'error', text: 'Catatan alasan penolakan pencairan wajib diisi.' });
+      return;
+    }
+
     setIsProcessing(true);
     setFeedbackMessage(null);
 

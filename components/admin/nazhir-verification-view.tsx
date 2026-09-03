@@ -75,6 +75,11 @@ export function NazhirVerificationView({ initialNadzirs }: NazhirVerificationVie
   });
 
   const handleVerifyAction = async (nadzirId: string, status: 'VERIFIED' | 'REJECTED') => {
+    if (status === 'REJECTED' && !adminNotes.trim()) {
+      setFeedback({ type: 'error', text: 'Catatan verifikasi (alasan penolakan) wajib diisi untuk menolak permohonan.' });
+      return;
+    }
+
     setIsProcessing(true);
     setFeedback(null);
 
@@ -367,9 +372,10 @@ export function NazhirVerificationView({ initialNadzirs }: NazhirVerificationVie
 
               <button
                 type="button"
-                disabled={isProcessing}
+                disabled={isProcessing || !adminNotes.trim()}
                 onClick={() => handleVerifyAction(selectedNadzir.id, 'REJECTED')}
-                className="px-4 h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer disabled:opacity-50"
+                className="px-4 h-11 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs rounded-xl border border-rose-200 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!adminNotes.trim() ? 'Wajib mengisi catatan verifikasi alasan penolakan' : 'Tolak permohonan'}
               >
                 Tolak
               </button>
