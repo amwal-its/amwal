@@ -903,7 +903,7 @@ export function WakafProgramsView({
   const currentWakifList = selectedProgram?.wakifList || [];
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 py-6 max-w-7xl mx-auto font-jakarta">
+    <div className="space-y-6">
       {/* ========================================================================= */}
       {/* 1. HALAMAN UTAMA: DAFTAR PROGRAM WAKAF & KELOLA                           */}
       {/* ========================================================================= */}
@@ -913,10 +913,15 @@ export function WakafProgramsView({
           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-card">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
               <div>
-                <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-emerald-800" />
-                  Manajemen &amp; Pengawasan Program Wakaf
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-emerald-800" />
+                    Manajemen &amp; Pengawasan Program Wakaf
+                  </h1>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                    using dummy data
+                  </span>
+                </div>
                 <p className="text-xs text-slate-500 mt-1">
                   Pusat pembuatan program baru, pemantauan slider progres fisik lapangan, upload kuitansi digital, dan tata kelola pencairan termin bertahap Nadzir.
                 </p>

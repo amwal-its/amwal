@@ -7,11 +7,9 @@ import {
   Search,
   Download,
   CheckCircle2,
-  Clock,
   Filter,
   User,
   CreditCard,
-  Building2,
   Receipt,
   TrendingUp,
   Wallet,
@@ -180,8 +178,8 @@ export function TransparencyLogsView() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
           <div>
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <FileSpreadsheet className="w-5 h-5 text-emerald-800" />
-              Transparansi Transaksi & Buku Besar Audit Akuntabilitas
+              <FileSpreadsheet size={20} className="text-emerald-800 shrink-0" />
+              Transparansi Transaksi &amp; Buku Besar Audit Akuntabilitas
             </h2>
             <p className="text-xs text-slate-500 mt-1">
               Catatan publik transaksi donatur real-time dengan pilihan Jenis Akad pasca-pembayaran, serta log audit fisik proyek.
@@ -199,7 +197,7 @@ export function TransparencyLogsView() {
               }
               className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer"
             >
-              <Download className="w-4 h-4" />
+              <Download size={16} className="shrink-0" />
               Cetak Laporan Transparansi (PDF)
             </button>
           </div>
@@ -215,7 +213,7 @@ export function TransparencyLogsView() {
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            <CreditCard className="w-4 h-4" />
+            <CreditCard size={16} className="shrink-0" />
             <span>Tabel Transparansi Transaksi ({transactions.length})</span>
           </button>
 
@@ -227,33 +225,95 @@ export function TransparencyLogsView() {
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Audit Pencairan & Progres Fisik ({auditLogs.length})</span>
+            <ShieldCheck size={16} className="shrink-0" />
+            <span>Buku Besar Audit Akuntabilitas ({auditLogs.length})</span>
           </button>
         </div>
+      </div>
 
-        {/* Audit Stats */}
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-            <span className="text-slate-500 font-semibold flex items-center justify-between">
-              <span>Total Penghimpunan Masuk</span>
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                {transactions.length} Transaksi
+      {/* 1. Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-card">
+          <div className="flex items-center justify-between text-slate-500 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">Total Transaksi Transparan</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                using dummy data
               </span>
+            </div>
+            <Receipt size={20} className="text-emerald-800 shrink-0" />
+          </div>
+          <div className="text-2xl font-black text-slate-900">1.420</div>
+          <span className="text-[11px] text-emerald-800 font-semibold mt-1 block">
+            Tercatat di Ledger Digital
+          </span>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-card">
+          <div className="flex items-center justify-between text-slate-500 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">Volume Terverifikasi</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                using dummy data
+              </span>
+            </div>
+            <TrendingUp size={20} className="text-emerald-800 shrink-0" />
+          </div>
+          <div className="text-2xl font-black text-slate-900">Rp 2.85 Milyar</div>
+          <span className="text-[11px] text-emerald-800 font-semibold mt-1 block">
+            Total Multi-Akad Lunas
+          </span>
+        </div>
+
+        <div className="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-card">
+          <div className="flex items-center justify-between text-slate-500 mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold uppercase tracking-wider">Kepatuhan Syariah DPS</span>
+              <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                using dummy data
+              </span>
+            </div>
+            <Landmark size={20} className="text-emerald-800 shrink-0" />
+          </div>
+          <div className="text-2xl font-black text-slate-900">100%</div>
+          <span className="text-[11px] text-emerald-800 font-semibold mt-1 block">
+            Sesuai Fatwa DSN-MUI &amp; UU 41/2004
+          </span>
+        </div>
+      </div>
+
+      {/* Snapshot Realisasi Program Utama */}
+      <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+              Snapshot Alokasi &amp; Realisasi Program Utama:
+            </h3>
+            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+              using dummy data
             </span>
+          </div>
+          <span className="text-xs font-bold text-emerald-800">
+            Waqf Pembangunan Klinik Air Bersih Al-Azhar
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+            <span className="text-slate-500 font-semibold block">Total Dana Terhimpun</span>
             <span className="text-xl font-black text-slate-900 mt-1 block">Rp 293.500.000</span>
-            <span className="text-[11px] text-slate-500 mt-1 block">Tercatat aman di buku kas publik</span>
+            <span className="text-[11px] text-slate-400 mt-1 block">Dari 180 Donatur (Waqf Uang &amp; Infaq)</span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
             <span className="text-slate-500 font-semibold flex items-center justify-between">
-              <span>Saldo Kas & Dana Tersedia</span>
+              <span>Saldo Kas &amp; Dana Tersedia</span>
               <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
                 68.3% Siap Salur
               </span>
             </span>
             <span className="text-xl font-black text-emerald-800 mt-1 block flex items-center gap-1.5">
-              <Wallet className="w-5 h-5 text-emerald-800 shrink-0" />
+              <Wallet size={20} className="text-emerald-800 shrink-0" />
               <span>Rp 200.450.000</span>
             </span>
             <span className="text-[11px] text-slate-500 mt-1 block">Tersimpan aman di Rekening Bank Penampung</span>
@@ -261,16 +321,16 @@ export function TransparencyLogsView() {
 
           <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
             <span className="text-slate-500 font-semibold flex items-center justify-between">
-              <span>Realisasi Penyaluran & Audit</span>
+              <span>Realisasi Penyaluran &amp; Audit</span>
               <span className="text-[10px] font-bold text-slate-700 bg-slate-200/80 px-1.5 py-0.5 rounded">
                 31.7% Tersalur
               </span>
             </span>
             <span className="text-xl font-black text-slate-900 mt-1 block flex items-center gap-1.5">
-              <Receipt className="w-5 h-5 text-emerald-800 shrink-0" />
+              <Receipt size={20} className="text-emerald-800 shrink-0" />
               <span>Rp 93.050.000</span>
             </span>
-            <span className="text-[11px] text-slate-500 mt-1 block">{auditLogs.length} Log fisik & kuitansi sah tervalidasi</span>
+            <span className="text-[11px] text-slate-500 mt-1 block">{auditLogs.length} Log fisik &amp; kuitansi sah tervalidasi</span>
           </div>
         </div>
       </div>
@@ -281,7 +341,7 @@ export function TransparencyLogsView() {
           <div className="p-4 bg-slate-50/50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
               <div className="relative w-full sm:w-80">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 shrink-0" />
                 <input
                   type="text"
                   placeholder="Cari nama donatur, ID transaksi, atau program..."
@@ -293,11 +353,11 @@ export function TransparencyLogsView() {
 
               {/* Filter Jenis Akad */}
               <div className="flex items-center gap-2">
-                <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <Filter size={14} className="text-slate-400 shrink-0" />
                 <select
                   value={filterAkad}
                   onChange={(e) => setFilterAkad(e.target.value)}
-                  className="bg-white text-slate-800 text-xs px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:ring-2 focus:ring-emerald-700 focus:outline-none"
+                  className="bg-white text-slate-800 text-xs px-3 py-2 rounded-xl border border-slate-200 font-semibold focus:ring-2 focus:ring-emerald-700 focus:outline-none cursor-pointer"
                 >
                   <option value="SEMUA">Semua Jenis Akad</option>
                   <option value="Wakaf Uang">Wakaf Uang</option>
@@ -309,16 +369,21 @@ export function TransparencyLogsView() {
               </div>
             </div>
 
-            <span className="text-xs text-slate-500 font-medium shrink-0">
-              Menampilkan <strong className="text-slate-900">{filteredTransactions.length}</strong> transaksi terverifikasi
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                using dummy data
+              </span>
+              <span className="text-xs text-slate-500 font-medium shrink-0">
+                Menampilkan <strong className="text-slate-900">{filteredTransactions.length}</strong> transaksi terverifikasi
+              </span>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[750px] text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                  <th className="py-3 px-4">Nama Donatur & ID</th>
+                  <th className="py-3 px-4">Nama Donatur &amp; ID</th>
                   <th className="py-3 px-3">Nominal Donasi</th>
                   <th className="py-3 px-3 bg-emerald-50/60 text-emerald-900 font-extrabold border-x border-emerald-200/60">
                     Spesifik Jenis Akad Pasca-Bayar
@@ -338,7 +403,7 @@ export function TransparencyLogsView() {
                         {isAnon ? (
                           <>
                             <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                              <ShieldCheck className="w-3.5 h-3.5 text-emerald-800 shrink-0" />
+                              <ShieldCheck size={14} className="text-emerald-800 shrink-0" />
                               <span>Hamba Allah</span>
                               <span className="px-1.5 py-0.5 text-[9px] font-bold bg-amber-100 text-amber-800 rounded border border-amber-200">
                                 Anonim
@@ -349,7 +414,7 @@ export function TransparencyLogsView() {
                         ) : (
                           <>
                             <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                              <User className="w-3.5 h-3.5 text-emerald-800 shrink-0" />
+                              <User size={14} className="text-slate-400 shrink-0" />
                               <span>{tx.donorName}</span>
                             </div>
                             <div className="text-[10px] text-slate-400 font-mono pl-5">{tx.id} • {tx.donorType}</div>
@@ -357,51 +422,50 @@ export function TransparencyLogsView() {
                         )}
                       </td>
 
-                      <td className="py-3.5 px-3 whitespace-nowrap font-black text-slate-900 text-sm">
+                      <td className="py-3.5 px-3 whitespace-nowrap font-extrabold text-slate-900">
                         {formatRupiah(tx.amount)}
                       </td>
 
-                    <td className="py-3.5 px-3 whitespace-nowrap bg-emerald-50/40 border-x border-emerald-100">
-                      <span className="px-2.5 py-1 rounded-lg text-xs font-black bg-emerald-800 text-white shadow-2xs inline-block">
-                        {tx.jenisAkad}
-                      </span>
-                    </td>
+                      <td className="py-3.5 px-3 whitespace-nowrap bg-emerald-50/30 border-x border-emerald-100">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 inline-block">
+                          {tx.jenisAkad}
+                        </span>
+                      </td>
 
-                    <td className="py-3.5 px-3 whitespace-nowrap text-slate-600 font-medium">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        <span>{tx.timestamp}</span>
-                      </div>
-                    </td>
+                      <td className="py-3.5 px-3 whitespace-nowrap text-slate-500 text-[11px]">
+                        {tx.timestamp}
+                      </td>
 
-                    <td className="py-3.5 px-3 max-w-xs">
-                      <div className="font-semibold text-slate-800 line-clamp-1">{tx.program}</div>
-                    </td>
+                      <td className="py-3.5 px-3">
+                        <div className="font-medium text-slate-800 max-w-xs truncate" title={tx.program}>
+                          {tx.program}
+                        </div>
+                      </td>
 
-                    <td className="py-3.5 px-3 whitespace-nowrap text-slate-500 font-mono text-[11px]">
-                      {tx.paymentMethod}
-                    </td>
+                      <td className="py-3.5 px-3 whitespace-nowrap text-slate-600 font-mono text-[11px]">
+                        {tx.paymentMethod}
+                      </td>
 
-                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900 border border-emerald-300 inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-700" /> {tx.status}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300 inline-flex items-center gap-1">
+                          <CheckCircle2 size={12} className="text-emerald-700 shrink-0" /> LUNAS &amp; AUDITED
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
       )}
 
-      {/* TAB 2: AUDIT PENCAIRAN & PROGRES FISIK */}
+      {/* TAB 2: BUKU BESAR AUDIT AKUNTABILITAS FISIK */}
       {activeTab === 'audit' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-card overflow-hidden">
           <div className="p-4 bg-slate-50/50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 shrink-0" />
               <input
                 type="text"
                 placeholder="Cari ID Log, Program, atau Aktivitas..."
@@ -410,16 +474,21 @@ export function TransparencyLogsView() {
                 className="w-full bg-white text-slate-800 text-xs pl-9 pr-3 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-700"
               />
             </div>
-            <span className="text-xs text-slate-500 font-medium">
-              Menampilkan <strong className="text-slate-900">{filteredAuditLogs.length}</strong> log audit terverifikasi
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                using dummy data
+              </span>
+              <span className="text-xs text-slate-500 font-medium">
+                Menampilkan <strong className="text-slate-900">{filteredAuditLogs.length}</strong> log audit terverifikasi
+              </span>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] text-left text-xs border-collapse">
               <thead>
                 <tr className="bg-slate-100/70 border-b border-slate-200 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
-                  <th className="py-3 px-4">Log ID & Waktu</th>
+                  <th className="py-3 px-4">Log ID &amp; Waktu</th>
                   <th className="py-3 px-3">Program Waqf</th>
                   <th className="py-3 px-3">Aktivitas Fisik</th>
                   <th className="py-3 px-3">Progres Fisik</th>
@@ -458,7 +527,7 @@ export function TransparencyLogsView() {
 
                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
                       <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-900 border border-emerald-300 inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-700" /> AUDITED
+                        <CheckCircle2 size={12} className="text-emerald-700 shrink-0" /> AUDITED
                       </span>
                     </td>
                   </tr>
@@ -471,3 +540,5 @@ export function TransparencyLogsView() {
     </div>
   );
 }
+
+export default TransparencyLogsView;

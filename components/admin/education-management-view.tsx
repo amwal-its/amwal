@@ -73,7 +73,6 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
-import { DrmSimulationBanner } from '@/components/admin/drm-simulation-banner';
 
 // --- DATA TYPES ---
 export interface QuizOption {
@@ -2148,7 +2147,11 @@ export function EducationManagementView() {
           </div>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-center shrink-0">
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+              using dummy data
+            </span>
+            <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-center">
             <div className="px-3 py-1">
               <div className="text-xs text-slate-500 font-medium">Total Artikel</div>
               <div className="text-lg font-black text-slate-900 font-mono">{articles.length}</div>
@@ -2165,6 +2168,7 @@ export function EducationManagementView() {
             </div>
           </div>
         </div>
+      </div>
 
         {/* PRIMARY TAB SWITCHER (Artikel vs Video) */}
         <div className="mt-8 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">

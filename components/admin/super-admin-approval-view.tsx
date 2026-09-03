@@ -265,15 +265,20 @@ export function SuperAdminApprovalView({ initialData }: SuperAdminApprovalViewPr
         </div>
 
         {/* Total Count Badge */}
-        <div className="flex items-center gap-3 bg-[#E8F5E9] border border-green-200 px-4 py-3 rounded-2xl shrink-0">
-          <Clock className="w-6 h-6 text-[#1B5E20]" />
-          <div>
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
-              Total Antrean Pending
-            </span>
-            <span className="text-xl font-black text-[#1B5E20]">
-              {data.counts.total} Berkas
-            </span>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            using dummy data
+          </span>
+          <div className="flex items-center gap-3 bg-[#E8F5E9] border border-green-200 px-4 py-3 rounded-2xl">
+            <Clock className="w-6 h-6 text-[#1B5E20]" />
+            <div>
+              <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+                Total Antrean Pending
+              </span>
+              <span className="text-xl font-black text-[#1B5E20]">
+                {data.counts.total} Berkas
+              </span>
+            </div>
           </div>
         </div>
       </div>

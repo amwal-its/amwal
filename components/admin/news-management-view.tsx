@@ -685,7 +685,13 @@ export function NewsManagementView() {
         </div>
 
         {/* STATS METRIC RIBBON */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100">
+        <div className="flex items-center justify-between mt-6 pt-5 border-t border-slate-100">
+          <div className="text-xs font-bold text-slate-700">Ringkasan Berita:</div>
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            using dummy data
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-2">
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
             <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Publikasi</div>
             <div className="text-xl font-black text-slate-900 mt-1 flex items-baseline gap-1.5">

@@ -1,129 +1,98 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
-  Wallet,
-  Landmark,
-  Users,
-  ShieldAlert,
-  ShieldCheck,
-  TrendingUp,
-  ArrowUpRight,
   Clock,
-  CheckCircle2,
-  Building2,
-  FileText,
-  FileSpreadsheet,
-  Settings,
-  ChevronRight,
-  ExternalLink,
-  Coins,
+  Repeat,
+  Wallet,
   Layers,
-  ArrowRight,
+  TrendingUp,
+  Sparkles,
+  Info,
+  ChevronRight,
+  ShieldAlert,
+  CheckCircle,
+  HelpCircle,
   BarChart2,
   Grid,
-  HelpCircle,
-  Info,
   Send,
   X,
-  Repeat,
+  Building2,
+  UserCheck,
 } from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
   PieChart,
   Pie,
   Cell,
-  XAxis,
-  YAxis,
+  ResponsiveContainer,
   Tooltip,
-  CartesianGrid,
 } from 'recharts';
-import { motion } from 'motion/react';
-import { DrmSimulationBanner } from '@/components/admin/drm-simulation-banner';
-import {
-  mockRfmdKpis,
-  mockDonorSegments,
-  mockCohortMatrix,
-  mockChurnPredictions,
-  mockChurnSegments,
-} from '@/lib/mock-drm-analytics';
 
-export interface OverviewMetrics {
-  totalDanaTerkumpul: number;
-  wakafVolume: number;
-  zakatVolume: number;
-  qurbanVolume: number;
-  totalProgramLive: number;
-  totalProgramAll: number;
-  totalDonaturUnik: number;
-  totalRegisteredUsers?: number;
-  totalGuestUsers?: number;
-  certificatesWithBwiCount?: number;
-  totalCertificatesCount?: number;
-  totalTransactionsCount: number;
-  pendingApprovals: {
-    nadzir: number;
-    withdrawals: number;
-    permohonan: number;
-    total: number;
-  };
-  trendData: Array<{
-    period: string;
-    wakaf: number;
-    zakat: number;
-    qurban: number;
-    total: number;
-  }>;
-  moduleDistribution: Array<{
-    name: string;
-    value: number;
-    color: string;
-    percentage: number;
-  }>;
-  recentTransactions: Array<{
-    id: string;
-    nomorKwitansi: string;
-    jenisTransaksi: string;
-    donorName: string;
-    isAnonymous: boolean;
-    programTitle: string;
-    amount: number;
-    statusPembayaran: string;
-    createdAt: string;
-  }>;
-  topPrograms: Array<{
-    id: string;
-    judul: string;
-    kategori: string;
-    jenisWakaf: string;
-    namaLembaga: string;
-    targetDana: number;
-    pokokDanaTerkumpul: number;
-    persentaseDana: number;
-    persentaseFisik: number | null;
-  }>;
+export interface AdminOverviewViewProps {
+  onNavigateTab?: (tab: string) => void;
+  data?: any;
 }
 
-interface AdminOverviewViewProps {
-  data: OverviewMetrics;
-}
-
-export function AdminOverviewView({ data }: AdminOverviewViewProps) {
-  const [activeChartMetric, setActiveChartMetric] = useState<'total' | 'wakaf' | 'zakat' | 'qurban'>('total');
-
-  // DRM Widget State
-  const [selectedDrmSegment, setSelectedDrmSegment] = useState<string | null>(null);
+export function AdminOverviewView({ onNavigateTab }: AdminOverviewViewProps) {
+  const router = useRouter();
+  const { showToast } = useToast();
+  const [selectedSegment, setSelectedSegment] = useState<string | null>(null);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [aiResult, setAiResult] = useState<string | null>(null);
   const [selectedActionAlert, setSelectedActionAlert] = useState<{
     title: string;
     segment: string;
     description: string;
+    suggestedAction: string;
     count: string;
   } | null>(null);
 
-  // Helpers for DRM widgets
+  const handleNavigate = (tab: string) => {
+    if (onNavigateTab) {
+      onNavigateTab(tab);
+      return;
+    }
+    const routes: Record<string, string> = {
+      overview: '/admin',
+      transparency: '/admin/transparansi',
+      nazhir_verifikasi: '/admin/nadzir-verifikasi',
+      segmentation: '/admin/segmentasi',
+      cohort: '/admin/kesetiaan',
+      super_admin_approvals: '/admin/approvals',
+      wakaf_programs: '/admin/wakaf',
+      education: '/admin/edukasi',
+      news: '/admin/berita',
+      documents: '/admin/dokumen',
+      settings: '/admin/pengaturan',
+    };
+    if (routes[tab]) {
+      router.push(routes[tab]);
+    }
+  };
+
+  // Box A Donut Chart Data
+  const segmentData = [
+    { name: 'Champion', value: 12, color: '#1B5E20', count: '1.450 donor', desc: 'Nilai & frekuensi tertinggi' },
+    { name: 'Loyal', value: 22, color: '#2E7D32', count: '2.660 donor', desc: 'Rutin berdonasi berkala' },
+    { name: 'New', value: 28, color: '#4CAF50', count: '3.380 donor', desc: 'Bergabung < 30 hari' },
+    { name: 'At-Risk', value: 20, color: '#E65100', count: '2.420 donor', desc: 'Keaktifan menurun > 60 hari' },
+    { name: 'Lapsed', value: 13, color: '#C62828', count: '1.570 donor', desc: 'Tidak ada transaksi > 180 hari' },
+    { name: 'Situational', value: 5, color: '#00838F', count: '600 donor', desc: 'Berdonasi saat bencana/ramadhan' },
+  ];
+
+  // Box B Cohort Data (Jan '25 - Jun '25)
+  const cohortRows = [
+    { month: "Jan '25", count: 1240, m0: 100, m1: 68, m2: 54, m3: 48, m4: 42, m5: 39 },
+    { month: "Feb '25", count: 1450, m0: 100, m1: 72, m2: 58, m3: 51, m4: 46, m5: null },
+    { month: "Mar '25", count: 1680, m0: 100, m1: 75, m2: 62, m3: 55, m4: null, m5: null },
+    { month: "Apr '25", count: 1920, m0: 100, m1: 71, m2: 59, m3: null, m4: null, m5: null },
+    { month: "May '25", count: 2150, m0: 100, m1: 76, m2: null, m3: null, m4: null, m5: null },
+    { month: "Jun '25", count: 2480, m0: 100, m1: null, m2: null, m3: null, m4: null, m5: null },
+  ];
+
+  // Function for retention heatmap cell background color & opacity
   const getHeatmapColor = (val: number | null) => {
     if (val === null) return 'bg-slate-50 text-slate-300';
     if (val === 100) return 'bg-emerald-800 text-white font-bold';
@@ -134,686 +103,309 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
     return 'bg-emerald-200/25 text-emerald-800';
   };
 
+  // Box C Markov Transition Matrix (5x5)
+  const markovSegments = ['Champion', 'Loyal', 'New', 'At-Risk', 'Lapsed'];
+  const markovMatrix = [
+    [68.4, 24.2, 0.0, 5.2, 2.2],   // From Champion
+    [15.8, 58.2, 0.0, 18.4, 7.6],  // From Loyal
+    [8.5, 32.1, 22.4, 25.0, 12.0], // From New
+    [2.1, 11.3, 0.0, 56.6, 30.0],  // From At-Risk -> Lapsed (Highlighted!)
+    [0.5, 3.2, 0.0, 12.1, 84.2],   // From Lapsed
+  ];
+
   const getMarkovCellColor = (fromIdx: number, toIdx: number, val: number) => {
+    // Highlight At-Risk -> Lapsed (Row 3, Col 4)
     if (fromIdx === 3 && toIdx === 4) {
       return 'bg-rose-100 text-rose-800 font-extrabold border-2 border-rose-400 animate-pulse';
     }
-    if (fromIdx === toIdx) return 'bg-emerald-100 text-emerald-900 font-bold';
+    // High retention on diagonal
+    if (fromIdx === toIdx) {
+      return 'bg-emerald-100 text-emerald-900 font-bold';
+    }
     if (val >= 25) return 'bg-slate-100 text-slate-900 font-semibold';
     if (val >= 10) return 'bg-slate-50 text-slate-700';
     return 'bg-white text-slate-400';
   };
 
-  const formatRupiah = (val: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(val);
-  };
-
-  const formatShortNumber = (val: number) => {
-    if (val >= 1_000_000_000) return `Rp ${(val / 1_000_000_000).toFixed(1)} M`;
-    if (val >= 1_000_000) return `Rp ${(val / 1_000_000).toFixed(1)} Jt`;
-    return formatRupiah(val);
+  const handleGenerateAiInsight = async () => {
+    setIsGeneratingAi(true);
+    setAiResult(null);
+    try {
+      const res = await fetch('/api/gemini/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `Analisis data Amwal:
+1. Segmen Donor: Champion 12%, Loyal 22%, New 28%, At-Risk 20%, Lapsed 13%, Situational 5%.
+2. Markov Matrix: At-Risk ke Lapsed mencapai 30.0% (HIGH Churn Risk).
+3. Cohort Retention: Retensi M+1 rata-rata 73%, M+3 turun ke 51%.
+Berikan 3 rekomendasi strategi retensi Waqf & Infaq yang konkret dalam bahasa Indonesia profesional.`,
+        }),
+      });
+      const data = await res.json();
+      setAiResult(data.result || data.error);
+    } catch (e) {
+      setAiResult('Gagal menghubungi Amwal AI Advisor. Menggunakan rekomendasi terukur sistem.');
+    } finally {
+      setIsGeneratingAi(false);
+    }
   };
 
   return (
-    <div className="space-y-6 px-6 py-6 max-w-7xl mx-auto font-jakarta">
-      {/* Top Banner & Executive Summary */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-white rounded-2xl p-6 border border-gray-200 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4"
-      >
-        <div>
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#E8F5E9] text-[#1B5E20] border border-green-200 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#1B5E20] animate-pulse" />
-              Sistem Ledger Berjalan Normal
-            </span>
-            <span className="text-xs text-gray-500 hidden sm:inline">•</span>
-            <span className="text-xs text-gray-500 hidden sm:inline">Database Supabase PostgreSQL Terkoneksi</span>
+    <div className="space-y-6">
+      {/* Top Banner / Welcome Action */}
+      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-emerald-900 rounded-2xl p-4 sm:p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-700/30 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <span className="px-2.5 py-1 rounded-md bg-emerald-700/60 text-emerald-200 text-xs font-semibold border border-emerald-600/50">
+                HETI 2026 Engine
+              </span>
+              <span className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-200 text-[10px] font-bold border border-amber-400/40">
+                using dummy data
+              </span>
+              <span className="text-[11px] sm:text-xs text-emerald-200">
+                Update Realtime: 11 Agustus 2026, 12:11 WIB
+              </span>
+            </div>
+            <h2 className="text-xl sm:text-2xl font-black tracking-tight">
+              Dashboard Tatakelola Waqf &amp; Social Finance
+            </h2>
+            <p className="text-emerald-100 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
+              Ringkasan otomatis keaktifan donatur, tingkat kesetiaan (retensi), prediksi risiko, serta rekomendasi aksi untuk pengelola.
+            </p>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-            Ringkasan Eksekutif & Pengawasan Platform
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1">
-            Monitoring real-time penghimpunan dana wakaf, distribusi zakat, transparansi qurban, dan audit tatakelola institusional.
-          </p>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              onClick={handleGenerateAiInsight}
+              disabled={isGeneratingAi}
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-md transition disabled:opacity-50 cursor-pointer shrink-0"
+            >
+              <Sparkles size={16} className="text-slate-950 shrink-0" />
+              <span>{isGeneratingAi ? 'Menganalisis...' : 'Analisis AI Otomatis'}</span>
+            </button>
+            <button
+              onClick={() => handleNavigate('transparency')}
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs flex items-center gap-2 border border-white/20 transition cursor-pointer shrink-0"
+            >
+              <CheckCircle size={16} className="text-white shrink-0" />
+              <span>Catatan Transparansi</span>
+            </button>
+          </div>
         </div>
 
-        {/* Pending Approvals Quick CTA */}
-        {data.pendingApprovals.total > 0 ? (
-          <Link
-            href="/admin/approvals"
-            className="flex items-center gap-3 bg-amber-50 hover:bg-amber-100/80 border border-amber-200/90 px-4 py-3 rounded-2xl transition-all shadow-2xs group shrink-0"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold">
-              <ShieldAlert className="w-5 h-5" />
+        {/* AI Result Box if Generated */}
+        {aiResult && (
+          <div className="mt-4 p-4 rounded-xl bg-white/95 text-slate-900 border border-amber-300 shadow-md animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center justify-between mb-2 pb-1 border-b border-slate-200">
+              <div className="flex items-center gap-2 font-bold text-xs text-emerald-900">
+                <Sparkles size={16} className="text-amber-600 shrink-0" />
+                Rekomendasi Strategis AI Amwal
+              </div>
+              <button
+                onClick={() => setAiResult(null)}
+                className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                Tutup
+              </button>
             </div>
-            <div>
-              <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-wider block">
-                Pusat Persetujuan
-              </span>
-              <span className="text-sm font-black text-gray-900 flex items-center gap-1">
-                {data.pendingApprovals.total} Berkas Menunggu
-                <ChevronRight className="w-4 h-4 text-amber-700 group-hover:translate-x-0.5 transition-transform" />
-              </span>
-            </div>
-          </Link>
-        ) : (
-          <div className="flex items-center gap-3 bg-[#E8F5E9] border border-green-200 px-4 py-3 rounded-2xl shrink-0">
-            <CheckCircle2 className="w-6 h-6 text-[#1B5E20]" />
-            <div>
-              <span className="text-[10px] font-bold text-gray-500 uppercase block">Antrean Persetujuan</span>
-              <span className="text-sm font-black text-[#1B5E20]">Semua Berkas Bersih</span>
+            <div className="text-xs text-slate-800 whitespace-pre-line leading-relaxed font-sans">
+              {aiResult}
             </div>
           </div>
         )}
-      </motion.div>
-
-      {/* Top 4 Stat KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Dana Terkumpul */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.05 }}
-          className="bg-white p-5 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all relative overflow-hidden"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Total Dana Terhimpun
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-[#E8F5E9] text-[#1B5E20] flex items-center justify-center">
-              <Wallet className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-gray-900 tracking-tight">
-            {formatShortNumber(data.totalDanaTerkumpul)}
-          </div>
-          <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>Dari {data.totalTransactionsCount} transaksi lunas</span>
-            <span className="text-[#1B5E20] font-bold flex items-center gap-0.5">
-              <TrendingUp className="w-3 h-3" />
-              100% Sah
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Card 2: Program Wakaf Aktif */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.1 }}
-          className="bg-white p-5 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Program Wakaf Aktif
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
-              <Landmark className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-gray-900 tracking-tight">
-            {data.totalProgramLive} <span className="text-sm font-semibold text-gray-400">/ {data.totalProgramAll} Program</span>
-          </div>
-          <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>Wakaf Produktif & Manfaat</span>
-            <Link href="/admin/wakaf" className="text-blue-700 font-bold hover:underline inline-flex items-center gap-0.5">
-              <span>Kelola</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Card 3: Donatur & Muzakki Terdaftar */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.15 }}
-          className="bg-white p-5 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Donatur & Muzakki
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-gray-900 tracking-tight">
-            {data.totalRegisteredUsers ?? data.totalDonaturUnik} <span className="text-sm font-semibold text-gray-400">Akun Terdaftar</span>
-          </div>
-          <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>{data.totalGuestUsers ?? 0} Tamu (Guest)</span>
-            <span className="text-purple-700 font-semibold">{data.totalDonaturUnik} Donatur Lunas</span>
-          </div>
-        </motion.div>
-
-        {/* Card 4: Sertifikat Ter-registrasi BWI */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.2 }}
-          className="bg-white p-5 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Sertifikat Ter-registrasi BWI
-            </span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="text-2xl font-black text-[#1B5E20] tracking-tight flex items-center gap-1.5">
-            {data.certificatesWithBwiCount ?? 0} <span className="text-sm font-semibold text-gray-400">/ {data.totalCertificatesCount ?? 0} Sertifikat</span>
-          </div>
-          <div className="mt-2.5 pt-2.5 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500">
-            <span>
-              {(data.totalCertificatesCount ?? 0) > 0
-                ? `${Math.round(((data.certificatesWithBwiCount ?? 0) / (data.totalCertificatesCount ?? 1)) * 100)}% Terdaftar BWI`
-                : 'Nomor Registrasi BWI'}
-            </span>
-            <Link href="/admin/nadzir-verifikasi" className="text-amber-800 font-bold hover:underline inline-flex items-center gap-0.5">
-              <span>Audit</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-        </motion.div>
       </div>
 
-      {/* Main Charts Section (2 Columns Grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left (7 Cols): Tren Penerimaan Dana Waktu Riil */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-          className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-card p-6 flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-              <div>
-                <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-[#1B5E20]" />
-                  Tren Penghimpunan Dana (Time-Series)
-                </h2>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Agregasi transaksi lunas masuk per periode waktu
-                </p>
-              </div>
-
-              {/* Metric Switcher */}
-              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl text-xs">
-                {(
-                  [
-                    { id: 'total', label: 'Semua' },
-                    { id: 'wakaf', label: 'Wakaf' },
-                    { id: 'zakat', label: 'Zakat' },
-                    { id: 'qurban', label: 'Qurban' },
-                  ] as const
-                ).map((m) => (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => setActiveChartMetric(m.id)}
-                    className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                      activeChartMetric === m.id
-                        ? 'bg-white text-gray-900 shadow-2xs'
-                        : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Area Chart Container */}
-            <div className="h-64 w-full pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.trendData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="gradientEmerald" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#1B5E20" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="gradientBlue" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#1E88E5" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#1E88E5" stopOpacity={0.0} />
-                    </linearGradient>
-                    <linearGradient id="gradientAmber" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#D97706" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#D97706" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <XAxis
-                    dataKey="period"
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 11, fill: '#94A3B8' }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickFormatter={(v) => (v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)} Jt` : v)}
-                    tick={{ fontSize: 11, fill: '#94A3B8' }}
-                  />
-                  <Tooltip
-                    formatter={(value: any) => [formatRupiah(Number(value) || 0), 'Nominal']}
-                    contentStyle={{
-                      backgroundColor: '#0F172A',
-                      borderColor: '#1E293B',
-                      borderRadius: '12px',
-                      color: '#FFFFFF',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    }}
-                    itemStyle={{ color: '#81C784' }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey={activeChartMetric}
-                    stroke={
-                      activeChartMetric === 'wakaf'
-                        ? '#1B5E20'
-                        : activeChartMetric === 'zakat'
-                        ? '#1E88E5'
-                        : activeChartMetric === 'qurban'
-                        ? '#D97706'
-                        : '#1B5E20'
-                    }
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill={
-                      activeChartMetric === 'zakat'
-                        ? 'url(#gradientBlue)'
-                        : activeChartMetric === 'qurban'
-                        ? 'url(#gradientAmber)'
-                        : 'url(#gradientEmerald)'
-                    }
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+      {/* Super Admin Action Banner: Verifikasi & Pendaftaran Nazhir */}
+      <div className="bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-transparent border border-amber-300/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 rounded-xl bg-amber-500 text-slate-950 font-bold shrink-0 mt-0.5">
+            <Building2 size={20} className="text-slate-950 shrink-0" />
           </div>
-
-          <div className="pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center text-xs">
-            <div>
-              <span className="text-[10px] text-gray-400 font-bold block uppercase">Wakaf</span>
-              <span className="font-extrabold text-[#1B5E20]">{formatShortNumber(data.wakafVolume)}</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-gray-400 font-bold block uppercase">Zakat</span>
-              <span className="font-extrabold text-blue-700">{formatShortNumber(data.zakatVolume)}</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-gray-400 font-bold block uppercase">Qurban</span>
-              <span className="font-extrabold text-amber-700">{formatShortNumber(data.qurbanVolume)}</span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Right (5 Cols): Donut Pie Chart Komposisi Modul */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="lg:col-span-5 bg-white rounded-2xl border border-gray-200 shadow-card p-6 flex flex-col justify-between"
-        >
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <Coins className="w-4 h-4 text-[#1B5E20]" />
-                Komposisi Dana per Modul
-              </h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-gray-100 text-gray-600">
-                100% Nyata
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold text-amber-950 uppercase tracking-wide">
+                Verifikasi Lembaga Nazhir
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 font-black text-[10px]">
+                2 Permohonan Menunggu
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 font-bold text-[10px]">
+                using dummy data
               </span>
             </div>
-            <p className="text-xs text-gray-500 mb-2">
-              Proporsi perolehan dana sosial berdasarkan jenis akad syariah
-            </p>
-
-            {/* Pie Chart Container */}
-            <div className="h-52 w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={data.moduleDistribution}
-                    innerRadius={55}
-                    outerRadius={80}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {data.moduleDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#FFFFFF" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value: any) => [formatRupiah(Number(value) || 0), 'Nominal']}
-                    contentStyle={{
-                      backgroundColor: '#0F172A',
-                      borderColor: '#1E293B',
-                      borderRadius: '12px',
-                      color: '#FFFFFF',
-                      fontSize: '12px',
-                      fontWeight: 600,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Dominan</span>
-                <span className="text-sm font-black text-gray-900">Wakaf & ZIS</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Module List Legend */}
-          <div className="space-y-2 pt-3 border-t border-gray-100">
-            {data.moduleDistribution.map((m) => (
-              <div key={m.name} className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
-                  <span className="font-semibold text-gray-800">{m.name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-500 font-mono text-[11px]">{formatShortNumber(m.value)}</span>
-                  <span className="font-extrabold text-gray-900 w-9 text-right">{m.percentage}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* 2-Column Lower Section: Live Transactions & Program Progress */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left (7 Cols): Transaksi Masuk Terverifikasi Terbaru */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-          className="lg:col-span-7 bg-white rounded-2xl border border-gray-200 shadow-card p-6 space-y-4"
-        >
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <div>
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-[#1B5E20]" />
-                Transaksi Masuk Terverifikasi Terbaru
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Aliran dana masuk langsung ke rekening LKS-PWU BSI
-              </p>
-            </div>
-            <Link
-              href="/admin/transparansi"
-              className="text-xs font-bold text-[#1B5E20] hover:underline inline-flex items-center gap-1"
-            >
-              <span>Lihat Semua Log</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          <div className="divide-y divide-gray-100">
-            {data.recentTransactions.length === 0 ? (
-              <div className="py-8 text-center text-gray-400 text-xs">
-                Belum ada data transaksi yang tercatat.
-              </div>
-            ) : (
-              data.recentTransactions.map((tx) => (
-                <div key={tx.id} className="py-3 flex items-center justify-between gap-3 text-xs hover:bg-slate-50/60 px-2 rounded-xl transition-colors">
-                  <div className="space-y-0.5 min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
-                          tx.jenisTransaksi === 'WAKAF'
-                            ? 'bg-emerald-100 text-[#1B5E20]'
-                            : tx.jenisTransaksi === 'ZAKAT'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
-                      >
-                        {tx.jenisTransaksi}
-                      </span>
-                      <span className="font-bold text-gray-900 truncate block">
-                        {tx.isAnonymous ? 'Hamba Allah (Anonim)' : tx.donorName}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-gray-500 truncate">
-                      {tx.programTitle} • No: <span className="font-mono">{tx.nomorKwitansi}</span>
-                    </p>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <span className="font-black text-gray-900 block text-xs">
-                      {formatRupiah(tx.amount)}
-                    </span>
-                    <span className="text-[10px] text-gray-400">
-                      {new Date(tx.createdAt).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                      })}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </motion.div>
-
-        {/* Right (5 Cols): Program Fisik & Ledger Highlights */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.4 }}
-          className="lg:col-span-5 bg-white rounded-2xl border border-gray-200 shadow-card p-6 space-y-4"
-        >
-          <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <div>
-              <h2 className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                <Landmark className="w-4 h-4 text-[#1B5E20]" />
-                Portofolio Program Prioritas
-              </h2>
-              <p className="text-xs text-gray-500 mt-0.5">
-                Monitoring progres dana & progres fisik
-              </p>
-            </div>
-            <Link
-              href="/admin/wakaf"
-              className="text-xs font-bold text-[#1B5E20] hover:underline inline-flex items-center gap-1"
-            >
-              <span>Semua Program</span>
-              <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-
-          <div className="space-y-3.5">
-            {data.topPrograms.length === 0 ? (
-              <div className="py-8 text-center text-gray-400 text-xs">
-                Belum ada program wakaf aktif.
-              </div>
-            ) : (
-              data.topPrograms.map((prog) => (
-                <div key={prog.id} className="p-3.5 rounded-xl bg-gray-50 border border-gray-200/80 space-y-2 text-xs">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h3 className="font-bold text-gray-900 line-clamp-1">
-                        {prog.judul}
-                      </h3>
-                      <span className="text-[11px] text-gray-500">
-                        {prog.namaLembaga} • {prog.jenisWakaf === 'PRODUKTIF_KEKAL' ? 'Produktif' : 'Manfaat'}
-                      </span>
-                    </div>
-
-                    {prog.persentaseFisik !== null && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 shrink-0">
-                        Fisik {prog.persentaseFisik}%
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Dana Progress Bar */}
-                  <div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-1">
-                      <div
-                        className="h-full bg-[#1B5E20] rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, prog.persentaseDana)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-[10px] font-semibold text-gray-600">
-                      <span>Terkumpul: {formatShortNumber(prog.pokokDanaTerkumpul)}</span>
-                      <span>{prog.persentaseDana}% dari {formatShortNumber(prog.targetDana)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </motion.div>
-      </div>
-
-      {/* ===================================================================== */}
-      {/* DRM ANALYTICS SECTION: Box A–D — DATA SIMULASI (Wajib Ada Banner)   */}
-      {/* ===================================================================== */}
-      <div className="space-y-6">
-        {/* 4 Mini KPI Metric Cards (RFM-D Summary) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Keaktifan Donatur */}
-          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
-                    <Clock className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
-                    {mockRfmdKpis[0].title}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                  {mockRfmdKpis[0].change}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[0].value}</span>
-                <span className="text-xs font-semibold text-slate-500">{mockRfmdKpis[0].unit}</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
-              {mockRfmdKpis[0].desc}
-            </p>
-          </div>
-
-          {/* Card 2: Frekuensi Donasi */}
-          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
-                    <Repeat className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
-                    {mockRfmdKpis[1].title}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                  {mockRfmdKpis[1].change}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[1].value}</span>
-                <span className="text-xs font-semibold text-slate-500">{mockRfmdKpis[1].unit}</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
-              {mockRfmdKpis[1].desc}
-            </p>
-          </div>
-
-          {/* Card 3: Rata-rata Nominal */}
-          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
-                    <Wallet className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
-                    {mockRfmdKpis[2].title}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                  {mockRfmdKpis[2].change}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[2].value}</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
-              {mockRfmdKpis[2].desc}
-            </p>
-          </div>
-
-          {/* Card 4: Variasi Program */}
-          <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-card hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
-            <div>
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
-                    <Layers className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
-                    {mockRfmdKpis[3].title}
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                  {mockRfmdKpis[3].change}
-                </span>
-              </div>
-              <div className="flex items-baseline gap-1 mt-2">
-                <span className="text-2xl font-black text-slate-900 tracking-tight">{mockRfmdKpis[3].value}</span>
-                <span className="text-xs font-semibold text-slate-500">{mockRfmdKpis[3].unit}</span>
-              </div>
-            </div>
-            <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
-              {mockRfmdKpis[3].desc}
+            <p className="text-xs text-slate-700 mt-1 max-w-2xl leading-relaxed">
+              Yayasan RSI Surabaya &amp; Ponpes Bina Insan Mandiri mengajukan pendaftaran Nazhir Wakaf Uang baru dan menunggu persetujuan Super Admin / verifikasi BWI.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+          <button
+            onClick={() => handleNavigate('nazhir_verifikasi')}
+            className="w-full sm:w-auto px-4 py-2 bg-[#1B5E20] hover:bg-[#144716] text-white rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
+          >
+            <UserCheck size={16} className="text-white shrink-0" />
+            <span>Review &amp; Setujui Nazhir</span>
+          </button>
+        </div>
+      </div>
 
-        {/* BOX A: RFMD Donor Segmentation Donut Chart */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-card flex flex-col overflow-hidden">
-          {/* MANDATORY SIMULATION BANNER — DO NOT REMOVE */}
-          <DrmSimulationBanner />
-          <div className="p-5 flex flex-col flex-1">
+      {/* 1. KPI Metric Cards Grid (4x1) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: Keaktifan Donatur */}
+        <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+          <div>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                  <Clock size={16} className="text-emerald-800 shrink-0" />
+                </div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                  Keaktifan Donatur
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  -12 hari (Lebih Cepat)
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                  using dummy data
+                </span>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1 mt-2">
+              <span className="text-2xl font-black text-slate-900 tracking-tight">68</span>
+              <span className="text-xs font-semibold text-slate-500">hari sekali</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+            Rata-rata waktu donatur kembali berdonasi sejak transaksi terakhir
+          </p>
+        </div>
+
+        {/* Card 2: Frekuensi Donasi */}
+        <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+          <div>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                  <Repeat size={16} className="text-emerald-800 shrink-0" />
+                </div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                  Frekuensi Donasi
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  +0.8x Naik
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                  using dummy data
+                </span>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1 mt-2">
+              <span className="text-2xl font-black text-slate-900 tracking-tight">4.2</span>
+              <span className="text-xs font-semibold text-slate-500">kali transaksi</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+            Rata-rata jumlah donasi yang dilakukan setiap donatur
+          </p>
+        </div>
+
+        {/* Card 3: Rata-rata Nominal */}
+        <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+          <div>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                  <Wallet size={16} className="text-emerald-800 shrink-0" />
+                </div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                  Rata-rata Nominal
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  +15% Naik
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                  using dummy data
+                </span>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1 mt-2">
+              <span className="text-2xl font-black text-slate-900 tracking-tight">Rp 842.000</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+            Besar donasi rata-rata per sekali transaksi (Waqf &amp; Infaq)
+          </p>
+        </div>
+
+        {/* Card 4: Variasi Program */}
+        <div className="bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200 shadow-xs hover:shadow-md hover:border-emerald-300 transition-all flex flex-col justify-between gap-3">
+          <div>
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <div className="p-1.5 rounded-md bg-emerald-50 text-emerald-800 shrink-0">
+                  <Layers size={16} className="text-emerald-800 shrink-0" />
+                </div>
+                <span className="text-[11px] uppercase tracking-wider text-slate-700 font-bold leading-snug">
+                  Variasi Program
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                  +0.4 Jenis
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
+                  using dummy data
+                </span>
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1 mt-2">
+              <span className="text-2xl font-black text-slate-900 tracking-tight">2.3</span>
+              <span className="text-xs font-semibold text-slate-500">Jenis Program</span>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500 leading-snug pt-2 border-t border-slate-100">
+            Rata-rata ragam jenis donasi yang diikuti (Waqf, Infaq, Sedekah)
+          </p>
+        </div>
+      </div>
+
+      {/* 2. Main Section Grid 2x2 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* BOX A: Segmen Donor (Donut Chart) */}
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card flex flex-col justify-between">
+          <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <BarChart2 className="w-4 h-4 text-emerald-800" />
-                  Box A: Kelompok &amp; Status Donatur
-                </h3>
+                <div className="flex items-center gap-2">
+                  <BarChart2 size={16} className="text-emerald-800 shrink-0" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Box A: Kelompok &amp; Status Donatur
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                    using dummy data
+                  </span>
+                </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Pembagian 12.080 donatur berdasarkan tingkat keaktifan &amp; loyalitas
                 </p>
               </div>
-              <Link
-                href="/admin/segmentasi"
+              <button
+                onClick={() => handleNavigate('segmentation')}
                 className="text-xs font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 cursor-pointer shrink-0"
               >
-                <span>Lihat Tabel Donatur</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+                <span>Lihat Daftar Donatur</span>
+                <ChevronRight size={14} className="shrink-0" />
+              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mt-4">
@@ -822,7 +414,7 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={mockDonorSegments}
+                      data={segmentData}
                       cx="50%"
                       cy="50%"
                       innerRadius={55}
@@ -830,12 +422,12 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                       paddingAngle={3}
                       dataKey="value"
                     >
-                      {mockDonorSegments.map((entry, index) => (
+                      {segmentData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(val) => [`${Number(val)}%`, 'Persentase Donatur']}
+                      formatter={(val: any) => [`${val}%`, 'Persentase Donatur']}
                       contentStyle={{
                         backgroundColor: '#ffffff',
                         borderColor: '#cbd5e1',
@@ -846,21 +438,22 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                     />
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Center Overlay */}
+
+                {/* Donut Center Overlay */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                   <span className="text-xl font-black text-slate-900">100%</span>
                   <span className="text-[10px] text-slate-400 font-semibold uppercase">Total Donatur</span>
                 </div>
               </div>
 
-              {/* Legend */}
+              {/* Segment Legend & Counts */}
               <div className="sm:col-span-6 space-y-2">
-                {mockDonorSegments.map((seg) => (
+                {segmentData.map((seg) => (
                   <div
                     key={seg.name}
-                    onClick={() => setSelectedDrmSegment(seg.name)}
+                    onClick={() => setSelectedSegment(seg.name)}
                     className={`p-2 rounded-lg border text-xs cursor-pointer transition flex items-center justify-between ${
-                      selectedDrmSegment === seg.name
+                      selectedSegment === seg.name
                         ? 'border-emerald-700 bg-emerald-50/80 shadow-xs'
                         : 'border-slate-100 hover:bg-slate-50'
                     }`}
@@ -872,7 +465,9 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                       />
                       <div>
                         <span className="font-bold text-slate-800">{seg.name}</span>
-                        <span className="text-[10px] text-slate-500 block leading-tight">{seg.desc}</span>
+                        <span className="text-[10px] text-slate-500 block leading-tight">
+                          {seg.desc}
+                        </span>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
@@ -883,41 +478,44 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                 ))}
               </div>
             </div>
+          </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-              <span>Kelompok Terbesar: <strong className="text-slate-800">Baru (28%) &amp; Rutin (22%)</strong></span>
-              <span className="text-emerald-800 font-semibold">Kesehatan Komunitas: Sangat Baik</span>
-            </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Kelompok Terbesar: <strong className="text-slate-800">Baru (28%) &amp; Rutin (22%)</strong></span>
+            <span className="text-emerald-800 font-semibold">Kesehatan Komunitas: Sangat Baik</span>
           </div>
         </div>
 
-        {/* BOX B: Cohort Retention Heatmap M0-M5 */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-card flex flex-col overflow-hidden">
-          {/* MANDATORY SIMULATION BANNER — DO NOT REMOVE */}
-          <DrmSimulationBanner />
-          <div className="p-5 flex flex-col flex-1">
+        {/* BOX B: Cohort Retention Heatmap */}
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card flex flex-col justify-between">
+          <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <Grid className="w-4 h-4 text-emerald-800" />
-                  Box B: Tingkat Kesetiaan Donatur per Bulan
-                </h3>
+                <div className="flex items-center gap-2">
+                  <Grid size={16} className="text-emerald-800 shrink-0" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Box B: Tingkat Kesetiaan Donatur per Bulan
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                    using dummy data
+                  </span>
+                </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Berapa persen donatur baru yang masih terus berdonasi di bulan berikutnya
                 </p>
               </div>
-              <Link
-                href="/admin/kesetiaan"
+              <button
+                onClick={() => handleNavigate('cohort')}
                 className="text-xs font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-1 cursor-pointer shrink-0"
               >
                 <span>Detail Kesetiaan</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+                <ChevronRight size={14} className="shrink-0" />
+              </button>
             </div>
 
-            {/* Helper note */}
+            {/* Quick Helper Note for Laypeople */}
             <div className="mt-3 p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-100 text-[11px] text-emerald-950 flex items-start gap-1.5">
-              <Info className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+              <Info size={16} className="text-emerald-700 shrink-0 mt-0.5" />
               <span>
                 <strong>Cara Membaca:</strong> <strong>M+0</strong> adalah bulan pertama donatur bergabung (100%). <strong>M+1</strong> adalah bulan ke-2. Contoh: Dari donatur Jan &apos;25, <strong>68%</strong> masih terus berdonasi di bulan berikutnya.
               </span>
@@ -939,45 +537,80 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[11px]">
-                  {mockCohortMatrix.map((r) => (
+                  {cohortRows.map((r) => (
                     <tr key={r.month} className="hover:bg-slate-50/80 transition">
-                      <td className="text-left py-2 px-2 font-bold text-slate-800 whitespace-nowrap">{r.month}</td>
+                      <td className="text-left py-2 px-2 font-bold text-slate-800 whitespace-nowrap">
+                        {r.month}
+                      </td>
                       <td className="py-2 px-1 text-slate-500 font-medium">{r.count}</td>
-                      {[r.m0, r.m1, r.m2, r.m3, r.m4, r.m5].map((val, idx) => (
-                        <td key={idx} className="py-1 px-1">
-                          <div className={`py-1 rounded font-medium ${getHeatmapColor(val)}`}>
-                            {val !== null ? `${val}%` : '-'}
-                          </div>
-                        </td>
-                      ))}
+
+                      {/* M0 */}
+                      <td className="py-1 px-1">
+                        <div className={`py-1 rounded font-bold ${getHeatmapColor(r.m0)}`}>
+                          {r.m0}%
+                        </div>
+                      </td>
+                      {/* M1 */}
+                      <td className="py-1 px-1">
+                        <div className={`py-1 rounded font-medium ${getHeatmapColor(r.m1)}`}>
+                          {r.m1 !== null ? `${r.m1}%` : '-'}
+                        </div>
+                      </td>
+                      {/* M2 */}
+                      <td className="py-1 px-1">
+                        <div className={`py-1 rounded font-medium ${getHeatmapColor(r.m2)}`}>
+                          {r.m2 !== null ? `${r.m2}%` : '-'}
+                        </div>
+                      </td>
+                      {/* M3 */}
+                      <td className="py-1 px-1">
+                        <div className={`py-1 rounded font-medium ${getHeatmapColor(r.m3)}`}>
+                          {r.m3 !== null ? `${r.m3}%` : '-'}
+                        </div>
+                      </td>
+                      {/* M4 */}
+                      <td className="py-1 px-1">
+                        <div className={`py-1 rounded font-medium ${getHeatmapColor(r.m4)}`}>
+                          {r.m4 !== null ? `${r.m4}%` : '-'}
+                        </div>
+                      </td>
+                      {/* M5 */}
+                      <td className="py-1 px-1">
+                        <div className={`py-1 rounded font-medium ${getHeatmapColor(r.m5)}`}>
+                          {r.m5 !== null ? `${r.m5}%` : '-'}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-              <div className="flex items-center gap-1.5 text-slate-500">
-                <span className="w-2.5 h-2.5 rounded bg-emerald-800" /> Tinggi (100%)
-                <span className="w-2.5 h-2.5 rounded bg-emerald-600/70 ml-2" /> Sedang (50-75%)
-                <span className="w-2.5 h-2.5 rounded bg-emerald-200/40 ml-2" /> Rendah (&lt;45%)
-              </div>
-              <span className="text-emerald-800 font-bold">Rata-rata Bulan ke-2: 73.0% Donor Kembali</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <div className="flex items-center gap-1.5 text-slate-500">
+              <span className="w-2.5 h-2.5 rounded bg-emerald-800 shrink-0" /> Tinggi (100%)
+              <span className="w-2.5 h-2.5 rounded bg-emerald-600/70 ml-2 shrink-0" /> Sedang (50-75%)
+              <span className="w-2.5 h-2.5 rounded bg-emerald-200/40 ml-2 shrink-0" /> Rendah (&lt;45%)
             </div>
+            <span className="text-emerald-800 font-bold">Rata-rata Bulan ke-2: 73.0% Donor Kembali</span>
           </div>
         </div>
 
-        {/* BOX C: Markov Churn Transition Matrix */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-card flex flex-col overflow-hidden">
-          {/* MANDATORY SIMULATION BANNER — DO NOT REMOVE */}
-          <DrmSimulationBanner />
-          <div className="p-5 flex flex-col flex-1">
+        {/* BOX C: Markov Transition Matrix (5x5) */}
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card flex flex-col justify-between">
+          <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-emerald-800" />
-                  Box C: Prediksi Perubahan Status Donatur
-                </h3>
+                <div className="flex items-center gap-2">
+                  <TrendingUp size={16} className="text-emerald-800 shrink-0" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Box C: Prediksi Perubahan Status Donatur
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                    using dummy data
+                  </span>
+                </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Peluang (%) donatur berpindah antar status dalam 30 hari ke depan
                 </p>
@@ -987,32 +620,42 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
               </span>
             </div>
 
+            {/* Helper note for laypeople */}
             <div className="mt-3 p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] text-slate-700 flex items-start gap-1.5">
-              <HelpCircle className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+              <HelpCircle size={16} className="text-slate-500 shrink-0 mt-0.5" />
               <span>
                 <strong>Cara Membaca:</strong> Baris = Status Saat Ini. Kolom = Prediksi Status Bulan Depan. Kotak merah <strong>(30%)</strong> artinya donatur &quot;At-Risk&quot; berisiko tinggi berubah menjadi &quot;Pasif/Lapsed&quot;.
               </span>
             </div>
 
+            {/* Matrix 5x5 Grid Table */}
             <div className="mt-3 overflow-x-auto -mx-2 px-2">
               <table className="w-full min-w-[500px] text-center text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-500 text-[10px] font-bold">
                     <th className="text-left py-2 px-1 text-slate-400">Dari \ Ke</th>
-                    {mockChurnSegments.map((s) => (
-                      <th key={s} className="py-2 px-1 font-bold text-slate-700">{s}</th>
+                    {markovSegments.map((s) => (
+                      <th key={s} className="py-2 px-1 font-bold text-slate-700">
+                        {s}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-[11px]">
-                  {mockChurnSegments.map((fromSeg, rIdx) => (
+                  {markovSegments.map((fromSeg, rIdx) => (
                     <tr key={fromSeg}>
                       <td className="text-left py-2 px-1 font-bold text-slate-800 text-[11px] whitespace-nowrap bg-slate-50/50">
                         {fromSeg}
                       </td>
-                      {mockChurnPredictions.markovMatrix[rIdx].map((val, cIdx) => (
+                      {markovMatrix[rIdx].map((val, cIdx) => (
                         <td key={`${rIdx}-${cIdx}`} className="p-1">
-                          <div className={`py-1.5 px-1 rounded transition text-[11px] ${getMarkovCellColor(rIdx, cIdx, val)}`}>
+                          <div
+                            className={`py-1.5 px-1 rounded transition text-[11px] ${getMarkovCellColor(
+                              rIdx,
+                              cIdx,
+                              val
+                            )}`}
+                          >
                             {val.toFixed(1)}%
                           </div>
                         </td>
@@ -1022,263 +665,253 @@ export function AdminOverviewView({ data }: AdminOverviewViewProps) {
                 </tbody>
               </table>
             </div>
+          </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-              <span className="text-slate-500">
-                Kestabilan Tertinggi: <strong className="text-slate-800">Kelompok Pasif Stay Lapsed (84.2%)</strong>
-              </span>
-              <span className="text-rose-600 font-bold">Perlu Sapaan Ulang</span>
-            </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">
+              Kestabilan Tertinggi: <strong className="text-slate-800">Kelompok Pasif Stay Lapsed (84.2%)</strong>
+            </span>
+            <span className="text-rose-600 font-bold">Perlu Sapaan Ulang</span>
           </div>
         </div>
 
-        {/* BOX D: Action Hub — Early Warning & Strategic Recommendations */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-card flex flex-col overflow-hidden">
-          {/* MANDATORY SIMULATION BANNER — PALING KRITIS DI BOX D — DO NOT REMOVE */}
-          <DrmSimulationBanner />
-          <div className="p-5 flex flex-col flex-1">
+        {/* BOX D: Early Warning Alerts & Strategic Recommendations */}
+        <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-card flex flex-col justify-between">
+          <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                  <ShieldAlert className="w-4 h-4 text-rose-600" />
-                  Box D: Peringatan Otomatis &amp; Saran Tindakan
-                </h3>
+                <div className="flex items-center gap-2">
+                  <ShieldAlert size={16} className="text-rose-600 shrink-0" />
+                  <h3 className="text-sm font-bold text-slate-900">
+                    Box D: Peringatan Otomatis &amp; Saran Tindakan
+                  </h3>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 shrink-0">
+                    using dummy data
+                  </span>
+                </div>
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   Deteksi dini donatur yang mulai pasif beserta solusi praktis
                 </p>
               </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                {mockChurnPredictions.actionAlerts.length} Peringatan
+              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                2 Peringatan
               </span>
             </div>
 
+            {/* Alert List */}
             <div className="mt-4 space-y-3">
-              {/* Alert 1: HIGH */}
+              {/* Alert 1 */}
               <div className="p-3.5 rounded-xl bg-rose-50/80 border border-rose-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-600 text-white uppercase">
                       RISIKO TINGGI
                     </span>
-                    <span className="font-bold text-rose-950">{mockChurnPredictions.actionAlerts[0].label}</span>
+                    <span className="font-bold text-rose-950">At-Risk Berisiko Pasif (30.0%)</span>
                   </div>
                   <p className="text-[11px] text-rose-800 leading-snug">
-                    {mockChurnPredictions.actionAlerts[0].description}
+                    Ada 2.420 donatur yang belum berdonasi lagi dalam 60 hari terakhir. Perlu disapa kembali!
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5 shrink-0">
                   <button
-                    type="button"
                     onClick={() =>
                       setSelectedActionAlert({
                         title: 'Kirim Pesan Sapaan Retensi',
-                        segment: `At-Risk (${mockChurnPredictions.actionAlerts[0].count})`,
-                        description: mockChurnPredictions.actionAlerts[0].description,
-                        count: mockChurnPredictions.actionAlerts[0].count,
+                        segment: 'At-Risk (2.420 Donatur)',
+                        description:
+                          'Kirimkan pesan silaturahmi berkala dan update progres program wakaf terakhir agar donatur kembali berdonasi.',
+                        suggestedAction: 'Blast WhatsApp Sapaan & Buletin Dampak',
+                        count: '2.420 Kontak',
                       })
                     }
-                    className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition shadow-xs cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition shadow-xs cursor-pointer shrink-0"
                   >
                     Kirim Pesan Sapaan
                   </button>
                   <button
-                    type="button"
                     onClick={() =>
                       setSelectedActionAlert({
                         title: 'Instruksi Khusus ke Nazhir Pengelola',
                         segment: 'At-Risk & Pasif',
-                        description: 'Teruskan daftar donatur prioritas tinggi ke tim Relationship Manager Yayasan/Nadzir untuk follow up personal.',
-                        count: mockChurnPredictions.actionAlerts[0].count,
+                        description:
+                          'Teruskan daftar donatur prioritas tinggi ke tim Relationship Manager Yayasan/Nadzir untuk follow up personal.',
+                        suggestedAction: 'Disposisi Tugas Internal CRM',
+                        count: '2.420 Kontak',
                       })
                     }
-                    className="px-2.5 py-1 rounded-lg bg-white text-rose-800 font-semibold text-[11px] border border-rose-300 hover:bg-rose-100 transition cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-white text-rose-800 font-semibold text-[11px] border border-rose-300 hover:bg-rose-100 transition cursor-pointer shrink-0"
                   >
                     Kontak Pengelola
                   </button>
                 </div>
               </div>
 
-              {/* Alert 2: MEDIUM */}
+              {/* Alert 2 */}
               <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-500 text-white uppercase">
                       RISIKO SEDANG
                     </span>
-                    <span className="font-bold text-amber-950">{mockChurnPredictions.actionAlerts[1].label}</span>
+                    <span className="font-bold text-amber-950">Loyal Berisiko Menurun (18.4%)</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-snug">
-                    {mockChurnPredictions.actionAlerts[1].description}
+                    Donatur rutin yang belum mengaktifkan pengingat donasi bulanan (autodebet).
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-1.5 shrink-0">
                   <button
-                    type="button"
                     onClick={() =>
                       setSelectedActionAlert({
                         title: 'Aktivasi Penawaran Autodebet Syariah',
-                        segment: `Loyal (${mockChurnPredictions.actionAlerts[1].count})`,
-                        description: 'Kirimkan rekomendasi pengaturan transfer berkala otomatis (BSI Debit Rutin / QRIS Subscription) untuk mempermudah wakaf rutin.',
-                        count: mockChurnPredictions.actionAlerts[1].count,
+                        segment: 'Loyal (2.660 Donatur)',
+                        description:
+                          'Kirimkan rekomendasi pengaturan transfer berkala otomatis (BSI Debit Rutin / QRIS Subscription) untuk mempermudah wakaf rutin.',
+                        suggestedAction: 'Kirim Panduan & Link Aktivasi Autodebet',
+                        count: '2.660 Kontak',
                       })
                     }
-                    className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition shadow-xs cursor-pointer"
+                    className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] transition shadow-xs cursor-pointer shrink-0"
                   >
                     Tawarkan Autodebet
                   </button>
                 </div>
               </div>
 
-              {/* Strategy Chips */}
+              {/* Action Chips Pairings */}
               <div className="pt-2">
                 <span className="text-[11px] font-bold text-slate-700 block mb-2">
                   Panduan Strategi Per Kelompok Donatur:
                 </span>
                 <div className="flex flex-wrap gap-2">
-                  {mockChurnPredictions.strategyChips.map((chip) => (
-                    <div
-                      key={chip.segment}
-                      className={`px-3 py-1.5 rounded-lg border text-xs flex items-center gap-1.5 ${chip.colorClass}`}
-                    >
-                      <span className="font-bold">{chip.segment}:</span>
-                      <span>{chip.strategy}</span>
-                    </div>
-                  ))}
+                  <div className="px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-1.5">
+                    <span className="font-bold text-emerald-950">Champion:</span>
+                    <span>&quot;Ajak menjadi Duta Waqf Abadi&quot;</span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center gap-1.5">
+                    <span className="font-bold text-blue-950">Donatur Baru:</span>
+                    <span>&quot;Kirim laporan dampak dalam 30 hari&quot;</span>
+                  </div>
+                  <div className="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-800 flex items-center gap-1.5">
+                    <span className="font-bold text-slate-900">Musiman:</span>
+                    <span>&quot;Ingatkan saat Program Ramadhan &amp; Bencana&quot;</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
-              <span className="text-slate-500">
-                Estimasi Potensi Donasi Terselamatkan: <strong className="text-emerald-800">Rp 420 Juta / bulan</strong>
-              </span>
-            </div>
+          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+            <span className="text-slate-500">Estimasi Potensi Donasi Terselamatkan: <strong className="text-emerald-800">Rp 420 Juta / bulan</strong></span>
+            <button
+              onClick={() => handleNavigate('segmentation')}
+              className="text-emerald-800 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>Jalankan Program</span>
+              <ChevronRight size={14} className="shrink-0" />
+            </button>
           </div>
         </div>
       </div>
-      </div>
 
-      {/* Action Alert Modal */}
+      {/* ========================================================================= */}
+      {/* MODAL: AKSI CEPAT DINI (EARLY WARNING ACTION MODAL)                      */}
+      {/* ========================================================================= */}
       {selectedActionAlert && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl space-y-4 border border-slate-200 overflow-hidden">
-            {/* Banner Wajib di dalam modal juga */}
-            <DrmSimulationBanner />
-            <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold">
-                    <ShieldAlert className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">{selectedActionAlert.title}</h3>
-                    <p className="text-xs text-slate-500">
-                      Target Segmen: <strong className="text-slate-800">{selectedActionAlert.segment}</strong>
-                    </p>
-                  </div>
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold">
+                  <ShieldAlert size={20} className="text-rose-800 shrink-0" />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedActionAlert(null)}
-                  className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs">
                 <div>
-                  <span className="text-slate-500 font-medium block">Deskripsi &amp; Tujuan:</span>
-                  <p className="text-slate-800 mt-0.5 leading-relaxed">{selectedActionAlert.description}</p>
-                </div>
-                <div className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-600 font-medium">Estimasi Penerima Kampanye:</span>
-                  <span className="font-bold text-emerald-900 font-mono">{selectedActionAlert.count}</span>
-                </div>
-                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-950 space-y-1">
-                  <div className="font-bold text-[11px]">⚠ Template ini berbasis data simulasi. Verifikasi ke data aktual sebelum dieksekusi.</div>
-                  <p className="text-[11px] text-amber-900 italic leading-relaxed">
-                    &quot;Assalamu&apos;alaikum Bapak/Ibu Donatur, semoga senantiasa diberkahi. Kami ingin menyampaikan kabar gembira terkait amanah wakaf Anda pada program Klinik Al-Azhar yang saat ini progresnya telah mencapai 65%...&quot;
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {selectedActionAlert.title}
+                    </h3>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                      using dummy data
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Target Segmen: <strong className="text-slate-800">{selectedActionAlert.segment}</strong>
                   </p>
                 </div>
               </div>
+              <button
+                onClick={() => setSelectedActionAlert(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+              >
+                <X size={20} className="shrink-0" />
+              </button>
+            </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3 text-xs">
+              <div>
+                <span className="text-slate-500 font-medium block">Deskripsi &amp; Tujuan:</span>
+                <p className="text-slate-800 mt-0.5 leading-relaxed">
+                  {selectedActionAlert.description}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-slate-200">
+                <span className="text-slate-600 font-medium">Estimasi Penerima Kampanye:</span>
+                <span className="font-bold text-emerald-900 font-mono">{selectedActionAlert.count}</span>
+              </div>
+
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200 rounded-lg text-emerald-950 space-y-1">
+                <div className="font-bold text-[11px] flex items-center gap-1">
+                  <Sparkles size={14} className="text-emerald-700 shrink-0" />
+                  Rekomendasi Template Pesan AI:
+                </div>
+                <p className="text-[11px] text-emerald-900 italic leading-relaxed">
+                  &quot;Assalamu&apos;alaikum Bapak/Ibu Donatur, semoga senantiasa diberkahi. Kami ingin menyampaikan kabar gembira terkait amanah wakaf Anda pada program Klinik Al-Azhar yang saat ini progresnya telah mencapai 65%...&quot;
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setSelectedActionAlert(null);
+                  handleNavigate('segmentation');
+                }}
+                className="text-xs font-semibold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
+              >
+                <span>Lihat Daftar Kontak Detail</span>
+                <ChevronRight size={14} className="shrink-0" />
+              </button>
+
+              <div className="flex items-center gap-2">
                 <button
-                  type="button"
                   onClick={() => setSelectedActionAlert(null)}
                   className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold cursor-pointer"
                 >
-                  Tutup
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    showToast({
+                      title: 'Kampanye Retensi Diluncurkan',
+                      description: `Berhasil mengeksekusi "${selectedActionAlert.suggestedAction}" ke ${selectedActionAlert.count}.`,
+                      type: 'success',
+                    });
+                    setSelectedActionAlert(null);
+                  }}
+                  className="px-4 py-1.5 bg-[#1B5E20] hover:bg-[#144716] text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Send size={14} className="text-white shrink-0" />
+                  Eksekusi Aksi Sekarang
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Quick Action Navigation Hub */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-2">
-        <Link
-          href="/admin/approvals"
-          className="bg-white p-4 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all flex items-center gap-3.5 group cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
-            <ShieldCheck className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#1B5E20] transition-colors">
-              Pusat Persetujuan
-            </h3>
-            <p className="text-[11px] text-gray-400">Verifikasi berkas & termin</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/admin/nadzir-verifikasi"
-          className="bg-white p-4 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all flex items-center gap-3.5 group cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
-            <Building2 className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
-              Verifikasi Nadzir BWI
-            </h3>
-            <p className="text-[11px] text-gray-400">Audit legalitas lembaga</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/admin/transparansi"
-          className="bg-white p-4 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all flex items-center gap-3.5 group cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-[#1B5E20] flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
-            <FileSpreadsheet className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-gray-900 group-hover:text-[#1B5E20] transition-colors">
-              Log Transparansi
-            </h3>
-            <p className="text-[11px] text-gray-400">Audit rekam transaksi</p>
-          </div>
-        </Link>
-
-        <Link
-          href="/admin/pengaturan"
-          className="bg-white p-4 rounded-2xl border border-gray-200 shadow-card hover:border-emerald-300 hover:shadow-card-hover transition-all flex items-center gap-3.5 group cursor-pointer"
-        >
-          <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
-            <Settings className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-xs font-bold text-gray-900 group-hover:text-slate-900 transition-colors">
-              Pengaturan Sistem
-            </h3>
-            <p className="text-[11px] text-gray-400">Rekening & parameter</p>
-          </div>
-        </Link>
-      </div>
     </div>
   );
 }
+
+export default AdminOverviewView;

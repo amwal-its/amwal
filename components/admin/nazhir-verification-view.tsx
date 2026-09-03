@@ -132,14 +132,19 @@ export function NazhirVerificationView({ initialNadzirs }: NazhirVerificationVie
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="bg-[#E8F5E9] border border-green-200 px-4 py-2.5 rounded-2xl text-center">
-            <span className="text-[10px] font-bold text-gray-500 block uppercase">Pending</span>
-            <span className="text-lg font-black text-[#1B5E20]">{pendingList.length}</span>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 px-4 py-2.5 rounded-2xl text-center">
-            <span className="text-[10px] font-bold text-gray-500 block uppercase">Terverifikasi</span>
-            <span className="text-lg font-black text-blue-700">{verifiedList.length}</span>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+            using dummy data
+          </span>
+          <div className="flex items-center gap-2">
+            <div className="bg-[#E8F5E9] border border-green-200 px-4 py-2.5 rounded-2xl text-center">
+              <span className="text-[10px] font-bold text-gray-500 block uppercase">Pending</span>
+              <span className="text-lg font-black text-[#1B5E20]">{pendingList.length}</span>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 px-4 py-2.5 rounded-2xl text-center">
+              <span className="text-[10px] font-bold text-gray-500 block uppercase">Terverifikasi</span>
+              <span className="text-lg font-black text-blue-700">{verifiedList.length}</span>
+            </div>
           </div>
         </div>
       </div>

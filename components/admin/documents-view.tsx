@@ -1237,6 +1237,9 @@ export function DocumentsView({
                   Menampilkan <strong className="text-slate-900">{filteredLegalDocs.length}</strong> dari{' '}
                   <span className="text-slate-500">{legalDocs.length} dokumen legalitas resmi</span>
                 </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                  using dummy data
+                </span>
                 {(legalSearchQuery || legalCategoryFilter !== 'SEMUA') && (
                   <span className="text-emerald-800 font-semibold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 text-[11px]">
                     Filter Aktif

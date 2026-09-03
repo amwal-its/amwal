@@ -44,11 +44,23 @@ export function BackofficeShell({ role, userName, children }: BackofficeShellPro
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
             transition={{ duration: 0.2 }}
-            className="flex-1 min-w-0"
+            className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6 min-w-0"
           >
             {children}
           </motion.main>
         </AnimatePresence>
+
+        {/* Footer */}
+        <footer className="bg-white border-t border-slate-200 py-4 px-6 text-center text-xs text-slate-500 mt-auto">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="font-semibold text-slate-700">
+              Amwal © 2026 — Islamic Social Finance Platform (Super Admin, Nazhir Wakaf, Amil ZISWAF)
+            </p>
+            <p className="text-[11px] text-slate-400">
+              Otoritas Tunggal Internal Super Admin • Terakreditasi BWI & BAZNAS RI
+            </p>
+          </div>
+        </footer>
       </div>
     </div>
     </ToastProvider>
