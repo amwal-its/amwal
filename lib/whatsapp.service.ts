@@ -30,9 +30,15 @@ export async function sendWhatsAppNotification(phone: string, message: string): 
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
+    if (!response.ok || response.status !== 200) {
       const errorText = await response.text().catch(() => '');
       console.warn(`[WhatsAppService] Failed to send message to ${phone}: HTTP ${response.status} - ${errorText}`);
+      return false;
+    }
+
+    const data = await response.json().catch(() => null);
+    if (!data || data.success !== true) {
+      console.warn(`[WhatsAppService] Baileys response indicated failure for ${phone}:`, data);
       return false;
     }
 

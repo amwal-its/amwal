@@ -1019,7 +1019,7 @@ export function NazhirDashboardView({ onNavigateTab, defaultView = 'manage' }: N
                 }`}
               >
                 <Landmark className="w-3.5 h-3.5" />
-                <span>Pencairan Termin & Kas Escrow ({terminList.filter((t) => t.programId === selectedProgram.id).length})</span>
+                <span>Pencairan Termin Penyaluran ({terminList.filter((t) => t.programId === selectedProgram.id).length})</span>
               </button>
 
               <button
@@ -1115,7 +1115,7 @@ export function NazhirDashboardView({ onNavigateTab, defaultView = 'manage' }: N
               </div>
             )}
 
-            {/* SUB-TAB 2: PENCAIRAN TERMIN & KAS ESCROW */}
+            {/* SUB-TAB 2: PENCAIRAN TERMIN PENYALURAN */}
             {workbenchTab === 'termin' && (
               <div className="space-y-5">
                 {/* Ringkasan Arus Kas Dana Wakaf */}
@@ -1141,7 +1141,7 @@ export function NazhirDashboardView({ onNavigateTab, defaultView = 'manage' }: N
                   </div>
 
                   <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
-                    <span className="text-[10px] font-bold text-blue-800 uppercase block">Sisa Saldo di Escrow BSI</span>
+                    <span className="text-[10px] font-bold text-blue-800 uppercase block">Sisa Saldo Dana Program</span>
                     <span className="text-sm font-extrabold text-blue-950 font-mono block mt-1">
                       Rp 650.000.000
                     </span>
@@ -2201,7 +2201,7 @@ export function NazhirDashboardView({ onNavigateTab, defaultView = 'manage' }: N
               <div className="font-bold text-slate-900">Isi Ringkasan Berkas Pelaporan BWI:</div>
               <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
                 <li>Identitas Lembaga Nazhir & SK BWI Aktif</li>
-                <li>Laporan Posisi Keuangan & Arus Kas Escrow Bank Syariah</li>
+                <li>Laporan Posisi Keuangan & Arus Kas Rekening Penampung Bank Syariah</li>
                 <li>Daftar Realisasi Belanja & Bukti Kuitansi Sah</li>
                 <li>Laporan Monitoring Progres Fisik Konstruksi ({selectedProgram.progressFisik}%)</li>
                 <li>Surat Pernyataan Dewan Pengawas Syariah (DPS) Terverifikasi</li>

@@ -199,7 +199,7 @@ export function SettingsManagementView({ onNavigateTab }: SettingsSectionProps =
       setIsSaving(false);
       showToast({
         title: 'Konfigurasi Sistem Disimpan',
-        description: 'Seluruh parameter RFM-D, Bank Escrow, dan Gateway Notifikasi berhasil diterapkan secara global.',
+        description: 'Seluruh parameter RFM-D, Rekening Penampung Syariah, dan Gateway Notifikasi berhasil diterapkan secara global.',
         type: 'success',
       });
     }, 400);
@@ -213,10 +213,10 @@ export function SettingsManagementView({ onNavigateTab }: SettingsSectionProps =
           <div>
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Settings className="w-5 h-5 text-emerald-800" />
-              Pengaturan Sistem & Konfigurasi Platform
+              Pengaturan Sistem &amp; Konfigurasi Platform
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Pusat kendali parameter RFM-D donor, gerbang pembayaran escrow bank syariah, dan gateway notifikasi WhatsApp/Email.
+              Pusat kendali parameter RFM-D donor, gerbang pembayaran bank syariah (non-custodial), dan gateway notifikasi WhatsApp/Email.
             </p>
           </div>
 
@@ -256,7 +256,7 @@ export function SettingsManagementView({ onNavigateTab }: SettingsSectionProps =
           }`}
         >
           <CreditCard className="w-4 h-4" />
-          <span>Bank Escrow & Pembayaran</span>
+          <span>Rekening Penampung &amp; Pembayaran</span>
         </button>
 
         <button
@@ -489,7 +489,7 @@ export function SettingsManagementView({ onNavigateTab }: SettingsSectionProps =
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: BANK ESCROW & PEMBAYARAN SYARIAH                                   */}
+      {/* TAB 2: REKENING PENAMPUNG & PEMBAYARAN SYARIAH                           */}
       {/* ========================================================================= */}
       {activeTab === 'payment' && (
         <div className="space-y-6 animate-in fade-in duration-200">
@@ -497,16 +497,16 @@ export function SettingsManagementView({ onNavigateTab }: SettingsSectionProps =
             <div>
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                 <CreditCard className="w-5 h-5 text-emerald-800" />
-                Konfigurasi Rekening Escrow Giro Wadiah & Payment Gateway Syariah
+                Konfigurasi Rekening Giro Wadiah &amp; Payment Gateway Syariah (Non-Custodial)
               </h3>
               <p className="text-xs text-slate-500 mt-1">
-                Rekening penampung dana wakaf terikat fatwa DSN-MUI & BWI. Dana hanya dapat dicairkan melalui mekanisme persetujuan termin.
+                Rekening penampung giro wadiah bank syariah resmi mitra Nazhir (YMI ITS). Dana disalurkan secara non-custodial berbasis persetujuan termin.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
               <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                <label className="font-bold text-slate-800 block">Bank Penampung Escrow Utama</label>
+                <label className="font-bold text-slate-800 block">Bank Penampung Utama</label>
                 <input
                   type="text"
                   value={paymentParams.escrowBankName}

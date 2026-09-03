@@ -677,7 +677,7 @@ export function WakafProgramsView({
           waqfProgramId: selectedProgram.id,
           amount: amountNum,
           peruntukan: withdrawNote || 'Pencairan Termin Lapangan',
-          rekeningTujuan: selectedProgram.bankAccount || selectedProgram.bankName || 'BSI Escrow YMI',
+          rekeningTujuan: selectedProgram.bankAccount || selectedProgram.bankName || 'Rekening Operasional Nadzir (BSI)',
         }),
       });
 
@@ -714,7 +714,7 @@ export function WakafProgramsView({
       setShowWithdrawModal(false);
       showToast({
         title: 'Pengajuan Penarikan Dana Terkirim',
-        description: `Pengajuan Rp ${amountNum.toLocaleString('id-ID')} telah tercatat di sistem pengawasan termin escrow.`,
+        description: `Pengajuan Rp ${amountNum.toLocaleString('id-ID')} telah tercatat di sistem pengawasan pencairan termin non-custodial.`,
         type: 'success',
       });
 
@@ -756,7 +756,7 @@ export function WakafProgramsView({
 
       showToast({
         title: 'Pencairan Dana Disetujui',
-        description: 'Pengajuan penarikan dana berhasil disetujui & mutasi kas escrow telah diperbarui.',
+        description: 'Pengajuan penarikan dana berhasil disetujui & mutasi saldo termin telah diperbarui.',
         type: 'success',
       });
     } catch (error: any) {
@@ -918,7 +918,7 @@ export function WakafProgramsView({
                   Manajemen &amp; Pengawasan Program Wakaf
                 </h1>
                 <p className="text-xs text-slate-500 mt-1">
-                  Pusat pembuatan program baru, pemantauan slider progres fisik lapangan, upload kuitansi digital, dan tata kelola termin escrow BSI.
+                  Pusat pembuatan program baru, pemantauan slider progres fisik lapangan, upload kuitansi digital, dan tata kelola pencairan termin bertahap Nadzir.
                 </p>
               </div>
 
@@ -975,7 +975,7 @@ export function WakafProgramsView({
                   Daftar Program Wakaf Terkelola ({filteredPrograms.length} Program)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Pilih program untuk membuka workbench manajemen progres fisik, kuitansi belanja digital, dan termin kas escrow.
+                  Pilih program untuk membuka workbench manajemen progres fisik, kuitansi belanja digital, dan pencairan termin bertahap.
                 </p>
               </div>
 
@@ -1313,7 +1313,7 @@ export function WakafProgramsView({
               >
                 <Landmark className="w-3.5 h-3.5" />
                 <span>
-                  Pencairan Termin &amp; Kas Escrow ({currentTerminList.length})
+                  Pencairan Termin Penyaluran ({currentTerminList.length})
                 </span>
               </button>
 
@@ -2297,7 +2297,7 @@ export function WakafProgramsView({
                 <span className="font-bold text-slate-900 block">{selectedProgram.name}</span>
                 <span className="text-slate-500 block mt-1">Rekening Tujuan:</span>
                 <span className="font-mono font-bold text-emerald-800 block">
-                  {selectedProgram.bankAccount || selectedProgram.bankName || 'BSI Escrow YMI'}
+                  {selectedProgram.bankAccount || selectedProgram.bankName || 'Rekening Operasional Nadzir (BSI)'}
                 </span>
               </div>
 
@@ -2391,7 +2391,8 @@ export function WakafProgramsView({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
+                  disabled={!rejectReason.trim()}
+                  className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Check className="w-4 h-4" />
                   <span>Konfirmasi Penolakan</span>
