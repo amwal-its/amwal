@@ -617,7 +617,11 @@ model QurbanDistributionReport {
   qurbanOrderId    String      @map("qurban_order_id")
   qurbanOrder      QurbanOrder @relation(fields: [qurbanOrderId], references: [id])
   buktiFotoUrl     String?     @map("bukti_foto_url")
+  videoUrl         String?     @map("video_url")
   lokasiPenyaluran String?     @map("lokasi_penyaluran")
+  lokasiLat        Decimal?    @map("lokasi_lat") @db.Decimal(10, 8)
+  lokasiLng        Decimal?    @map("lokasi_lng") @db.Decimal(11, 8)
+  jumlahPenerima   Int?        @map("jumlah_penerima")
   createdAt        DateTime    @default(now()) @map("created_at")
 
   @@map("qurban_distribution_reports")
